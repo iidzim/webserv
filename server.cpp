@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/16 15:22:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/03/17 10:31:46 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/03/17 18:58:41 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,9 @@
 
 int main(void){
 
-	int socket_fd, new_sock_fd, r, backlog = 3, port = 8080;
+	int socket_fd, new_sock_fd, r, backlog = 5, port = 8080;
 	struct sockaddr_in address;
+	int addrlen = sizeof(address);
 
 	//! creates a stream socket in the Internet domain
 	//* int server_fd = socket(domain, type, protocol);
@@ -36,7 +37,9 @@ int main(void){
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = htonl(INADDR_ANY);
 	address.sin_port = htons(port);
+	memset(address.sin_zero, '\0', sizeof(address.sin_zero));
 	//! allows a process to specify the local address of the socket
+	//* int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 	if (bind(socket_fd, (struct sockaddr *) &address, sizeof(address)) < 0){
 		perror("failed to bind");
 		return (0);
@@ -52,7 +55,7 @@ int main(void){
 	while (1){
 
 		std::cout << " Waiting for new connections ..." << std::endl;
-		if ((new_sock_fd = connect(socket_fd, (struct sockaddr *) &address, sizeof(address))) < 0){
+		if ((new_sock_fd = accept(socket_fd, (struct sockaddr *) &address, (socklen_t *) &addrlen)) < 0){
 			perror("connect failed");
 			return (0);
 		}
@@ -63,8 +66,8 @@ int main(void){
 			//? MSG_OOB - MSG_PEEK - MSG_DONTROUTE
 		r = recv(new_sock_fd, buffer, sizeof(buffer), 0);
 		std::cout << buffer << std::endl;
-		char *hola = "Hello from server";
-		send(new_sock_fd, hola, strlen(hola), 0);
+		// char *hola = "Hello from server";
+		// send(new_sock_fd, hola, strlen(hola), 0);
 		close(new_sock_fd);
 	}
 

@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/17 10:15:33 by iidzim            #+#    #+#             */
-/*   Updated: 2022/03/17 10:34:23 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/03/17 18:28:09 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,8 +36,9 @@ int main(void){
         perror("connect failed");
         return (0);
     }
-    char *hi = "hello from client";
-    send(socket_fd, hi, strlen(hi), 0);
+    // char *hi = "hello from client";
+    // send(socket_fd, hi, strlen(hi), 0);
+    // send(socket_fd, "000", 3, 0);
     r = recv(socket_fd, buffer, sizeof(buffer), 0);
     std::cout << buffer << std::endl;
 
