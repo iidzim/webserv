@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/16 15:22:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/03/17 18:58:41 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/03/19 18:55:05 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ int main(void){
 	}
 	//? htonl converts a long integer (e.g. address) to a network representation 
 	//? htons converts a short integer (e.g. port) to a network representation
+	memset((char *)&address, 0, sizeof(address));
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = htonl(INADDR_ANY);
 	address.sin_port = htons(port);
