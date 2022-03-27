@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/16 15:22:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/03/24 21:03:37 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/03/26 16:50:45 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
-
 
 int main(void){
 

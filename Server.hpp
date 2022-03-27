@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/03/24 22:22:54 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/03/26 15:32:02 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ namespace ft{
 
 		private:
 			// Socket *_sock;
-			std::vector<Socket> _sock;			
+			std::vector<Socket> _sock;
 	};
 
 }
