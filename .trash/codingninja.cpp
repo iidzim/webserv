@@ -67,7 +67,7 @@ int main(int argc , char *argv[])
         for ( i = 0 ; i < maximum_clients ; i++) //Adding child sockets to set 
         {
             sock_descriptor = client_sock[i]; //Descriptor for Socket 
-            
+
             if(sock_descriptor > 0) //if the socket descriptor is valid then adding it to the read list 
                 FD_SET( sock_descriptor , &readfds);
 
