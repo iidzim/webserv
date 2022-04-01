@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/03/28 18:14:11 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/03/29 15:00:45 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ int main(int argc, char** argv){
 	}
 	(void)argv;
 
-	// std::cout << FD_SETSIZE << std::endl;
+	// std::cout << "pollin" << POLLIN << std::endl;
 	ft::Socket a;
 	// ft::Socket b(AF_INET, SOCK_STREAM, 0, 80, INADDR_ANY, 5);
 	std::cout << "end" << std::endl;
