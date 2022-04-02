@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/01 19:19:42 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/02 12:30:39 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,37 +85,60 @@ namespace ft{
 		//? Accept method
 		void accept_connection(){
 
-			int new_socket, r, p;
+			int new_socket, r, p, s, nbr_fds = 2;
 			std::cout << ">> Waiting for new connections ..." << std::endl;
 			// struct pollfd fds[1];
-			struct pollfd fds[2];
+			struct pollfd fds[nbr_fds];
 			char buffer[100000] = {0};
-			fds[0].fd = _socket_fd;
-			fds[0].events = POLLIN;
 			while(1){
 				if ((new_socket = accept(_socket_fd, (struct sockaddr *) &_address, (socklen_t*) &_addrlen)) < 0){
 					perror("Failed to connect");
 					exit(EXIT_FAILURE);
 				}
 
+				fds[0].fd = _socket_fd;
+				fds[0].events = POLLIN;
 				fds[0].fd = new_socket;
 				fds[0].events = POLLOUT;
 
 				// p = poll(fds, 1, 1000);
-				p = poll(fds, 2, 1000);
+				p = poll(fds, nbr_fds, 1000);
 				if (p == 0)
 					std::cout << ">> No new connection" << std::endl; //time out
-				else if (p < 0){
+				if (p < 0){
 					std::cout << "Unexpected event occured" << std::endl;
 					perror("poll");
 				}
-				else if (fds[0].revents & POLLIN){
-					r = recv(new_socket, buffer, sizeof(buffer), 0);
-					if (r < 0)
-						perror("read");
-					else
-						std::cout << ">> New connection from " << inet_ntoa(_address.sin_addr) << std::endl;
+				for (int i = 0; i < nbr_fds; i++){
+
+					if (!fds[i].revents)
+						continue;
+					if (fds[i].revents & POLLIN){
+						//? Data may be reading on device number i.
+						r = recv(new_socket, buffer, sizeof(buffer), 0);
+						if (r < 0)
+							perror("read");
+						else
+							std::cout << ">> New connection from " << inet_ntoa(_address.sin_addr) << std::endl;
+					}
+					if (fds[i].revents & POLLOUT){
+						//? Data may be written on device number i.
+						std::string resp = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html><body><h2>succes</h2></body></html>";
+						s = send(new_socket, resp.c_str(), strlen(resp.c_str()), 0);
+						if (s < 0)
+							perror("write");
+					}
 				}
+
+				// if (p == 0)
+				// 	std::cout << ">> No new connection" << std::endl; //time out
+				// else if (fds[0].revents & POLLIN){
+				// 	r = recv(new_socket, buffer, sizeof(buffer), 0);
+				// 	if (r < 0)
+				// 		perror("read");
+				// 	else
+				// 		std::cout << ">> New connection from " << inet_ntoa(_address.sin_addr) << std::endl;
+				// }
 				// else if (fds[1].revents & POLLOUT){
 				// 	std::string resp = "HTTP/1.1 200 OK\nContent-Type: text/html\n";//\n<html><body><h2>succes</h2></body></html>";
 				// 	s = send(new_socket, resp.c_str(), strlen(resp.c_str()), 0);
@@ -130,8 +153,8 @@ namespace ft{
 				std::cout << "**********\n" << buffer << "\n****************\n" << std::endl;
 
 				// //todo: Send the response to the client
-				std::string resp = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html><body><h2>succes</h2></body></html>";
-				send(new_socket, resp.c_str(), strlen(resp.c_str()), 0);
+				// std::string resp = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html><body><h2>succes</h2></body></html>";
+				// send(new_socket, resp.c_str(), strlen(resp.c_str()), 0);
 
 				close(new_socket);
 			}
