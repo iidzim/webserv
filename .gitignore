@@ -1,7 +1,6 @@
 # Prerequisites
 *.d
 *%*
-[0-9]*
 .vscode
 a.out
 
