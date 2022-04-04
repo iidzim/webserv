@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/04 16:57:49 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/04 17:22:28 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,7 +136,7 @@ namespace ft{
 			if (r <= 0){
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
-				_address.erase(_address.begin() + i);
+				// _address.erase(_address.begin() + i); segfault
 				return false;
 			}
 			std::cout << ">>> Received " << r << " bytes" << "\n" << _buffer << std::endl;
@@ -155,7 +155,7 @@ namespace ft{
 			if (s <= 0){
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
-				_address.erase(_address.begin() + i);
+				// _address.erase(_address.begin() + i); segfault
 				return false;
 			}
 			//+ when the request is complete switch the type of event to POLLIN
@@ -164,10 +164,6 @@ namespace ft{
 		}
 
 		void socketio(){
-
-			// int timeout, p, r, s, new_socket, addrlen;
-			int p;
-			// char buffer[100000] = {0};
 
 			//- Set up the initial listening socket for connections
 			for (size_t i = 0; i < _socket_fd.size(); i++){
@@ -180,8 +176,8 @@ namespace ft{
 			while (1){
 
 				std::cout << "Polling ..." << std::endl;
-				//& If the value of timeout is -1, poll() shall block until a requested event occurs or until the call is interrupted.
-				p = poll(&_fds.front(), _fds.size(), -1);
+				//- If the value of timeout is -1, poll() shall block until a requested event occurs or until the call is interrupted.
+				int p = poll(&_fds.front(), _fds.size(), -1);
 				if (p < 0){
 					std::cout << "Poll failed: Unexpected event occured" << std::endl;
 					break;
@@ -196,57 +192,32 @@ namespace ft{
 						continue;
 					if (_fds[i].revents & POLLIN){
 
-						if (_fds[i].fd == _socket_fd[i]){
-
-							std::cout << "New connection" << std::endl;
-							// addrlen = sizeof(_address[i]);
-							// new_socket = accept(_fds[i].fd, (struct sockaddr *)&(_address[i]), (socklen_t*)&addrlen);
-							// _msg = "Failed to accpet";
-							// check(new_socket, new_socket);
-							// struct pollfd new_fd;
-							// new_fd.fd = new_socket;
-							// new_fd.events = POLLIN;
-							// _fds.push_back(new_fd);
-							// std::cout << "New connection accepted" << std::endl;
+						if (_fds[i].fd == _socket_fd[i])
 							accept_connection(i);
-						}
 						else{
-							std::cout << "Listening socket is readable" << std::endl;
-							// r = recv(_fds[i].fd, buffer, sizeof(buffer), 0);
-							// if (r <= 0){
-							// 	_fds.erase(_fds.begin() + i);
-							// 	break;
-							// }
-							// std::cout << ">>> Received " << r << " bytes" << std::endl;
-							// std::cout << buffer << std::endl;
-							// //& parse the buffer
-							// memset(buffer, 0, sizeof(buffer));
-							// //+ when the request is complete switch the type of event to POLLOUT
-							// _fds[i].events = POLLOUT;
 							if (!recv_request(i))
 								break;
 						}
 					}
 					else if (_fds[i].revents & POLLOUT){
-						std::cout << "Socket is writable" << std::endl;
-						// std::string resp = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
-						// s = send(new_socket, resp.c_str(), strlen(resp.c_str()), 0);
-						// if (s <= 0){
-						// 	_fds.erase(_fds.begin() + i); //! if s == 0 -> add the fd to pollin events list
-						// 	break;
-						// }
-						// //+ when the request is complete switch the type of event to POLLIN
-						// _fds[i].events = POLLIN;
 						if (!send_response(i))
 							break;
+					}
+					else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
+						close(_fds[i].fd);
+						_fds.erase(_fds.begin() + i);
+						// _address.erase(_address.begin() + i); segfault
+						break;
 					}
 				}
 			}
 			//? close all the sockets
 			for (size_t i = 0; i < _fds.size(); i++){
+				// _address.erase(_address.begin() + i); segfault
 				if (_fds[i].fd >= 0)
 					close(_fds[i].fd);
 			}
+			// _address.clear(); //! segfault
 		}
 
 		//- POLLHUP - The connection has been broken, or a connection has been made to a non-blocking socket that has been marked as non-blocking.
