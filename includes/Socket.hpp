@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/05 15:01:17 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/05 17:38:54 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,7 @@ namespace ft{
 
 			for (size_t i = 0; i < _fds.size(); i++){
 				if (_fds[i].fd >= 0)
-					close(_fds[i].fd);
+					shutdown(_fds[i].fd, 2);
 			}
 		}
 
@@ -214,7 +214,7 @@ namespace ft{
 					}
 				}
 			}
-			//+ close all the sockets
+			//+ Terminate the connection
 			close_fd();
 		}
 
@@ -247,3 +247,5 @@ namespace ft{
 
 //td -- check for errors POLLHUP, POLLERR, POLLNVAL - if any of these events occur, the socket is closed and the loop is broken. √
 //td -- send response (headers first + body)
+//td -- chunked request
+//td -- buffer size - recv 
