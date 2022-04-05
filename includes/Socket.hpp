@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/04 17:22:28 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/05 15:01:17 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,9 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <fcntl.h>
-// #include <sys/select.h>
 #include <arpa/inet.h>
 #include <poll.h>
 #include <vector>
@@ -33,7 +32,70 @@ namespace ft{
 		std::string _msg;
 		std::vector<struct sockaddr_in> _address;
 		std::vector<struct pollfd> _fds;
-		char _buffer[100000];
+		char _buffer[1000];
+
+		void accept_connection(int i){
+
+			int addrlen = sizeof(_address[i]);
+			int new_socket = accept(_fds[i].fd, (struct sockaddr *)&(_address[i]), (socklen_t*)&addrlen);
+			_msg = "Failed to accept connection";
+			check(new_socket, -1);
+			struct pollfd new_fd;
+			new_fd.fd = new_socket;
+			new_fd.events = POLLIN;
+			_fds.push_back(new_fd);
+			std::cout << "New connection accepted" << std::endl;
+		}
+
+		bool recv_request(int i){
+
+			std::cout << "Receiving request" << std::endl;
+			int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
+			if (r <= 0){
+				close(_fds[i].fd);
+				_fds.erase(_fds.begin() + i);
+				return false;
+			}
+			std::cout << ">>> Received " << r << " bytes" << "\n" << _buffer << std::endl;
+			//& parse the buffer
+			memset(_buffer, 0, sizeof(_buffer));
+			//+ when the request is complete switch the type of event to POLLOUT
+			_fds[i].events = POLLOUT;
+			return true;
+		}
+
+		bool send_response(int i){
+
+			std::cout << "Sending response" << std::endl;
+			std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
+			int s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
+			if (s <= 0){
+				close(_fds[i].fd);
+				_fds.erase(_fds.begin() + i);
+				return false;
+			}
+			//+ when the request is complete switch the type of event to POLLIN
+			_fds[i].events = POLLIN;
+			return true;
+		}
+
+		void fill_fds(){
+
+			struct pollfd new_fd;
+			for (size_t i = 0; i < _socket_fd.size(); i++){
+				new_fd.fd = _socket_fd[i];
+				new_fd.events = POLLIN;
+				_fds.push_back(new_fd);
+			}
+		}
+
+		void close_fd(void){
+
+			for (size_t i = 0; i < _fds.size(); i++){
+				if (_fds[i].fd >= 0)
+					close(_fds[i].fd);
+			}
+		}
 
 	  public:
 
@@ -77,7 +139,6 @@ namespace ft{
 			socketio();
 		}
 
-
 		//? Parametrized Constructor
 		Socket(int domain, int type, int protocol, int port, unsigned int interface, int backlog){
 
@@ -115,64 +176,11 @@ namespace ft{
 			return (*this);
 		}
 
-		void accept_connection(int i){
-
-			int addrlen = sizeof(_address[i]);
-			int new_socket = accept(_fds[i].fd, (struct sockaddr *)&(_address[i]), (socklen_t*)&addrlen);
-			_msg = "Failed to accept connection";
-			// check(new_socket, new_socket);
-			check(new_socket, -1);
-			struct pollfd new_fd;
-			new_fd.fd = new_socket;
-			new_fd.events = POLLIN;
-			_fds.push_back(new_fd);
-			std::cout << "New connection accepted" << std::endl;
-		}
-
-		bool recv_request(int i){
-
-			std::cout << "Receiving request" << std::endl;
-			int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
-			if (r <= 0){
-				close(_fds[i].fd);
-				_fds.erase(_fds.begin() + i);
-				// _address.erase(_address.begin() + i); segfault
-				return false;
-			}
-			std::cout << ">>> Received " << r << " bytes" << "\n" << _buffer << std::endl;
-			//& parse the buffer
-			memset(_buffer, 0, sizeof(_buffer));
-			//+ when the request is complete switch the type of event to POLLOUT
-			_fds[i].events = POLLOUT;
-			return true;
-		}
-
-		bool send_response(int i){
-
-			std::cout << "Sending response" << std::endl;
-			std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
-			int s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
-			if (s <= 0){
-				close(_fds[i].fd);
-				_fds.erase(_fds.begin() + i);
-				// _address.erase(_address.begin() + i); segfault
-				return false;
-			}
-			//+ when the request is complete switch the type of event to POLLIN
-			_fds[i].events = POLLIN;
-			return true;
-		}
-
 		void socketio(){
 
-			//- Set up the initial listening socket for connections
-			for (size_t i = 0; i < _socket_fd.size(); i++){
-				struct pollfd fd;
-				fd.fd = _socket_fd[i];
-				fd.events = POLLIN;
-				_fds.push_back(fd);
-			}
-			//- Loop waiting for incoming connects or for incoming data on any of the connected sockets
+			//+ Set up the initial listening socket for connections
+			fill_fds();
+			//+ Loop waiting for incoming connects or for incoming data on any of the connected sockets
 			while (1){
 
 				std::cout << "Polling ..." << std::endl;
@@ -194,30 +202,20 @@ namespace ft{
 
 						if (_fds[i].fd == _socket_fd[i])
 							accept_connection(i);
-						else{
-							if (!recv_request(i))
-								break;
-						}
-					}
-					else if (_fds[i].revents & POLLOUT){
-						if (!send_response(i))
+						else if (!recv_request(i))
 							break;
 					}
+					else if ((_fds[i].revents & POLLOUT) && (!send_response(i)))
+							break;
 					else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
 						close(_fds[i].fd);
 						_fds.erase(_fds.begin() + i);
-						// _address.erase(_address.begin() + i); segfault
 						break;
 					}
 				}
 			}
-			//? close all the sockets
-			for (size_t i = 0; i < _fds.size(); i++){
-				// _address.erase(_address.begin() + i); segfault
-				if (_fds[i].fd >= 0)
-					close(_fds[i].fd);
-			}
-			// _address.clear(); //! segfault
+			//+ close all the sockets
+			close_fd();
 		}
 
 		//- POLLHUP - The connection has been broken, or a connection has been made to a non-blocking socket that has been marked as non-blocking.
@@ -235,14 +233,17 @@ namespace ft{
 		}
 
 		//? Destructor
-		~Socket(void){}
+		~Socket(void){
 
+			_fds.clear();
+			_socket_fd.clear();
+			_address.clear();
+		}
 
 	};
 }
 
 #endif
 
-//td -- check for errors POLLHUP, POLLERR, POLLNVAL
-//td -- split socket I/O to smaller functions
+//td -- check for errors POLLHUP, POLLERR, POLLNVAL - if any of these events occur, the socket is closed and the loop is broken. √
 //td -- send response (headers first + body)
