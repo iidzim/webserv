@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/07 03:24:37 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/08 16:44:50 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ namespace ft{
 		std::vector<struct pollfd> _fds;
 		char _buffer[10];
 		std::string buf;
+		int rend;
 
 		void accept_connection(int i){
 
@@ -48,36 +49,49 @@ namespace ft{
 			std::cout << "New connection accepted" << std::endl;
 		}
 
+		// bool recv_request(int i){
+
+		// 	std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++" << ++rend << std::endl;
+		// 	std::cout << "Receiving request" << std::endl;
+		// 	std::cout << "i = " << i << std::endl;
+		// 	memset(&_buffer, 0, sizeof(_buffer));
+		// 	int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
+		// 	if (r < 0){
+		// 		close(_fds[i].fd);
+		// 		_fds.erase(_fds.begin() + i);
+		// 		throw std::exception();
+		// 	}
+		// 	buf += _buffer;
+		// 	std::cout << "--------------------------------------r = " << r << std::endl;
+		// 	// if (r == 0 || (size_t)r < sizeof(_buffer)){
+		// 	if (r == 0){
+		// 		_fds[i].events = POLLOUT;
+		// 		std::cout << ">>> Received " << buf.size() << " bytes\n" << "|" << buf << "|" << std::endl;
+		// 	}
+
+		// 	//& parse the buffer
+		// 	std::cout << "events " << _fds[i].events << std::endl;
+		// 	memset(&_buffer, 0, sizeof(_buffer));
+		// 	//? if buffer_is_complete
+		// 	//+ when the request is complete switch the type of event to POLLOUT
+		// 	std::cout << "********* r = " << r << std::endl;
+		// 	return true;
+		// }
+
 		bool recv_request(int i){
 
 			std::cout << "Receiving request" << std::endl;
 			int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 			if (r <= 0){
-				// std::cout << "out\n";
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
-				if (r == 0 && _fds[i].events != POLLOUT){
-					_fds[i].events = POLLOUT;
-					std::cout << "okok\n";
-					std::cout << ">>>2 Received " << buf.size() << " bytes\n" << "|" << buf << "|" << std::endl;
-					buf.clear();
-				}
 				return false;
 			}
-			// buf.append(_buffer, sizeof(_buffer));
-			buf = buf + _buffer;
-			// std::cout << "-----------\n" << buf << "\n-----------" << std::endl;
-			// std::cout << ">>> Received " << buf.size() << " bytes" << _buffer << std::endl;
+			std::cout << ">>> Received " << r << " bytes" << "\n" << _buffer << std::endl;
 			//& parse the buffer
 			memset(_buffer, 0, sizeof(_buffer));
-			//? if buffer_is_complete
 			//+ when the request is complete switch the type of event to POLLOUT
-			if ((size_t)r < sizeof(_buffer)){
-				_fds[i].events = POLLOUT;
-				std::cout << ">>>1 Received " << buf.size() << " bytes\n" << "|" << buf << "|" << std::endl;
-				buf.clear();
-			}
-			// std::cout << r << "out 2\n";
+			_fds[i].events = POLLOUT;
 			return true;
 		}
 
@@ -118,6 +132,7 @@ namespace ft{
 
 		//? Default Constructor
 		Socket(void){
+			rend = 0;
 
 			struct sockaddr_in address;
 			int socket_fd, x = 1;
@@ -211,6 +226,7 @@ namespace ft{
 					std::cout << "No new connection - Timeout" << std::endl;
 					break;
 				}
+				std::cout << "size == " << _fds.size() << std::endl;
 				for (size_t i = 0; i < _fds.size(); i++){
 
 					if (!_fds[i].revents)
@@ -219,8 +235,10 @@ namespace ft{
 
 						if (_fds[i].fd == _socket_fd[i])
 							accept_connection(i);
-						else if (!recv_request(i))
-							break;
+						// else if (!recv_request(i))
+						// 	continue;
+						else
+							recv_request(i);
 					}
 					else if ((_fds[i].revents & POLLOUT) && (!send_response(i)))
 							break;
