@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/08 16:50:38 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/08 16:51:06 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/10 00:41:41 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,20 @@
 # define REQUEST_HPP
 
 class Request{
-    
+
+	private:
+		int _is_complete;
+
+	public:
+		char _buff[10];
+		Request(): _is_complete(1) {}
+		void parse(char *buffer){
+			(void)buffer;
+		}
+		int is_complete(){
+			return _is_complete;
+		}
+		~Request(){}
 };
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/08 16:44:50 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/10 00:43:22 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,20 +21,22 @@
 #include <arpa/inet.h>
 #include <poll.h>
 #include <vector>
+#include <exception>
+#include "Client.hpp"
 #define PORT 80
 
 namespace ft{
 
 	class Socket{
-	
+
 	  private:
 		std::vector<int> _socket_fd;
 		std::string _msg;
 		std::vector<struct sockaddr_in> _address;
 		std::vector<struct pollfd> _fds;
 		char _buffer[10];
-		std::string buf;
-		int rend;
+
+	  public:
 
 		void accept_connection(int i){
 
@@ -49,54 +51,32 @@ namespace ft{
 			std::cout << "New connection accepted" << std::endl;
 		}
 
-		// bool recv_request(int i){
-
-		// 	std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++" << ++rend << std::endl;
-		// 	std::cout << "Receiving request" << std::endl;
-		// 	std::cout << "i = " << i << std::endl;
-		// 	memset(&_buffer, 0, sizeof(_buffer));
-		// 	int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
-		// 	if (r < 0){
-		// 		close(_fds[i].fd);
-		// 		_fds.erase(_fds.begin() + i);
-		// 		throw std::exception();
-		// 	}
-		// 	buf += _buffer;
-		// 	std::cout << "--------------------------------------r = " << r << std::endl;
-		// 	// if (r == 0 || (size_t)r < sizeof(_buffer)){
-		// 	if (r == 0){
-		// 		_fds[i].events = POLLOUT;
-		// 		std::cout << ">>> Received " << buf.size() << " bytes\n" << "|" << buf << "|" << std::endl;
-		// 	}
-
-		// 	//& parse the buffer
-		// 	std::cout << "events " << _fds[i].events << std::endl;
-		// 	memset(&_buffer, 0, sizeof(_buffer));
-		// 	//? if buffer_is_complete
-		// 	//+ when the request is complete switch the type of event to POLLOUT
-		// 	std::cout << "********* r = " << r << std::endl;
-		// 	return true;
-		// }
-
-		bool recv_request(int i){
+		bool recv_request(int i, Client *c){
 
 			std::cout << "Receiving request" << std::endl;
 			int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 			if (r <= 0){
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
-				return false;
+				std::cout << ">>> Received " << r << " bytes" << "\n" << _buffer << std::endl;
+				return false; //- throw exception instead of return
 			}
-			std::cout << ">>> Received " << r << " bytes" << "\n" << _buffer << std::endl;
+			// std::cout << ">>> Received " << r << " bytes" << "\n" << _buffer << std::endl;
+			// c->client[_fds[i].fd] = std::make_pair(Request(), Response()); //!!!!!!!!!!!!!!!!!!!!!!!
 			//& parse the buffer
+			c->client[_fds[i].fd].first.parse(_buffer);
 			memset(_buffer, 0, sizeof(_buffer));
-			//+ when the request is complete switch the type of event to POLLOUT
-			_fds[i].events = POLLOUT;
+			//& when the request is complete switch the type of event to POLLOUT
+			if (c->client[_fds[i].fd].first.is_complete()){
+				std::cout << "Request is complete " << std::endl;
+				_fds[i].events = POLLOUT;
+			}
 			return true;
 		}
 
-		bool send_response(int i){
+		bool send_response(int i, Client *c){
 
+			(void)c;
 			std::cout << "Sending response" << std::endl;
 			std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
 			int s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
@@ -132,7 +112,6 @@ namespace ft{
 
 		//? Default Constructor
 		Socket(void){
-			rend = 0;
 
 			struct sockaddr_in address;
 			int socket_fd, x = 1;
@@ -210,6 +189,8 @@ namespace ft{
 
 		void socketio(){
 
+			Client c;
+
 			//+ Set up the initial listening socket for connections
 			fill_fds();
 			//+ Loop waiting for incoming connects or for incoming data on any of the connected sockets
@@ -220,13 +201,12 @@ namespace ft{
 				int p = poll(&_fds.front(), _fds.size(), -1);
 				if (p < 0){
 					std::cout << "Poll failed: Unexpected event occured" << std::endl;
-					break;
+					throw std::exception();
 				}
 				if (p == 0){
 					std::cout << "No new connection - Timeout" << std::endl;
 					break;
 				}
-				std::cout << "size == " << _fds.size() << std::endl;
 				for (size_t i = 0; i < _fds.size(); i++){
 
 					if (!_fds[i].revents)
@@ -238,9 +218,9 @@ namespace ft{
 						// else if (!recv_request(i))
 						// 	continue;
 						else
-							recv_request(i);
+							recv_request(i, &c);
 					}
-					else if ((_fds[i].revents & POLLOUT) && (!send_response(i)))
+					else if ((_fds[i].revents & POLLOUT) && (!send_response(i, &c)))
 							break;
 					else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
 						close(_fds[i].fd);
@@ -281,6 +261,9 @@ namespace ft{
 #endif
 
 //td -- check for errors POLLHUP, POLLERR, POLLNVAL - if any of these events occur, the socket is closed and the loop is broken. √
+//td -- chunked request - use of class Client 
+//td -- buffer size - recv[1024]
 //td -- send response (headers first + body)
-//td -- chunked request
-//td -- buffer size - recv 
+
+//= on success, poll() returns a nonnegative value which is the number of elements in the pollfds
+//= whose revents fields have been set to a nonzero value
