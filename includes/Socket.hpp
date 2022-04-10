@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/10 00:43:22 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/10 17:40:08 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,6 @@ namespace ft{
 		std::string _msg;
 		std::vector<struct sockaddr_in> _address;
 		std::vector<struct pollfd> _fds;
-		char _buffer[10];
 
 	  public:
 
@@ -53,6 +52,7 @@ namespace ft{
 
 		bool recv_request(int i, Client *c){
 
+			char _buffer[10];
 			std::cout << "Receiving request" << std::endl;
 			int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 			if (r <= 0){
@@ -61,14 +61,13 @@ namespace ft{
 				std::cout << ">>> Received " << r << " bytes" << "\n" << _buffer << std::endl;
 				return false; //- throw exception instead of return
 			}
-			// std::cout << ">>> Received " << r << " bytes" << "\n" << _buffer << std::endl;
 			// c->client[_fds[i].fd] = std::make_pair(Request(), Response()); //!!!!!!!!!!!!!!!!!!!!!!!
 			//& parse the buffer
 			c->client[_fds[i].fd].first.parse(_buffer);
 			memset(_buffer, 0, sizeof(_buffer));
 			//& when the request is complete switch the type of event to POLLOUT
 			if (c->client[_fds[i].fd].first.is_complete()){
-				std::cout << "Request is complete " << std::endl;
+				// std::cout << "Request is complete " << std::endl;
 				_fds[i].events = POLLOUT;
 			}
 			return true;
@@ -260,9 +259,8 @@ namespace ft{
 
 #endif
 
-//td -- check for errors POLLHUP, POLLERR, POLLNVAL - if any of these events occur, the socket is closed and the loop is broken. √
-//td -- chunked request - use of class Client 
-//td -- buffer size - recv[1024]
+//td -- chunked request
+//td -- use of class Client 
 //td -- send response (headers first + body)
 
 //= on success, poll() returns a nonnegative value which is the number of elements in the pollfds

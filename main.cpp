@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/08 15:57:50 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/10 00:46:25 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,17 +19,16 @@ int main(int argc, char** argv){
 		return (-1);
 	}
 	(void)argv;
-
-	
-	// std::cout << "pollin" << POLLIN << std::endl;
 	try{
-	ft::Socket a;
+		ft::Socket a;
 	}
 	catch (std::exception &e){
 		std::cerr << "excption ..." << std::endl;
 	}
 	// ft::Socket b(AF_INET, SOCK_STREAM, 0, 80, INADDR_ANY, 5);
-	std::cout << "end" << std::endl;
+
+	return (0);
+}
 
 	//td:
 		//? parse config file
@@ -42,6 +41,3 @@ int main(int argc, char** argv){
 		//? send response
 		//? close connection
 		//? repeat - handle multiple server & sockets at the same time
-
-	return (0);
-}

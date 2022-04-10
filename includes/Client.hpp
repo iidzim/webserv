@@ -6,14 +6,13 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/08 16:45:25 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/10 00:29:22 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/10 17:41:37 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
-// #include "Socket.hpp"
 #include "Response.hpp"
 #include "Request.hpp"
 #include <utility>
