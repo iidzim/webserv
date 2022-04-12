@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/10 17:40:08 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/12 17:43:58 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,20 +73,36 @@ namespace ft{
 			return true;
 		}
 
-		bool send_response(int i, Client *c){
+		// bool send_response(int i, Client *c){
 
-			(void)c;
+		// 	(void)c;
+		// 	std::cout << "Sending response" << std::endl;
+		// 	std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
+		// 	int s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
+		// 	if (s <= 0){
+		// 		close(_fds[i].fd);
+		// 		_fds.erase(_fds.begin() + i);
+		// 		return false;
+		// 	}
+		// 	//+ when the request is complete switch the type of event to POLLIN
+		// 	_fds[i].events = POLLIN;
+		// 	return true;
+		// }
+
+		bool send_reponse(int i, Client *c){
+
 			std::cout << "Sending response" << std::endl;
-			std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
+			std::string rep = c->client[_fds[i].fd].second.get_response();
 			int s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
 			if (s <= 0){
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
 				return false;
 			}
-			//+ when the request is complete switch the type of event to POLLIN
-			_fds[i].events = POLLIN;
-			return true;
+			if (s == rep.length()){
+				//+ when the request is complete switch the type of event to POLLIN
+				_fds[i].events = POLLIN;
+			}
 		}
 
 		void fill_fds(){
@@ -190,13 +206,13 @@ namespace ft{
 
 			Client c;
 
-			//+ Set up the initial listening socket for connections
+			//? Set up the initial listening socket for connections
 			fill_fds();
-			//+ Loop waiting for incoming connects or for incoming data on any of the connected sockets
+			//? Loop waiting for incoming connects or for incoming data on any of the connected sockets
 			while (1){
 
 				std::cout << "Polling ..." << std::endl;
-				//- If the value of timeout is -1, poll() shall block until a requested event occurs or until the call is interrupted.
+				//+ If the value of timeout is -1, poll() shall block until a requested event occurs or until the call is interrupted.
 				int p = poll(&_fds.front(), _fds.size(), -1);
 				if (p < 0){
 					std::cout << "Poll failed: Unexpected event occured" << std::endl;
@@ -228,7 +244,7 @@ namespace ft{
 					}
 				}
 			}
-			//+ Terminate the connection
+			//? Terminate the connection
 			close_fd();
 		}
 
@@ -253,7 +269,6 @@ namespace ft{
 			_socket_fd.clear();
 			_address.clear();
 		}
-
 	};
 }
 
@@ -265,3 +280,5 @@ namespace ft{
 
 //= on success, poll() returns a nonnegative value which is the number of elements in the pollfds
 //= whose revents fields have been set to a nonzero value
+
+//! catch EAGAIN & EWOULDBLOCK (send and recv /non-blocking)
