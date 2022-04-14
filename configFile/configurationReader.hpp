@@ -16,6 +16,8 @@
 #include <fstream>
 #include<vector>
 #include <map>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 # define INSIDESERVER   1
 # define INLOCATION     2
 # define CLOSED         0
@@ -30,9 +32,10 @@ typedef struct s_location
 
 typedef struct s_server
 {
-    std::string                 port; // int
+    std::string                 port; // int 
     //! an address can be a host and if only address is given the port is by default 80
-    std::string                 host; // unsigned int interface
+  //  std::string                 host; // IPV4 unsigned int interface
+    unsigned int                host;
     std::string                 root;
     std::string                 size;
     std::pair<std::string, std::string> errorPage; // int string
@@ -64,6 +67,7 @@ class configurationReader
         void                                    setSize(std::vector<std::string> words, serverInfo &server);
         void                                    setErrorPage(std::vector<std::string> words, serverInfo &server);
         void                                    setautoIndex(std::vector<std::string> words, serverInfo &server);
+        unsigned int                            convertStrIPv4toUnsinedInt(const std::string& IPV4);
     public:
         configurationReader(std::string path);
         std::vector<serverInfo>                 getVirtualServer() const;

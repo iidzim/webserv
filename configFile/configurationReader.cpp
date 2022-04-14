@@ -7,6 +7,26 @@ configurationReader::configurationReader(std::string path):_path(path), _state(C
 //* listen describes all addresses and ports that should accept connections for the server
 //! if it's missing port by default is 80
 
+unsigned int    configurationReader::convertStrIPv4toUnsinedInt(const std::string& IPV4)
+{
+    //! inet_pton() //convert IPV4 from text to binary form
+    //! inet_aton() //convert HOST FROM ipv4 NUMBERS IN DOTS NOTATION INTO BINARY FORM
+
+    unsigned int addr;
+
+    //check uf IPV4 is valid
+    if (inet_pton(AF_INET, IPV4.c_str(), &addr) == -1)
+    {
+        std::cout<<"Invalid IPv4 address in host "<<std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    //! htonl returns 0 => if invalid syntax
+    unsigned int resIp = htonl(addr);
+
+    return resIp;
+}
+
 void configurationReader::setPortHost(std::vector<std::string> words, serverInfo &server)
 {
     if (words.size() > 3 || _state != INSIDESERVER)
@@ -14,9 +34,11 @@ void configurationReader::setPortHost(std::vector<std::string> words, serverInfo
         std::cout<<"Syntax error (directive listen) "<<std::endl;
         exit(EXIT_FAILURE);
     }
-    server.host= words[1];
+    server.host= convertStrIPv4toUnsinedInt(words[1]);
     if (words.size() == 3)
         server.port = words[2];
+    //! I should convert std::string IPV4 formatted address into an unsigned int
+    //! htonl 
 }
 
 void configurationReader::setServerName(std::vector<std::string> words, serverInfo& server)
@@ -104,7 +126,7 @@ void clearLocation(locationInfos & location)
 void clearServer(serverInfo & server)
 {
     server.port = "";
-    server.host = "";
+    server.host = 0;
     server.root = "";
     server.size = "";
     server.errorPage.first = "";
@@ -175,8 +197,8 @@ void configurationReader::parser()
                     }
                     _state = INSIDESERVER;
                     
-                    server.port = "80"; //default port
-                    server.host = "0.0.0.0"; //default host
+                 //   server.port = "80"; //default port
+                  //  server.host = "0.0.0.0"; //default host
                 }
                 else if (words[0] == "}" && words.size() == 1)
                 {
