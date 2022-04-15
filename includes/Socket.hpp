@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/12 17:43:58 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/15 17:41:22 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@
 #include <vector>
 #include <exception>
 #include "Client.hpp"
-#define PORT 80
+#define PORT 8080
 
 namespace ft{
 
@@ -38,7 +38,6 @@ namespace ft{
 	  public:
 
 		void accept_connection(int i){
-
 			int addrlen = sizeof(_address[i]);
 			int new_socket = accept(_fds[i].fd, (struct sockaddr *)&(_address[i]), (socklen_t*)&addrlen);
 			_msg = "Failed to accept connection";
@@ -52,58 +51,60 @@ namespace ft{
 
 		bool recv_request(int i, Client *c){
 
-			char _buffer[10];
+			char _buffer[1024];
 			std::cout << "Receiving request" << std::endl;
 			int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 			if (r <= 0){
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
-				std::cout << ">>> Received " << r << " bytes" << "\n" << _buffer << std::endl;
+				std::cout << "- Connection closed" << std::endl;
 				return false; //- throw exception instead of return
 			}
-			// c->client[_fds[i].fd] = std::make_pair(Request(), Response()); //!!!!!!!!!!!!!!!!!!!!!!!
+			std::cout << ">>> Received " << r << " bytes" << "\n" << _buffer << std::endl;
+			c->client[_fds[i].fd] = std::make_pair(Request(), Response()); //!!!!!!!!!!!!!!!!!!!!!!!
 			//& parse the buffer
 			c->client[_fds[i].fd].first.parse(_buffer);
 			memset(_buffer, 0, sizeof(_buffer));
 			//& when the request is complete switch the type of event to POLLOUT
 			if (c->client[_fds[i].fd].first.is_complete()){
-				// std::cout << "Request is complete " << std::endl;
+				std::cout << "Request is complete " << std::endl;
 				_fds[i].events = POLLOUT;
 			}
 			return true;
 		}
 
-		// bool send_response(int i, Client *c){
+		bool send_response(int i, Client *c){
 
-		// 	(void)c;
-		// 	std::cout << "Sending response" << std::endl;
-		// 	std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
-		// 	int s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
-		// 	if (s <= 0){
-		// 		close(_fds[i].fd);
-		// 		_fds.erase(_fds.begin() + i);
-		// 		return false;
-		// 	}
-		// 	//+ when the request is complete switch the type of event to POLLIN
-		// 	_fds[i].events = POLLIN;
-		// 	return true;
-		// }
-
-		bool send_reponse(int i, Client *c){
-
+			(void)c;
 			std::cout << "Sending response" << std::endl;
-			std::string rep = c->client[_fds[i].fd].second.get_response();
+			std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
 			int s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
 			if (s <= 0){
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
 				return false;
 			}
-			if (s == rep.length()){
-				//+ when the request is complete switch the type of event to POLLIN
-				_fds[i].events = POLLIN;
-			}
+			//+ when the request is complete switch the type of event to POLLIN
+			_fds[i].events = POLLIN;
+			return true;
 		}
+
+		// bool send_response(int i, Client *c){
+
+		// 	std::cout << "Sending response" << std::endl;
+		// 	std::string rep = c->client[_fds[i].fd].second.get_response();
+		// 	size_t s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
+		// 	if (s <= 0){
+		// 		close(_fds[i].fd);
+		// 		_fds.erase(_fds.begin() + i);
+		// 		return false;
+		// 	}
+		// 	if (s == rep.size()){
+		// 		//+ when the request is complete switch the type of event to POLLIN
+		// 		_fds[i].events = POLLIN;
+		// 	}
+		// 	return true;
+		// }
 
 		void fill_fds(){
 
@@ -151,12 +152,14 @@ namespace ft{
 
 			//+ Bind the socket
 			memset((char *)&address, 0, sizeof(address));
+			// bzero(&_address[i].sin_addr, sizeof(_address[i].sin_addr));
+			
 			address.sin_family = AF_INET;
-			address.sin_addr.s_addr = htonl(INADDR_ANY);
+			address.sin_addr.s_addr = inet_addr("127.0.0.1");
 			address.sin_port = htons(PORT);
-			_address.push_back(address);
 			_msg = "Failed to bind socket";
 			check(bind(socket_fd, (struct sockaddr *)&address, sizeof(address)), socket_fd);
+			_address.push_back(address);
 
 			//+ Set the listen back log to 1024
 			_msg = "Failed to listen";
@@ -166,7 +169,8 @@ namespace ft{
 		}
 
 		//? Parametrized Constructor
-		Socket(int domain, int type, int protocol, int port, unsigned int interface, int backlog){
+		// Socket(int domain, int type, int protocol, int port, unsigned int interface, int backlog){
+		Socket(int domain, int type, int protocol, int port, int backlog){
 
 			struct sockaddr_in address;
 			int socket_fd, x = 1;
@@ -178,11 +182,11 @@ namespace ft{
 			check(fcntl(socket_fd, F_SETFL, O_NONBLOCK), socket_fd);
 			memset((char *)&address, 0, sizeof(address));
 			address.sin_family = domain;
-			address.sin_addr.s_addr = htonl(interface);
 			address.sin_port = htons(port);
-			_address.push_back(address);
+			address.sin_addr.s_addr = inet_addr("127.0.0.1");
 			_msg = "Failed to bind socket";
 			check(bind(socket_fd, (struct sockaddr *)&address, sizeof(address)), socket_fd);
+			_address.push_back(address);
 			_msg = "Failed to listen";
 			check(listen(socket_fd, backlog), socket_fd);
 			_socket_fd.push_back(socket_fd);
@@ -274,11 +278,28 @@ namespace ft{
 
 #endif
 
-//td -- chunked request
-//td -- use of class Client 
+//td -- chunked request/response
+//td -- throw exception instead of exit
 //td -- send response (headers first + body)
+//td -- catch EAGAIN & EWOULDBLOCK (send and recv /non-blocking)
+//td -- check if keep-alive is disabled -> turn off connection
+
 
 //= on success, poll() returns a nonnegative value which is the number of elements in the pollfds
 //= whose revents fields have been set to a nonzero value
 
-//! catch EAGAIN & EWOULDBLOCK (send and recv /non-blocking)
+
+//! [error] socket: 165031936 address is unavailable.: Can't assign requested address
+//! siege aborted due to excessive socket failure; you can change the failure threshold in $HOME/.siegerc
+// Transactions:                  16344 hits
+// Availability:                  93.97 %
+// Elapsed time:                   8.53 secs
+// Data transferred:               0.58 MB
+// Response time:                  0.01 secs
+// Transaction rate:            1916.06 trans/sec
+// Throughput:                     0.07 MB/sec
+// Concurrency:                   22.14
+// Successful transactions:       16344
+// Failed transactions:            1048
+// Longest transaction:            0.13
+// Shortest transaction:           0.00

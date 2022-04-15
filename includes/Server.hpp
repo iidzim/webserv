@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/05 14:52:59 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/15 17:27:51 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,10 +19,10 @@ namespace ft{
 
 		public:
 			Server();
-			Server(int domain, int type, int protocol, int port, unsigned int interface, int backlog)
+			Server(int domain, int type, int protocol, int port, int backlog)
 			{
 				// _sock = new Socket(domain, type, protocol, port, interface, backlog);
-				_sock.push_back(Socket(domain, type, protocol, port, interface, backlog));
+				_sock.push_back(Socket(domain, type, protocol, port, backlog));
 				
 			}
 

@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/10 00:46:25 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/14 23:52:14 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,11 +21,11 @@ int main(int argc, char** argv){
 	(void)argv;
 	try{
 		ft::Socket a;
+		// ft::Socket b(AF_INET, SOCK_STREAM, 0, 80, INADDR_ANY, 5);
 	}
 	catch (std::exception &e){
 		std::cerr << "excption ..." << std::endl;
 	}
-	// ft::Socket b(AF_INET, SOCK_STREAM, 0, 80, INADDR_ANY, 5);
 
 	return (0);
 }
