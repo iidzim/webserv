@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/14 23:52:14 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/17 03:34:06 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,6 @@ int main(int argc, char** argv){
 		std::cerr << "usage:\t./webserv [configuration file]" << std::endl;
 		return (-1);
 	}
-	(void)argv;
 	try{
 		if (argc == 1)
 			ft::Socket a;
@@ -30,8 +29,8 @@ int main(int argc, char** argv){
 			cfg_reader.parser();
 			std::cout<<cfg_reader<<std::endl;
 			//! pass struct cfg_reader to the socket class 
+			ft::Socket b(AF_INET, SOCK_STREAM, 0, PORT, BACKLOG);
 		}
-		// ft::Socket b(AF_INET, SOCK_STREAM, 0, 80, INADDR_ANY, 5);
 	}
 	catch (std::exception &e){
 		std::cerr << "excption ..." << std::endl;

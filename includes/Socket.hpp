@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/15 17:41:22 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/17 02:28:00 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 #include <exception>
 #include "Client.hpp"
 #define PORT 8080
+#define BACKLOG 1024
 
 namespace ft{
 
@@ -155,7 +156,8 @@ namespace ft{
 			// bzero(&_address[i].sin_addr, sizeof(_address[i].sin_addr));
 			
 			address.sin_family = AF_INET;
-			address.sin_addr.s_addr = inet_addr("127.0.0.1");
+			// address.sin_addr.s_addr = inet_addr("127.0.0.1");
+			address.sin_addr.s_addr = INADDR_ANY;
 			address.sin_port = htons(PORT);
 			_msg = "Failed to bind socket";
 			check(bind(socket_fd, (struct sockaddr *)&address, sizeof(address)), socket_fd);
@@ -163,7 +165,7 @@ namespace ft{
 
 			//+ Set the listen back log to 1024
 			_msg = "Failed to listen";
-			check(listen(socket_fd, 1024), socket_fd);
+			check(listen(socket_fd, BACKLOG), socket_fd);
 			_socket_fd.push_back(socket_fd);
 			socketio();
 		}
