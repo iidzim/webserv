@@ -23,12 +23,23 @@ class request
 
         void requestLine(std::string line); // Method URI VRSION
         void getHeaders(); //all the available headers in MJS
-        void clearRequest();
-        //bool expectedHeader();
+        void clearRequest(); //! not sure if necessary
+        bool expectedHeader(const std::string &str);
+        void putBufferIntoFile();
     public:
         request(char *buffer);
         ~request();
         s_requestInfo tokenizeRequest();
         bool getRequestStatus();//true if rqst is complete
 };
-#endif
+
+
+//TODO
+
+ //! put all of this into a file => function void putBufferIntoFile();
+
+ //! finished when there is a \r\n\r\n at the end
+ //! check the body depending on the method
+ //! parse status line
+ //! get Headers => are they excepted or if anyone is missing
+ //! return status code(I don't know yet how)

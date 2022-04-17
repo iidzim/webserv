@@ -11,16 +11,26 @@
 /* ************************************************************************** */
 
 #include "./includes/Server.hpp"
+#include "includes/configurationReader.hpp"
 
 int main(int argc, char** argv){
 
-	if (argc != 2){
+	if (argc > 2){
 		std::cerr << "usage:\t./webserv [configuration file]" << std::endl;
 		return (-1);
 	}
 	(void)argv;
 	try{
-		ft::Socket a;
+		if (argc == 1)
+			ft::Socket a;
+		else
+		{
+			std::string path = argv[1];
+			configurationReader cfg_reader(path);
+			cfg_reader.parser();
+			std::cout<<cfg_reader<<std::endl;
+			//! pass struct cfg_reader to the socket class 
+		}
 		// ft::Socket b(AF_INET, SOCK_STREAM, 0, 80, INADDR_ANY, 5);
 	}
 	catch (std::exception &e){

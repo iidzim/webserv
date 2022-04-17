@@ -32,7 +32,9 @@ typedef struct s_location
 
 typedef struct s_server
 {
-    std::string                 port; // int 
+    //! There are 65,535 ports available for communication between devices.
+   // std::string                 port; // int 
+   int                          port;
     //! an address can be a host and if only address is given the port is by default 80
   //  std::string                 host; // IPV4 unsigned int interface
     unsigned int                host;

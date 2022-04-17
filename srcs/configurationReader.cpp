@@ -1,4 +1,4 @@
-#include "configurationReader.hpp"
+#include "../includes/configurationReader.hpp"
 
 configurationReader::configurationReader(){}
 
@@ -15,37 +15,42 @@ unsigned int    configurationReader::convertStrIPv4toUnsinedInt(const std::strin
     unsigned int addr;
 
     //check uf IPV4 is valid
-    if (inet_pton(AF_INET, IPV4.c_str(), &addr) == -1)
+    if (IPV4 != "127.0.0.1")
     {
         std::cout<<"Invalid IPv4 address in host "<<std::endl;
-        exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);  
     }
+    // if (inet_pton(AF_INET, IPV4.c_str(), &addr) == -1)
+    // {
+    //     std::cout<<"Invalid IPv4 address in host "<<std::endl;
+    //     exit(EXIT_FAILURE);
+    // }
 
     //! htonl returns 0 => if invalid syntax
-    unsigned int resIp = htonl(addr);
+    inet_pton(AF_INET, IPV4.c_str(), &addr);
 
-    return resIp;
+    return htonl(addr);
 }
 
 void configurationReader::setPortHost(std::vector<std::string> words, serverInfo &server)
 {
-    if (words.size() > 3 || _state != INSIDESERVER)
+    //! Maybe I should accept only 127.0.0.1
+    if (words.size() != 3 || _state != INSIDESERVER)
     {
         std::cout<<"Syntax error (directive listen) "<<std::endl;
         exit(EXIT_FAILURE);
     }
     server.host= convertStrIPv4toUnsinedInt(words[1]);
     if (words.size() == 3)
-        server.port = words[2];
+        server.port = stoi(words[2]); //catch exception invalid argumenet
     //! I should convert std::string IPV4 formatted address into an unsigned int
-    //! htonl 
 }
 
 void configurationReader::setServerName(std::vector<std::string> words, serverInfo& server)
 {
     if (_state != INSIDESERVER)
     {
-         std::cout<<"Syntax error (directive server name) "<<std::endl;
+        std::cout<<"Syntax error (directive server name) "<<std::endl;
         exit(EXIT_FAILURE);
     }
     for (size_t i = 1; i < words.size(); i++)
@@ -125,7 +130,7 @@ void clearLocation(locationInfos & location)
 
 void clearServer(serverInfo & server)
 {
-    server.port = "";
+    server.port = 0;
     server.host = 0;
     server.root = "";
     server.size = "";
@@ -204,6 +209,7 @@ void configurationReader::parser()
                 {
                     if (_state == INSIDESERVER)
                     {
+                        //! check if there is any missing mandatory directive
                         _virtualServer.push_back(server);
                         clearServer(server);
                         _state = CLOSED;
@@ -212,6 +218,7 @@ void configurationReader::parser()
                     {
                         _state = INSIDESERVER;
                         
+                        //! check if there is any missing mandatory directive
                         server.location.push_back(location);
                         clearLocation(location);
                     }
