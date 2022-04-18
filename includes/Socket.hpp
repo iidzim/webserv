@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/18 01:21:11 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/18 17:30:52 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,8 +42,8 @@ namespace ft{
 			private:
 				std::string _msg;
 			public:
-				SocketException(std::string const &msg) throw() : _msg(msg){}
-				virtual ~SocketException() throw() {}
+				SocketException(std::string const &msg) throw(): _msg(msg){}
+				virtual ~SocketException() throw(){}
 				virtual const char* what() const throw(){
 					return _msg.c_str();
 				}
@@ -66,16 +66,16 @@ namespace ft{
 			char _buffer[1024];
 			std::cout << "Receiving request" << std::endl;
 			int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
-			if (r < 0){
+			if (r <= 0){
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
 				return false; //- throw exception instead of return 
 				//!! update do not throw exception
 			}
-			if (r == 0){
-				std::cout << "- Connection closed" << std::endl;
-				return true;
-			}
+			// if (r == 0){
+			// 	std::cout << "- Connection closed" << std::endl;
+			// 	return true;
+			// }
 			std::cout << ">>> Received " << r << " bytes" << "\n" << _buffer << std::endl;
 			// c->client[_fds[i].fd] = std::make_pair(Request(), Response()); //!!!!!!!!!!!!!!!!!!!!!!!
 			//& parse the buffer
@@ -100,6 +100,10 @@ namespace ft{
 				_fds.erase(_fds.begin() + i);
 				return false;
 			}
+			// if (s == 0){
+			// 	std::cout << "- Connection closed" << std::endl;
+			// 	return true;
+			// }
 			//+ when the request is complete switch the type of event to POLLIN
 			_fds[i].events = POLLIN;
 			return true;
@@ -201,6 +205,11 @@ namespace ft{
 			address.sin_family = domain;
 			address.sin_port = htons(port);
 			address.sin_addr.s_addr = inet_addr("127.0.0.1");
+			if (address.sin_addr.s_addr == INADDR_NONE){
+				memset((char *)&address, 0, sizeof(address));
+				_msg = "Invalid address";
+				check(-1, socket_fd);
+			}
 			_msg = "Failed to bind socket";
 			check(bind(socket_fd, (struct sockaddr *)&address, sizeof(address)), socket_fd);
 			_address.push_back(address);
@@ -250,7 +259,7 @@ namespace ft{
 						if (_fds[i].fd == _socket_fd[i])
 							accept_connection(i);
 						else if (!recv_request(i, &c))
-							continue;
+							break;
 						// else
 						// 	recv_request(i, &c);
 					}
@@ -259,7 +268,7 @@ namespace ft{
 					else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
 						close(_fds[i].fd);
 						_fds.erase(_fds.begin() + i);
-						continue;;
+						break;
 					}
 				}
 			}
@@ -321,3 +330,4 @@ namespace ft{
 
 
 //* Search for all read/recv/write/send on a socket and check that if an error returned the client is removed
+//? accept/poll on a socket and check that if an error returned the client is removed and the socket is closed -> program continues

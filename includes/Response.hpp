@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/08 16:51:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/17 23:36:50 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/18 16:50:29 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,8 @@ class Response{
 
     private:
         std::string _response;
-        std::string _headers;
-        int _body_file;
+        std::string _headers; //= start_line + headers
+        int _body_file; //= file descriptor of the body file
     public:
         Response(){}
         ~Response(){}
