@@ -39,6 +39,7 @@ class request
         void putBufferIntoFile();
         bool isBodyExpected(); // based on the parsed data
         bool isFieldNameValid(const std::string &str);
+        bool endBodyisFound(std::string lastLine);
     public:
         request();
         request(char *buffer, int rBytes);

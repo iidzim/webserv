@@ -107,7 +107,7 @@ void    request::requestLine(std::istringstream &istr)
     //* http version
     //! erase \r at the end of the line
     words[2].erase(words[2].end() - 1);
-    if (words[2] != "HTTP/1.1")
+    if (words[2] != "HTTP/1.1") //! rfc 
     {
         std::cout<<"400 Bad  Request !"<<std::endl;
         exit(EXIT_FAILURE);
@@ -164,6 +164,19 @@ void    request::getHeaders(std::istringstream & istr)
     }
 }
 
+bool request::endBodyisFound(std::string lastLine)
+{
+    std::string line;
+
+    while (std::getline(my_file, line))
+    {
+        std::cout<<"line : "<<lastLine<<std::endl;
+        if (line.find(lastLine) != std::string::npos)
+            return true;
+    }
+    return false;
+}
+
 s_requestInfo request::parse(char *buffer, size_t r)
 {
     //* look for \r\n\r\n => if found and _headersComplete == false
@@ -171,7 +184,6 @@ s_requestInfo request::parse(char *buffer, size_t r)
 
     //! for (size_t i = 0; i < 20; i++)
     // !    std::cout<<_buffer[i]; std::string = char * => if there is a \0 it stops there
-
   
     if (_headersComplete && _bodyComplete)
     {
@@ -189,38 +201,41 @@ s_requestInfo request::parse(char *buffer, size_t r)
     }
     
     size_t pos = 0;
+
     if ((pos = _data.find("\r\n\r\n")) != std::string::npos && !_headersComplete) 
     {
             std::istringstream istr(_data);
             _headersComplete = true;
             requestLine(istr);
             getHeaders(istr);
-          //  print_request();
-            //erase all from 0 to pos
-            //_data.erase(0, pos);
+            _data.clear();
+            while (pos+4 < r)
+            {
+                my_file<<buffer[pos+4];pos++;
+            }
     }
-    if (_headersComplete && !_bodyComplete)
+    else if (_headersComplete && !_bodyComplete)
     {
         int i = 0;
         while (i < r)
-        {   
+        {
             my_file<<buffer[i]; i++;
         }
     }
-    if (_headersComplete)
-    {
-        if (!_isChunked && _data.find("\r\n\r\n"))
-        {
-            _bodyComplete = true;
-            return _rqst;
-        }
-        else if (_isChunked && _data.find("0\r\n\r\n"))
-        {
-            _bodyComplete = true;
-            std::cout<<"check if length = octets received !"<<std::endl;
-        }
+    // if (_headersComplete)
+    // {
+    //     if (!_isChunked  && endBodyisFound("\r\n\r\n")) 
+    //     {
+    //         _bodyComplete = true;
+    //         return _rqst;
+    //     }
+    //     else if (_isChunked && endBodyisFound("0\r\n\r\n"))
+    //     {
+    //         _bodyComplete = true;
+    //         std::cout<<"check if length = octets received !"<<std::endl;
+    //     }
         
-    }
+   // }
     //body excpected => methode = POST
     //if the body is expected then parse it
     //if hcunked look for 0\r\n\r\n

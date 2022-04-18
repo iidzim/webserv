@@ -36,7 +36,7 @@ int main(int argc, char **argv)
     
     request a;
     a.parse(buffer, 16);
-    char buf [1024] = ("\r\nAccept: ok\r\nHost: 8080\r\nTest_header: pwd\r\n\r\ntestetsttett\r\n\r\n");
+    char buf [1024] = ("\r\nAccept: ok\r\nHost: 8080\r\nTest_header: pwd\r\n\r\n");
     //!   a.setBuffer(buf);
 
     a.parse(buf, 29+18);
