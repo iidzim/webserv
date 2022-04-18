@@ -4,35 +4,54 @@
 #include <vector>
 #include <map>
 #include "utility.hpp"
-
+#include <sstream>
+#include <string>
+#include <fstream>
+#include <string>
+#define CRLF "\r\n\r\n"
 typedef struct t_requestInfo
 {
     std::string method;
     std::string URI; // queries
     std::string versionHTTP;
-    std::string body;//possibility d overflow
+    //std::string body;//possibility d overflow
+    //! add a file to store a file
+    std::string bodyFile ;
     std::map<std::string, std::string> headers;
 }               s_requestInfo;
 
 class request
 {
     private:
-        std::string     _buffer;
-        bool            _isComplete;
+        //char            *_buffer;
+      //  int             _rBytes;
+        std::string     _data;
         s_requestInfo   _rqst;
+        bool            _headersComplete;
+        bool            _bodyComplete;
+        std::fstream    my_file;
+        bool            _isChunked;
 
-        void requestLine(std::string line); // Method URI VRSION
-        void getHeaders(); //all the available headers in MJS
+        void requestLine(std::istringstream & istr); // Method URI VERSION
+        void getHeaders(std::istringstream & str); //all the available headers in MJS
         void clearRequest(); //! not sure if necessary
         bool expectedHeader(const std::string &str);
         void putBufferIntoFile();
+        bool isBodyExpected(); // based on the parsed data
+        bool isFieldNameValid(const std::string &str);
     public:
-        request(char *buffer);
+        request();
+        request(char *buffer, int rBytes);
+        void setBuffer(char *buff);
         ~request();
         s_requestInfo tokenizeRequest();
-        bool getRequestStatus();//true if rqst is complete
+        s_requestInfo parse(char *buffer, size_t n);
+       // bool getRequestStatus();//true if rqst is complete
+
+       void print_request();
 };
 
+#endif
 
 //TODO
 
