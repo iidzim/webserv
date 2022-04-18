@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/08 16:50:38 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/10 17:40:44 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/17 23:40:03 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,9 @@ class Request{
 
 	public:
 		Request(): _is_complete(1) {}
-		void parse(char *buffer){
+		void parse(char *buffer, int r){
 			(void)buffer;
+			(void)r;
 		}
 		int is_complete(){
 			return _is_complete;

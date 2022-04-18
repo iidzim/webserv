@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/17 02:28:00 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/18 01:21:11 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 #include <poll.h>
 #include <vector>
 #include <exception>
+#include <stdexcept>
 #include "Client.hpp"
 #define PORT 8080
 #define BACKLOG 1024
@@ -36,13 +37,23 @@ namespace ft{
 		std::vector<struct sockaddr_in> _address;
 		std::vector<struct pollfd> _fds;
 
-	  public:
+		class SocketException : public std::exception{
+
+			private:
+				std::string _msg;
+			public:
+				SocketException(std::string const &msg) throw() : _msg(msg){}
+				virtual ~SocketException() throw() {}
+				virtual const char* what() const throw(){
+					return _msg.c_str();
+				}
+		};
 
 		void accept_connection(int i){
 			int addrlen = sizeof(_address[i]);
 			int new_socket = accept(_fds[i].fd, (struct sockaddr *)&(_address[i]), (socklen_t*)&addrlen);
 			_msg = "Failed to accept connection";
-			check(new_socket, -1);
+			check(new_socket, -1); //!!!! do not exit on error
 			struct pollfd new_fd;
 			new_fd.fd = new_socket;
 			new_fd.events = POLLIN;
@@ -55,16 +66,20 @@ namespace ft{
 			char _buffer[1024];
 			std::cout << "Receiving request" << std::endl;
 			int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
-			if (r <= 0){
+			if (r < 0){
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
+				return false; //- throw exception instead of return 
+				//!! update do not throw exception
+			}
+			if (r == 0){
 				std::cout << "- Connection closed" << std::endl;
-				return false; //- throw exception instead of return
+				return true;
 			}
 			std::cout << ">>> Received " << r << " bytes" << "\n" << _buffer << std::endl;
-			c->client[_fds[i].fd] = std::make_pair(Request(), Response()); //!!!!!!!!!!!!!!!!!!!!!!!
+			// c->client[_fds[i].fd] = std::make_pair(Request(), Response()); //!!!!!!!!!!!!!!!!!!!!!!!
 			//& parse the buffer
-			c->client[_fds[i].fd].first.parse(_buffer);
+			c->client[_fds[i].fd].first.parse(_buffer, r);
 			memset(_buffer, 0, sizeof(_buffer));
 			//& when the request is complete switch the type of event to POLLOUT
 			if (c->client[_fds[i].fd].first.is_complete()){
@@ -132,7 +147,7 @@ namespace ft{
 
 			struct sockaddr_in address;
 			int socket_fd, x = 1;
-			
+
 			//+ Create an AF_INET4 stream socket to receive incoming connections
 			_msg = "socket creation failure";
 			check((socket_fd = socket(AF_INET, SOCK_STREAM, 0)), -1);
@@ -220,12 +235,10 @@ namespace ft{
 				std::cout << "Polling ..." << std::endl;
 				//+ If the value of timeout is -1, poll() shall block until a requested event occurs or until the call is interrupted.
 				int p = poll(&_fds.front(), _fds.size(), -1);
-				if (p < 0){
-					std::cout << "Poll failed: Unexpected event occured" << std::endl;
-					throw std::exception();
-				}
-				if (p == 0){
-					std::cout << "No new connection - Timeout" << std::endl;
+				if (p < 0)
+					throw SocketException("Poll failed: Unexpected event occured"); // !! do not exit on error
+				if (p == 0){ 
+					std::cout << "No new connection" << std::endl; //!!!
 					break;
 				}
 				for (size_t i = 0; i < _fds.size(); i++){
@@ -236,17 +249,17 @@ namespace ft{
 
 						if (_fds[i].fd == _socket_fd[i])
 							accept_connection(i);
-						// else if (!recv_request(i))
-						// 	continue;
-						else
-							recv_request(i, &c);
+						else if (!recv_request(i, &c))
+							continue;
+						// else
+						// 	recv_request(i, &c);
 					}
 					else if ((_fds[i].revents & POLLOUT) && (!send_response(i, &c)))
-							break;
+						break;
 					else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
 						close(_fds[i].fd);
 						_fds.erase(_fds.begin() + i);
-						break;
+						continue;;
 					}
 				}
 			}
@@ -261,10 +274,9 @@ namespace ft{
 		void check(int res, int fd){
 
 			if (res < 0){
-				perror(_msg.c_str());
 				if (fd > -1)
 					close(fd);
-				exit(-1);
+				throw SocketException(_msg);
 			}
 		}
 
@@ -285,6 +297,7 @@ namespace ft{
 //td -- send response (headers first + body)
 //td -- catch EAGAIN & EWOULDBLOCK (send and recv /non-blocking)
 //td -- check if keep-alive is disabled -> turn off connection
+//td -- fix functions return value
 
 
 //= on success, poll() returns a nonnegative value which is the number of elements in the pollfds
@@ -305,3 +318,6 @@ namespace ft{
 // Failed transactions:            1048
 // Longest transaction:            0.13
 // Shortest transaction:           0.00
+
+
+//* Search for all read/recv/write/send on a socket and check that if an error returned the client is removed
