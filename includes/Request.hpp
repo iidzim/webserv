@@ -15,7 +15,8 @@ typedef struct t_requestInfo
     std::string versionHTTP;
     //std::string body;//possibility d overflow
     //! add a file to store a file
-    std::string bodyFile ;
+    std::string bodyFile;
+    int     statusCode;
     std::map<std::string, std::string> headers;
 }               s_requestInfo;
 
@@ -30,7 +31,7 @@ class request
         bool            _bodyComplete;
         std::fstream    my_file;
         bool            _isChunked;
-        bool            _parsingComplete;
+        bool            _isBodyExcpected;
 
         void requestLine(std::istringstream & istr); // Method URI VERSION
         void getHeaders(std::istringstream & str); //all the available headers in MJS
@@ -40,6 +41,7 @@ class request
         bool isBodyExpected(); // based on the parsed data
         bool isFieldNameValid(const std::string &str);
         bool endBodyisFound(std::string lastLine);
+        void deleteOptionalWithespaces(std::string fieldValue); 
     public:
         request();
         request(const request& obj);
@@ -48,23 +50,18 @@ class request
         request(char *buffer, int rBytes);
         void setBuffer(char *buff);
         ~request();
-       // s_requestInfo tokenizeRequest();
+
         void parse(char *buffer, size_t n);
-       // bool getRequestStatus();//true if rqst is complete
        s_requestInfo getRequest();
        bool isComplete();
 
+       //! for debugging
        void print_request();
 };
 
 #endif
 
-//TODO
 
- //! put all of this into a file => function void putBufferIntoFile();
-
- //! finished when there is a \r\n\r\n at the end
- //! check the body depending on the method
- //! parse status line
- //! get Headers => are they excepted or if anyone is missing
- //! return status code(I don't know yet how)
+ //TODO for today
+ //delete optinal withespaces from field value
+ //fix body errors

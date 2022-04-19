@@ -64,7 +64,7 @@ namespace ft{
 
 		void recv_request(int i, Clients *c){
 
-			char _buffer[1024];
+			char _buffer[5];
 			// std::cout << "Receiving request" << std::endl;
 			int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 			if (r < 0){

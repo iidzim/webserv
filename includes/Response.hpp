@@ -13,7 +13,7 @@
 #ifndef RESPONSE_HPP
 # define RESPONSE_HPP
 
-#include "request.hpp"
+#include "Request.hpp"
 
 class Response{
 

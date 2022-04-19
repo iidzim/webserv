@@ -14,7 +14,7 @@
 # define CLIENT_HPP
 
 #include "Response.hpp"
-#include "request.hpp"
+#include "Request.hpp"
 #include <utility>
 #include <map>
 
