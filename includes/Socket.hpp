@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/19 01:55:26 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/19 03:11:14 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,7 +70,7 @@ namespace ft{
 				c->remove_clients(_fds[i].fd);
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
-				return; //- throw exception instead of return
+				return;
 				//!! update do not throw exception
 			}
 			if (r == 0){
@@ -111,14 +111,16 @@ namespace ft{
 		// bool send_response(int i, Clients *c){
 
 		// 	std::cout << "Sending response" << std::endl;
-		// 	std::string rep = c->connections[_fds[i].fd].second.get_response();
-		// 	size_t s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
+		// 	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
+		// 	std::string header = rep.first;
+		// 	size_t s = send(_fds[i].fd, rep.first.c_str(), rep.first.length(), 0);
 		// 	if (s <= 0){
+		// 		c->remove_clients(_fds[i].fd);
 		// 		close(_fds[i].fd);
 		// 		_fds.erase(_fds.begin() + i);
 		// 		return false;
 		// 	}
-		// 	if (s == rep.size()){
+		// 	if (s == rep.first.size()){
 		// 		//+ when the request is complete switch the type of event to POLLIN
 		// 		_fds[i].events = POLLIN;
 		// 	}
@@ -257,19 +259,13 @@ namespace ft{
 
 						if (_fds[i].fd == _socket_fd[i])
 							accept_connection(i);
-						// else if (!recv_request(i, &c))
-						// 	break;
 						else{
-							std::cout << "fd = " << _fds[i].fd << std::endl;
-							// std::pair<request, Response> r
-							// c.connections[_fds[i].fd] = std::make_pair(q, Response()); //&&&&&&&&&&&&&&&&&&&&
 							c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
-							std::cout << c.connections.size() << std::endl;
 							recv_request(i, &c);
 						}
 					}
 					else if (_fds[i].revents & POLLOUT){
-						// c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first);
+						c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first);
 						send_response(i, &c);
 					}
 					else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
