@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/19 03:43:48 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/19 17:57:50 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ namespace ft{
 			int new_socket = accept(_fds[i].fd, (struct sockaddr *)&(_address[i]), (socklen_t*)&addrlen);
 			_msg = "Failed to accept connection";
 			check(new_socket, -1); //!!!! do not exit on error
-			_fds.erase(_fds.begin() + i); //======================== remove the socket_fd from the pollfd vector and add the accepted_fd
+			// _fds.erase(_fds.begin() + i); //======================== do not remove the socket_fd from the pollfd vector and add the accepted_fd
 			struct pollfd new_fd;
 			new_fd.fd = new_socket;
 			new_fd.events = POLLIN;
@@ -65,7 +65,7 @@ namespace ft{
 		void recv_request(int i, Clients *c){
 
 			char _buffer[5];
-			// std::cout << "Receiving request" << std::endl;
+			std::cout << "Receiving request" << std::endl;
 			int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 			if (r < 0){
 				c->remove_clients(_fds[i].fd);
@@ -106,9 +106,9 @@ namespace ft{
 				return true;
 			}
 			// //+ when the request is complete switch the type of event to POLLIN
-			// _fds[i].events = POLLIN;
-			close(_fds[i].fd);
-			_fds.erase(_fds.begin() + i);
+			_fds[i].events = POLLIN;
+			// close(_fds[i].fd);
+			// _fds.erase(_fds.begin() + i);
 			return true;
 		}
 
@@ -246,11 +246,13 @@ namespace ft{
 			while (1){
 
 				std::cout << "Polling ..." << std::endl;
+				// std::cout << _fds.size() << std::endl;
 				//+ If the value of timeout is -1, poll() shall block until a requested event occurs or until the call is interrupted.
 				int p = poll(&_fds.front(), _fds.size(), -1);
+				// std::cout << "********************\np = " << p << std::endl;
 				if (p < 0)
 					throw SocketException("Poll failed: Unexpected event occured"); // !! do not exit on error
-				if (p == 0){ 
+				if (p == 0){
 					std::cout << "No new connection" << std::endl; //!!!
 					break;
 				}
