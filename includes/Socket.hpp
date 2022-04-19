@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/19 03:11:14 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/19 03:43:48 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,21 +50,22 @@ namespace ft{
 		};
 
 		void accept_connection(int i){
+
 			int addrlen = sizeof(_address[i]);
 			int new_socket = accept(_fds[i].fd, (struct sockaddr *)&(_address[i]), (socklen_t*)&addrlen);
 			_msg = "Failed to accept connection";
 			check(new_socket, -1); //!!!! do not exit on error
+			_fds.erase(_fds.begin() + i); //======================== remove the socket_fd from the pollfd vector and add the accepted_fd
 			struct pollfd new_fd;
 			new_fd.fd = new_socket;
 			new_fd.events = POLLIN;
 			_fds.push_back(new_fd);
-			// std::cout << "New connection accepted" << std::endl;
 		}
 
 		void recv_request(int i, Clients *c){
 
 			char _buffer[1024];
-			std::cout << "Receiving request" << std::endl;
+			// std::cout << "Receiving request" << std::endl;
 			int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 			if (r < 0){
 				c->remove_clients(_fds[i].fd);
@@ -74,10 +75,10 @@ namespace ft{
 				//!! update do not throw exception
 			}
 			if (r == 0){
-				std::cout << "- Connection closed" << std::endl;
+				// std::cout << "- Connection closed" << std::endl;
 				return;
 			}
-			std::cout << ">>> Received " << r << " bytes" << "\n" << "|" << _buffer << "|" << std::endl;
+			// std::cout << ">>> Received " << r << " bytes" << "\n" << "|" << _buffer << "|" << std::endl;
 			//& parse the buffer
 			c->connections[_fds[i].fd].first.parse(_buffer, r);
 			memset(_buffer, 0, sizeof(_buffer));
@@ -97,20 +98,23 @@ namespace ft{
 			if (s <= 0){
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
+				std::cout << "here\n";
 				return false;
 			}
 			if (s == 0){
-				// std::cout << "- Connection closed" << std::endl;
+				std::cout << "- Connection closed" << std::endl;
 				return true;
 			}
-			//+ when the request is complete switch the type of event to POLLIN
-			_fds[i].events = POLLIN;
+			// //+ when the request is complete switch the type of event to POLLIN
+			// _fds[i].events = POLLIN;
+			close(_fds[i].fd);
+			_fds.erase(_fds.begin() + i);
 			return true;
 		}
 
 		// bool send_response(int i, Clients *c){
 
-		// 	std::cout << "Sending response" << std::endl;
+		// 	// std::cout << "Sending response" << std::endl;
 		// 	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
 		// 	std::string header = rep.first;
 		// 	size_t s = send(_fds[i].fd, rep.first.c_str(), rep.first.length(), 0);
@@ -191,7 +195,6 @@ namespace ft{
 		}
 
 		//? Parametrized Constructor
-		// Socket(int domain, int type, int protocol, int port, unsigned int interface, int backlog){
 		Socket(int domain, int type, int protocol, int port, int backlog){
 
 			struct sockaddr_in address;
@@ -253,6 +256,7 @@ namespace ft{
 				}
 				for (size_t i = 0; i < _fds.size(); i++){
 
+					std::cout << _fds.size() << std::endl;
 					if (!_fds[i].revents)
 						continue;
 					if (_fds[i].revents & POLLIN){
