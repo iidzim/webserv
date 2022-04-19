@@ -31,6 +31,7 @@ class request
         bool            _bodyComplete;
         std::fstream    my_file;
         bool            _isChunked;
+        bool            _parsingComplete;
 
         void requestLine(std::istringstream & istr); // Method URI VERSION
         void getHeaders(std::istringstream & str); //all the available headers in MJS
@@ -45,9 +46,10 @@ class request
         request(char *buffer, int rBytes);
         void setBuffer(char *buff);
         ~request();
-        s_requestInfo tokenizeRequest();
-        s_requestInfo parse(char *buffer, size_t n);
+       // s_requestInfo tokenizeRequest();
+        void parse(char *buffer, size_t n);
        // bool getRequestStatus();//true if rqst is complete
+       s_requestInfo getRequest();
 
        void print_request();
 };

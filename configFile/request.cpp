@@ -34,7 +34,7 @@
 //! A message that uses a valid Content-Length is incomplete if the size of the message body received (in octets) is less than the value given by Content-Length.
 
 
-request::request(): _headersComplete(false), _bodyComplete(false), _isChunked(false)
+request::request(): _headersComplete(false), _bodyComplete(false), _isChunked(false), _parsingComplete(false)
 {
     _rqst.method = "";
     _rqst.URI = "";
@@ -177,7 +177,12 @@ bool request::endBodyisFound(std::string lastLine)
     return false;
 }
 
-s_requestInfo request::parse(char *buffer, size_t r)
+s_requestInfo request::getRequest()
+{
+    return _rqst;
+}
+
+void request::parse(char *buffer, size_t r)
 {
     //* look for \r\n\r\n => if found and _headersComplete == false
     //* if not found => put the values into the string caractere by character
@@ -187,9 +192,9 @@ s_requestInfo request::parse(char *buffer, size_t r)
   
     if (_headersComplete && _bodyComplete)
     {
+        _parsingComplete = true;
         my_file.close();
-        return _rqst;
-    } //_reuestiscomplete
+    }
 
     if (!_headersComplete)
     {
@@ -197,6 +202,14 @@ s_requestInfo request::parse(char *buffer, size_t r)
         while (i < r)
         {
             _data+=buffer[i];i++;
+        }
+    }
+    else if (!_bodyComplete)
+    {
+        int i = 0;
+        while (i < r)
+        {
+            my_file<<buffer[i]; i++;
         }
     }
     
@@ -208,39 +221,30 @@ s_requestInfo request::parse(char *buffer, size_t r)
             _headersComplete = true;
             requestLine(istr);
             getHeaders(istr);
+            //put the rest of data in body 
+
+            my_file<<_data.substr(pos+4, _data.size()-1);
             _data.clear();
-            while (pos+4 < r)
-            {
-                my_file<<buffer[pos+4];pos++;
-            }
     }
-    else if (_headersComplete && !_bodyComplete)
-    {
-        int i = 0;
-        while (i < r)
-        {
-            my_file<<buffer[i]; i++;
-        }
-    }
-    // if (_headersComplete)
-    // {
-    //     if (!_isChunked  && endBodyisFound("\r\n\r\n")) 
-    //     {
-    //         _bodyComplete = true;
-    //         return _rqst;
-    //     }
-    //     else if (_isChunked && endBodyisFound("0\r\n\r\n"))
-    //     {
-    //         _bodyComplete = true;
-    //         std::cout<<"check if length = octets received !"<<std::endl;
-    //     }
+//     else  if (endBodyisFound("\r\n\r\n") && _headersComplete)
+//     {
+//         if (!_isChunked )// && endBodyisFound("\r\n\r\n")) 
+//         {
+//             std::cout<<"request not chunked "<<std::endl;
+//             _bodyComplete = true;
+//           //  return _rqst;
+//         }
+//         else if (_isChunked && endBodyisFound("0\r\n\r\n"))
+//         {
+//             _bodyComplete = true;
+//             std::cout<<"check if length = octets received !"<<std::endl;
+//         }
         
-   // }
+//    }
     //body excpected => methode = POST
     //if the body is expected then parse it
     //if hcunked look for 0\r\n\r\n
     //if not hcunked \r\n\r\n
-    return _rqst;
 }
 
 void request::print_request()
