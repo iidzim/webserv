@@ -1,4 +1,4 @@
-#include "request.hpp"
+#include "../includes/request.hpp"
 
 // ! recipients SHOULD ignore unrecognized header fields.
 // ! rfc 7230 section 3.2.1
@@ -40,14 +40,28 @@ request::request(): _headersComplete(false), _bodyComplete(false), _isChunked(fa
     _rqst.URI = "";
     _rqst.versionHTTP = "";
     //generate random name for the file
-    srand(time(0));
-    std::stringstream str;
-    std::string st = "bodyFile";
-    _rqst.bodyFile  = st + std::to_string(rand()) +".txt";
-    my_file.open(_rqst.bodyFile, std::ios::out);
+   // srand(time(0));
+   // std::stringstream str;
+    // std::string st = "bodyFile";
+    // _rqst.bodyFile  = st + std::to_string(rand()) +".txt";
+    // my_file.open(_rqst.bodyFile, std::ios::out);
+    std::cout<<"request called !"<<std::endl;
     //open it
 }
-
+request::request(const request& obj)
+{
+ *this = obj;
+}
+request& request::operator=(const request& obj)
+{
+    _rqst = obj._rqst;
+    _headersComplete = obj._headersComplete;
+    _bodyComplete = obj._bodyComplete;
+    _isChunked = obj._isChunked;
+    _parsingComplete = obj._parsingComplete;
+    _data = obj._data;
+    return *this;
+}
 request::~request(){}
 
 // void request::setBuffer(char *buff)
@@ -189,42 +203,49 @@ void request::parse(char *buffer, size_t r)
 
     //! for (size_t i = 0; i < 20; i++)
     // !    std::cout<<_buffer[i]; std::string = char * => if there is a \0 it stops there
-  
-    if (_headersComplete && _bodyComplete)
+    
+    std::cout<<"buffer :"<<buffer<<std::endl;
+
+    if (_headersComplete )//&& _bodyComplete)
     {
         _parsingComplete = true;
-        my_file.close();
+        print_request();
+       // my_file.close();
     }
 
     if (!_headersComplete)
     {
-        int i = 0;
+        size_t i = 0;
         while (i < r)
         {
             _data+=buffer[i];i++;
         }
     }
-    else if (!_bodyComplete)
-    {
-        int i = 0;
-        while (i < r)
-        {
-            my_file<<buffer[i]; i++;
-        }
-    }
+    // else if (!_bodyComplete)
+    // {
+    //     size_t i = 0;
+    //     while (i < r)
+    //     {
+    //         my_file<<buffer[i]; i++;
+    //     }
+    // }
     
     size_t pos = 0;
 
     if ((pos = _data.find("\r\n\r\n")) != std::string::npos && !_headersComplete) 
     {
+        std::cout<<"headers complete"<<std::endl;
             std::istringstream istr(_data);
             _headersComplete = true;
             requestLine(istr);
             getHeaders(istr);
             //put the rest of data in body 
 
-            my_file<<_data.substr(pos+4, _data.size()-1);
+            // my_file<<_data.substr(pos+4, _data.size()-1);
             _data.clear();
+            //! i want the body
+            _parsingComplete = true;
+            print_request();
     }
 //     else  if (endBodyisFound("\r\n\r\n") && _headersComplete)
 //     {
@@ -266,6 +287,10 @@ void request::print_request()
 }
 //bool request::getRequestStatus(){return is_complete;}
 
+bool request::isComplete()
+{
+    return  _parsingComplete;
+}
 
 //! istream getline(istream& is, string& str, char delim)
 

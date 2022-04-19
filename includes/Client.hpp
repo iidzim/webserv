@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/08 16:45:25 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/10 17:41:37 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/19 01:42:56 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,22 +14,26 @@
 # define CLIENT_HPP
 
 #include "Response.hpp"
-#include "Request.hpp"
+#include "request.hpp"
 #include <utility>
 #include <map>
 
-class Client{
+class Clients{
 
     private:
 
     public:
-        std::map<int, std::pair<Request, Response> > client;
-        Client(){}
-        Client(int fd, Request req, Response res){
-            client[fd] = std::make_pair(req, res);
+        std::map<int, std::pair<request, Response> > connections;
+        Clients(){}
+        Clients(int fd, request req, Response res){
+            connections[fd] = std::make_pair(req, res);
         }
-        ~Client(){
-            client.clear();
+        ~Clients(){
+            connections.clear();
+        }
+
+        void remove_clients(int fd){
+            connections.erase(fd);
         }
 
 };

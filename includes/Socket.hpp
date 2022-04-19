@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/18 17:30:52 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/19 01:55:26 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,38 +58,37 @@ namespace ft{
 			new_fd.fd = new_socket;
 			new_fd.events = POLLIN;
 			_fds.push_back(new_fd);
-			std::cout << "New connection accepted" << std::endl;
+			// std::cout << "New connection accepted" << std::endl;
 		}
 
-		bool recv_request(int i, Client *c){
+		void recv_request(int i, Clients *c){
 
 			char _buffer[1024];
 			std::cout << "Receiving request" << std::endl;
 			int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
-			if (r <= 0){
+			if (r < 0){
+				c->remove_clients(_fds[i].fd);
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
-				return false; //- throw exception instead of return 
+				return; //- throw exception instead of return
 				//!! update do not throw exception
 			}
-			// if (r == 0){
-			// 	std::cout << "- Connection closed" << std::endl;
-			// 	return true;
-			// }
-			std::cout << ">>> Received " << r << " bytes" << "\n" << _buffer << std::endl;
-			// c->client[_fds[i].fd] = std::make_pair(Request(), Response()); //!!!!!!!!!!!!!!!!!!!!!!!
+			if (r == 0){
+				std::cout << "- Connection closed" << std::endl;
+				return;
+			}
+			std::cout << ">>> Received " << r << " bytes" << "\n" << "|" << _buffer << "|" << std::endl;
 			//& parse the buffer
-			c->client[_fds[i].fd].first.parse(_buffer, r);
+			c->connections[_fds[i].fd].first.parse(_buffer, r);
 			memset(_buffer, 0, sizeof(_buffer));
 			//& when the request is complete switch the type of event to POLLOUT
-			if (c->client[_fds[i].fd].first.is_complete()){
+			if (c->connections[_fds[i].fd].first.isComplete()){
 				std::cout << "Request is complete " << std::endl;
 				_fds[i].events = POLLOUT;
 			}
-			return true;
 		}
 
-		bool send_response(int i, Client *c){
+		bool send_response(int i, Clients *c){
 
 			(void)c;
 			std::cout << "Sending response" << std::endl;
@@ -100,19 +99,19 @@ namespace ft{
 				_fds.erase(_fds.begin() + i);
 				return false;
 			}
-			// if (s == 0){
-			// 	std::cout << "- Connection closed" << std::endl;
-			// 	return true;
-			// }
+			if (s == 0){
+				// std::cout << "- Connection closed" << std::endl;
+				return true;
+			}
 			//+ when the request is complete switch the type of event to POLLIN
 			_fds[i].events = POLLIN;
 			return true;
 		}
 
-		// bool send_response(int i, Client *c){
+		// bool send_response(int i, Clients *c){
 
 		// 	std::cout << "Sending response" << std::endl;
-		// 	std::string rep = c->client[_fds[i].fd].second.get_response();
+		// 	std::string rep = c->connections[_fds[i].fd].second.get_response();
 		// 	size_t s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
 		// 	if (s <= 0){
 		// 		close(_fds[i].fd);
@@ -234,7 +233,7 @@ namespace ft{
 
 		void socketio(){
 
-			Client c;
+			Clients c;
 
 			//? Set up the initial listening socket for connections
 			fill_fds();
@@ -258,13 +257,21 @@ namespace ft{
 
 						if (_fds[i].fd == _socket_fd[i])
 							accept_connection(i);
-						else if (!recv_request(i, &c))
-							break;
-						// else
-						// 	recv_request(i, &c);
+						// else if (!recv_request(i, &c))
+						// 	break;
+						else{
+							std::cout << "fd = " << _fds[i].fd << std::endl;
+							// std::pair<request, Response> r
+							// c.connections[_fds[i].fd] = std::make_pair(q, Response()); //&&&&&&&&&&&&&&&&&&&&
+							c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
+							std::cout << c.connections.size() << std::endl;
+							recv_request(i, &c);
+						}
 					}
-					else if ((_fds[i].revents & POLLOUT) && (!send_response(i, &c)))
-						break;
+					else if (_fds[i].revents & POLLOUT){
+						// c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first);
+						send_response(i, &c);
+					}
 					else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
 						close(_fds[i].fd);
 						_fds.erase(_fds.begin() + i);
