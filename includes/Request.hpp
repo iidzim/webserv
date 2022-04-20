@@ -43,8 +43,8 @@ class request
         bool isBodyExpected(); // based on the parsed data
         bool isFieldNameValid(const std::string &str);
         bool endBodyisFound(std::string lastLine);
-        void deleteOptionalWithespaces(std::string fieldValue); 
     public:
+        void deleteOptionalWithespaces(std::string &fieldValue); 
         request();
         request(const request& obj);
         request& operator=(const request& obj);

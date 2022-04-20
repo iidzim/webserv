@@ -42,10 +42,8 @@ request::request(): _headersComplete(false), _bodyComplete(false), _isChunked(fa
     _rqst.query = "";
     _rqst.statusCode = 200;
     _contentLength = 0;
-    //generate random name for the file
     
     std::cout<<"request called !"<<std::endl;
-    //open it
 }
 request::request(const request& obj)
 {
@@ -65,6 +63,16 @@ request& request::operator=(const request& obj)
 }
 
 request::~request(){}
+
+void request::deleteOptionalWithespaces(std::string & fieldValue)
+{
+    while (std::isspace(fieldValue[0]))
+        fieldValue.erase(0, 1);
+    while (std::isspace(fieldValue[fieldValue.size()-1]))
+        fieldValue.erase(fieldValue.size()-1);
+
+    std::cout<<"["<<fieldValue<<"]"<<std::endl;
+}
 
 bool request::isFieldNameValid(const std::string &str)
 {
@@ -110,7 +118,7 @@ void    request::requestLine(std::istringstream &istr)
     if (words[0] != "GET" && words[0] != "POST" && words[0] != "DELETE")
         _rqst.statusCode = 501; //! 501 method not implemented || 405 method not allowed
     _rqst.method = words[0];
-    if (_rqst.method == "POST")
+    if (_rqst.method == "POST" || _rqst.method == "DELETE")
     {
         srand(time(0));
         std::stringstream str;
@@ -164,6 +172,7 @@ void    request::getHeaders(std::istringstream & istr)
             if (isFieldNameValid(fieldName))
             {
                 std::string fieldValue = line.substr(pos+1, line.size()-1);
+                deleteOptionalWithespaces(fieldValue);
                 if (fieldName == "Transfer-Encoding" && fieldValue == "chunked")
                 //! could be several values separated by a comma
                     _isChunked = true;
