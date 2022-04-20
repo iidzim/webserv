@@ -3,19 +3,19 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
+/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/19 03:41:20 by oel-yous          #+#    #+#             */
-/*   Updated: 2022/04/20 05:00:33 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/04/20 05:11:31 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Response.hpp"
+#include "../includes/Response.hpp"
 
-Response::Response(): _headers(""), _body(""), _contentlength(0) {
+Response::Response(): _headers(""), _body("") {
 }
 
-Response::Response(request req):  _headers(""), _body(""), _reqInfo(req.getRequest()), _contentlength(0) {
+Response::Response(request req):  _headers(""), _body(""), _reqInfo(req.getRequest()) {
 
 }
 
@@ -23,9 +23,7 @@ Response::~Response(){
 
 }
 
-int Response::getContentlength(){
-    return _contentlength;
-}
+
 
 void Response::errorsResponse(int statCode){
     char cwd[256];
@@ -37,27 +35,23 @@ void Response::errorsResponse(int statCode){
     if (_reqInfo.statusCode == 400){
         _headers = heads.replace(heads.find("ER",0), 2,"400 Bad Request");
         _headers = _headers.replace(_headers.find("XX",0), 2,"968");
-        _contentlength = 968;
     }
-    else if (_reqInfo.statCode == 404){
+    else if (_reqInfo.statusCode == 404){
         _headers = heads.replace(heads.find("ER",0), 2,"404 Not Found");
         _headers = _headers.replace(_headers.find("XX",0), 2,"1011");
-        _contentlength = 1011;
     }
-    // else if (_reqInfo.statCode == 500){
+    // else if (_reqInfo.statusCode == 500){
     //     _headers = heads.replace(heads.find("ER",0), 2,"500 Internal Server Error");
     //     _headers = headers.replace(_headers.find("XX",0), 2,"1022");
     //     _contentlength = 1022;
     // }
-    else if (_reqInfo.statCode == 501){
+    else if (_reqInfo.statusCode == 501){
         _headers = heads.replace(heads.find("ER",0), 2,"501 Not Implemented");
         _headers = _headers.replace(_headers.find("XX",0), 2,"1014");
-        _contentlength = 1014;
     }
-    else if (_reqInfo.statCode == 505){
+    else if (_reqInfo.statusCode == 505){
         _headers = heads.replace(heads.find("ER",0), 2,"505 HTTP Version Not Supported");
         _headers = _headers.replace(_headers.find("XX",0), 2,"993");
-        _contentlength = 993;
     }
 }
 
@@ -83,7 +77,7 @@ void Response::stringfyHeaders(){
 }
 
 std::pair<std::string, std::string> Response::get_response(){
-    if (_reqInfo.statusCode != 200){
+    if (_reqInfo.statusCode != 200)
         errorsResponse(_reqInfo.statusCode);
     else
         stringfyHeaders();

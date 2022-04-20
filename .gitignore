@@ -4,6 +4,7 @@
 .vscode
 a.out
 web_server
+bodyFile*
 
 # Compiled Object files
 *.slo

@@ -1,32 +1,27 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Client.hpp                                         :+:      :+:    :+:   */
+/*   Clients.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/04/08 16:45:25 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/20 06:37:08 by iidzim           ###   ########.fr       */
+/*   Created: 2022/04/20 06:34:34 by iidzim            #+#    #+#             */
+/*   Updated: 2022/04/20 06:37:48 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CLIENT_HPP
-# define CLIENT_HPP
+#include "../includes/Client.hpp"
 
-#include "Response.hpp"
-#include "Request.hpp"
-#include <utility>
-#include <map>
+Clients::Clients(){}
 
-class Clients{
+Clients::Clients(int fd, request req, Response res){
+    connections[fd] = std::make_pair(req, res);
+}
 
-    public:
-        std::map<int, std::pair<request, Response> > connections;
+Clients::~Clients(){
+    connections.clear();
+}
 
-        Clients(void);
-        Clients(int fd, request req, Response res);
-        ~Clients(void);
-        void remove_clients(int fd);
-};
-
-#endif
+void Clients::remove_clients(int fd){
+    connections.erase(fd);
+}
