@@ -23,6 +23,7 @@ clean:
 
 fclean: clean
 	@ rm -f $(NAME)
+	@rm -f body*
 re: fclean all
 	@ ./web_server server.conf
 

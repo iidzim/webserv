@@ -33,6 +33,7 @@ class request
         std::fstream    my_file;
         bool            _isChunked;
         bool            _isBodyExcpected;
+        size_t          _contentLength;
 
         void requestLine(std::istringstream & istr); // Method URI VERSION
         void getHeaders(std::istringstream & str); //all the available headers in MJS
