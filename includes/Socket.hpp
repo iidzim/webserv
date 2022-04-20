@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/20 02:55:34 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/20 05:06:18 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,8 +66,8 @@ namespace ft{
 
 		void recv_request(int i, Clients *c){
 
-			char _buffer[5];
-			std::cout << "Receiving request" << std::endl;
+			char _buffer[1024];
+			// std::cout << "Receiving request" << std::endl;
 			int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 			if (r < 0){
 				// c->remove_clients(_fds[i].fd);

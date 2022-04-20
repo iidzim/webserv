@@ -11,7 +11,8 @@
 typedef struct t_requestInfo
 {
     std::string method;
-    std::string URI; // queries
+    std::string URI;
+    std::string query;
     std::string versionHTTP;
     //std::string body;//possibility d overflow
     //! add a file to store a file
