@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/19 17:57:50 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/20 02:55:34 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,8 @@
 #include <vector>
 #include <exception>
 #include <stdexcept>
+#include <fstream>
+
 #include "Client.hpp"
 #define PORT 8080
 #define BACKLOG 1024
@@ -68,7 +70,7 @@ namespace ft{
 			std::cout << "Receiving request" << std::endl;
 			int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 			if (r < 0){
-				c->remove_clients(_fds[i].fd);
+				// c->remove_clients(_fds[i].fd);
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
 				return;
@@ -93,6 +95,32 @@ namespace ft{
 
 			(void)c;
 			std::cout << "Sending response" << std::endl;
+			// std::fstream file;
+			// file.open("../test.png", std::ios::in | std::ios::binary);
+			// if (!file.is_open()){
+			// 	std::cout << "Failed to open file - no such file" << std::endl;
+			// 	return false;
+			// }
+			// int len = 0;
+			// std::cout << "File opened" << std::endl;
+			// char buff[1024];
+			// while (1){
+			// 	file.read(buff, sizeof(buff));
+			// 	if (file.eof()){
+			// 		break;
+			// 	}
+			// 	int s = send(_fds[i].fd, buff, sizeof(buff), 0);
+			// 	if (s < 0){
+			// 		close(_fds[i].fd);
+			// 		_fds.erase(_fds.begin() + i);
+			// 		std::cout << "here\n";
+			// 		return false;
+			// 	}
+			// 	if (s == 0){
+			// 		std::cout << "- Connection closed" << std::endl;
+			// 		return true;
+			// 	}
+			// }
 			std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
 			int s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
 			if (s <= 0){
@@ -105,10 +133,14 @@ namespace ft{
 				std::cout << "- Connection closed" << std::endl;
 				return true;
 			}
-			// //+ when the request is complete switch the type of event to POLLIN
-			_fds[i].events = POLLIN;
-			// close(_fds[i].fd);
-			// _fds.erase(_fds.begin() + i);
+			// close the file if keep_alive is false
+			// if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
+				// std::cout << "Closing socket - keepAlive = false" << std::endl;
+				// close(_fds[i].fd);
+				// _fds.erase(_fds.begin() + i);
+			// }
+			// else // when the request is complete switch the type of event to POLLIN
+				_fds[i].events = POLLIN;
 			return true;
 		}
 
@@ -127,6 +159,9 @@ namespace ft{
 		// 	if (s == rep.first.size()){
 		// 		//+ when the request is complete switch the type of event to POLLIN
 		// 		_fds[i].events = POLLIN;
+		// 		//+ unlink body_file
+		// 		if (unlink(rep.second.c_str()))
+		// 			std::cout << "Failed to unlink file" << std::endl;
 		// 	}
 		// 	return true;
 		// }
@@ -258,7 +293,7 @@ namespace ft{
 				}
 				for (size_t i = 0; i < _fds.size(); i++){
 
-					std::cout << _fds.size() << std::endl;
+					// std::cout << _fds.size() << std::endl;
 					if (!_fds[i].revents)
 						continue;
 					if (_fds[i].revents & POLLIN){
@@ -266,6 +301,7 @@ namespace ft{
 						if (_fds[i].fd == _socket_fd[i])
 							accept_connection(i);
 						else{
+							// if ()
 							c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
 							recv_request(i, &c);
 						}

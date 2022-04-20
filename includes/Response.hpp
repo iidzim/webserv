@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/08 16:51:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/19 03:00:48 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/20 02:29:26 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,8 @@ class Response{
         std::string _response;
         std::string _headers; //= start_line + headers
         int _body_file; //= file descriptor of the body file
+        int _content_lenght;
+        int _keep_alive;
         
     public:
         Response(){}
@@ -37,6 +39,12 @@ class Response{
         }
         int get_body_file(){
             return _body_file;
+        }
+        int get_contentLength(){
+            return _content_lenght;
+        }
+        int IsKeepAlive(){
+            return _keep_alive;
         }
 };
 
