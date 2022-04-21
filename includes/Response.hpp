@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/08 16:51:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/20 07:23:01 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/21 17:17:07 by viet             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,9 @@
 #include <fstream>
 #include <unistd.h>
 #include <string>
-
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "Request.hpp"
 
@@ -36,17 +38,19 @@ class Response{
         Response(request req);
         ~Response();
         std::pair<std::string, std::string> get_response();
+        std::string setErrorsHeaders(std::string , std::string);
         void stringfyHeaders();
         void errorsResponse(int statCode);
         int getContentlength();
         std::string getBody();
         std::string getHeaders();
-        std::string toString(int);
         void PostMethod();
         void GetMethod();
         void DeleteMethod();
-        bool IsKeepAlive(){return true;} //! ra definit function hna ghi bach tcompila ta tatzidiha f .cpp 7it makaynach
-        int response_size(){return (_body.size() + _headers.size());} //! zet hadi tahya sorry ;) talmenb3d o 7ydiha
+        bool IsKeepAlive();//! ra definit function hna ghi bach tcompila ta tatzidiha f .cpp 7it makaynach
+        int response_size();
+        template<class T>
+        std::string toString(T);
 };
 
 #endif

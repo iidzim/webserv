@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/19 03:41:20 by oel-yous          #+#    #+#             */
-/*   Updated: 2022/04/20 05:11:31 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/21 17:18:02 by viet             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,35 +24,41 @@ Response::~Response(){
 }
 
 
+std::string Response::setErrorsHeaders(std::string ErrorMsg, std::string cLentgh){
+    std::ostringstream headers;
+
+    headers << "HTTP/1.1 ";
+    headers << ErrorMsg;
+    headers << "\r\nContent-type: text/html\r\nContent-length: ";
+    headers << cLentgh;
+    headers << "\r\n\r\n";
+    return headers.str();
+}
+
 
 void Response::errorsResponse(int statCode){
     char cwd[256];
     std::string heads;
     std::string currPath(getcwd(cwd, sizeof(cwd)));
+    off_t ret;
+    int fd;
 
+    
     _body = currPath + "/../error_pages/" + toString(statCode) + ".html"; 
-    heads = "HTTP/1.1 ER\r\nContent-type: text/html\r\nContent-length: XX\r\n\r\n";
-    if (_reqInfo.statusCode == 400){
-        _headers = heads.replace(heads.find("ER",0), 2,"400 Bad Request");
-        _headers = _headers.replace(_headers.find("XX",0), 2,"968");
-    }
-    else if (_reqInfo.statusCode == 404){
-        _headers = heads.replace(heads.find("ER",0), 2,"404 Not Found");
-        _headers = _headers.replace(_headers.find("XX",0), 2,"1011");
-    }
-    // else if (_reqInfo.statusCode == 500){
-    //     _headers = heads.replace(heads.find("ER",0), 2,"500 Internal Server Error");
-    //     _headers = headers.replace(_headers.find("XX",0), 2,"1022");
-    //     _contentlength = 1022;
-    // }
-    else if (_reqInfo.statusCode == 501){
-        _headers = heads.replace(heads.find("ER",0), 2,"501 Not Implemented");
-        _headers = _headers.replace(_headers.find("XX",0), 2,"1014");
-    }
-    else if (_reqInfo.statusCode == 505){
-        _headers = heads.replace(heads.find("ER",0), 2,"505 HTTP Version Not Supported");
-        _headers = _headers.replace(_headers.find("XX",0), 2,"993");
-    }
+    fd = open(_body.c_str(), O_RDONLY);
+    ret = lseek(fd, 0, SEEK_END);
+    lseek(fd, 0, SEEK_SET);
+    if (_reqInfo.statusCode == 400)
+        _headers = setErrorsHeaders("400 Bad Request", toString(ret));
+    else if (_reqInfo.statusCode == 404)
+        _headers = setErrorsHeaders("404 Not Found", toString(ret));
+    else if (_reqInfo.statusCode == 500)
+        _headers = setErrorsHeaders("500 Internal Server Error", toString(ret));
+    else if (_reqInfo.statusCode == 501)
+        _headers = setErrorsHeaders("501 Not Implemented", toString(ret));
+    else if (_reqInfo.statusCode == 505)
+        _headers = setErrorsHeaders("505 HTTP Version Not Supported", toString(ret));
+    close(fd);
 }
 
 void Response::PostMethod(){
@@ -92,8 +98,27 @@ std::string Response::getHeaders(){
     return _headers;
 }
 
-std::string Response::toString(int i){
+
+template<class T>
+std::string Response::toString(T i){
     std::stringstream ret;
     ret  << i;
     return ret.str();
 }
+
+
+int Response::response_size(){
+    int fd;
+    int size;
+
+    fd = open(_body.c_str(), O_RDONLY);
+    size = lseek(fd, 0,SEEK_END);
+    lseek(fd, 0, SEEK_SET);
+    close(fd);
+    return (size + _headers.size());
+}
+
+
+bool Response::IsKeepAlive(){
+    return true;
+} 
