@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/20 06:10:21 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/20 07:28:20 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/21 01:39:15 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,8 +118,8 @@ void Socket::fill_fds(){
 void Socket::close_fd(void){
 
 	for (size_t i = 0; i < _fds.size(); i++){
-		if (_fds[i].fd >= 0)
-			shutdown(_fds[i].fd, 2);
+		// if (_fds[i].fd >= 0)
+		shutdown(_fds[i].fd, 2);
 	}
 }
 
@@ -127,13 +127,14 @@ void Socket::accept_connection(int i){
 
 	std::cout << "Accepting connection" << std::endl;
 	int addrlen = sizeof(_address[i]);
-	int new_socket = accept(_fds[i].fd, (struct sockaddr *)&(_address[i]), (socklen_t*)&addrlen);
+	int accept_fd = accept(_fds[i].fd, (struct sockaddr *)&(_address[i]), (socklen_t*)&addrlen);
 	_msg = "Failed to accept connection";
-	check(new_socket, -1); //!!!! do not exit on error
+	check(accept_fd, -1); //!!!! do not exit on error
 	struct pollfd new_fd;
-	new_fd.fd = new_socket;
+	new_fd.fd = accept_fd;
 	new_fd.events = POLLIN;
 	_fds.push_back(new_fd);
+	// std::cout << "accept function: " << _fds.back().fd << " - " << _fds.back().events << std::endl;
 }
 
 void Socket::recv_request(int i, Clients *c){
@@ -141,16 +142,16 @@ void Socket::recv_request(int i, Clients *c){
 	char _buffer[1024];
 	std::cout << "Receiving request" << std::endl;
 	int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
-	if (r < 0){
-		// c->remove_clients(_fds[i].fd);
+	if (r <= 0){
+		c->remove_clients(_fds[i].fd);
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
 		return;
 	}
-	if (r == 0){
-		std::cout << "- Connection closed" << std::endl;
-		return;
-	}
+	// if (r == 0){
+	// 	std::cout << "- Connection closed" << std::endl;
+	// 	return;
+	// }
 	// std::cout << ">>> Received " << r << " bytes" << "\n" << "|" << _buffer << "|" << std::endl;
 	//& parse the buffer
 	c->connections[_fds[i].fd].first.parse(_buffer, r);
@@ -173,31 +174,33 @@ void Socket::socketio(){
 	//? Loop waiting for incoming connects or for incoming data on any of the connected sockets
 	while (1){
 
-		std::cout << "Polling ..." << std::endl;
-		std::cout << _fds.size() << std::endl;
 		//+ If the value of timeout is -1, poll() shall block until a requested event occurs or until the call is interrupted.
-		int p = poll(&_fds.front(), _fds.size(), -1);
-		std::cout << "********************\np = " << p << std::endl;
-		if (p < 0)
-			throw SocketException("Poll failed: Unexpected event occured"); // !! do not exit on error
-		if (p == 0){
-			std::cout << "No new connection" << std::endl; //!!!
-			break;
-		}
 		for (size_t i = 0; i < _fds.size(); i++){
 
+			std::cout << "\n\nPolling ... - " << _fds.size() << std::endl;
+			int p = poll(&_fds.front(), _fds.size(), -1);
+			std::cout << "********************\np = " << p << std::endl;
+			if (p < 0)
+				throw SocketException("Poll failed: Unexpected event occured"); // !! do not exit on error
+			if (p == 0){
+				std::cout << "No new connection" << std::endl; //!!!!
+				break;
+			}
+
 			std::cout << "in----- " << _fds.size() << " ---- i = " << i << std::endl;
-            
+
+			std::cout << _fds[i].fd << " - " << _fds[i].events << std::endl;
+
 			if (!_fds[i].revents){
 				std::cout << "No r events" << std::endl; //!!!
 				continue;
 			}
-			// std::cout << "revent √√√√√\n";
 			else if (_fds[i].revents & POLLIN){
 
-				if (_fds[i].fd == _socket_fd[i])
+				if (find(_socket_fd.begin() ,_socket_fd.end(), _fds[i].fd) != _socket_fd.end())
 					accept_connection(i);
 				else{
+				std::cout << "revent √√√√√\n";
 					// if ()
 					std::cout << "here\n";
 					c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
@@ -214,6 +217,10 @@ void Socket::socketio(){
 				break;
 			}
 		}
+		std::cout << "------------- fds struct fd --------------\n";
+		for (size_t i = 0; i < _fds.size(); i++)
+			std::cout << _fds[i].fd << " - ";
+		std::cout << std::endl;
 	}
 	//? Terminate the connection
 	close_fd();
@@ -221,27 +228,27 @@ void Socket::socketio(){
 
 // &&&&&&&&&&&&&&&&& static response
 //= use this function for simple test 
-// bool Socket::send_response(int i, Clients *c){
+bool Socket::send_response(int i, Clients *c){
 
-// 	(void)c;
-// 	std::cout << "Sending response" << std::endl;
-// 	std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
-// 	int s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
-// 	if (s <= 0){
-// 		close(_fds[i].fd);
-// 		_fds.erase(_fds.begin() + i);
-// 		std::cout << "here\n";
-// 		return false;
-// 	}
-// 	if (s == 0){
-// 		std::cout << "- Connection closed" << std::endl;
-// 		return true;
-// 	}
-// 	_fds[i].events = POLLIN;
-// 	// close(_fds[i].fd);
-// 	// _fds.erase(_fds.begin() + i);
-// 	return true;
-// }
+	(void)c;
+	std::cout << "Sending response" << std::endl;
+	std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
+	int s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
+	if (s <= 0){
+		close(_fds[i].fd);
+		_fds.erase(_fds.begin() + i);
+		std::cout << "here\n";
+		return false;
+	}
+	if (s == 0){
+		std::cout << "- Connection closed" << std::endl;
+		return true;
+	}
+	// _fds[i].events = POLLIN;
+	close(_fds[i].fd);
+	_fds.erase(_fds.begin() + i);
+	return true;
+}
 
 // &&&&&&&&&&&&&&&&&
 // bool Socket::send_response(int i, Clients *c){
