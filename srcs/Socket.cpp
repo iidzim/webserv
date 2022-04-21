@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/20 06:10:21 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/21 01:39:15 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/21 03:09:45 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,7 +134,6 @@ void Socket::accept_connection(int i){
 	new_fd.fd = accept_fd;
 	new_fd.events = POLLIN;
 	_fds.push_back(new_fd);
-	// std::cout << "accept function: " << _fds.back().fd << " - " << _fds.back().events << std::endl;
 }
 
 void Socket::recv_request(int i, Clients *c){
@@ -180,19 +179,17 @@ void Socket::socketio(){
 			std::cout << "\n\nPolling ... - " << _fds.size() << std::endl;
 			int p = poll(&_fds.front(), _fds.size(), -1);
 			std::cout << "********************\np = " << p << std::endl;
-			if (p < 0)
-				throw SocketException("Poll failed: Unexpected event occured"); // !! do not exit on error
-			if (p == 0){
+			if (p < 0){
+				// throw SocketException("Poll failed: Unexpected event occured"); // !! do not exit on error
+				std::cout << "Poll failed: Unexpected event occured" << std::endl;
+				break;
+			}
+			else if (p == 0){
 				std::cout << "No new connection" << std::endl; //!!!!
 				break;
 			}
-
-			std::cout << "in----- " << _fds.size() << " ---- i = " << i << std::endl;
-
-			std::cout << _fds[i].fd << " - " << _fds[i].events << std::endl;
-
 			if (!_fds[i].revents){
-				std::cout << "No r events" << std::endl; //!!!
+				std::cout << "No r events - _fds[" << i << "] = " << _fds[i].fd << std::endl; //!!!
 				continue;
 			}
 			else if (_fds[i].revents & POLLIN){
@@ -200,9 +197,6 @@ void Socket::socketio(){
 				if (find(_socket_fd.begin() ,_socket_fd.end(), _fds[i].fd) != _socket_fd.end())
 					accept_connection(i);
 				else{
-				std::cout << "revent √√√√√\n";
-					// if ()
-					std::cout << "here\n";
 					c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
 					recv_request(i, &c);
 				}
@@ -217,10 +211,6 @@ void Socket::socketio(){
 				break;
 			}
 		}
-		std::cout << "------------- fds struct fd --------------\n";
-		for (size_t i = 0; i < _fds.size(); i++)
-			std::cout << _fds[i].fd << " - ";
-		std::cout << std::endl;
 	}
 	//? Terminate the connection
 	close_fd();
@@ -244,9 +234,9 @@ bool Socket::send_response(int i, Clients *c){
 		std::cout << "- Connection closed" << std::endl;
 		return true;
 	}
-	// _fds[i].events = POLLIN;
-	close(_fds[i].fd);
-	_fds.erase(_fds.begin() + i);
+	_fds[i].events = POLLIN;
+	// close(_fds[i].fd);
+	// _fds.erase(_fds.begin() + i);
 	return true;
 }
 
@@ -277,54 +267,54 @@ bool Socket::send_response(int i, Clients *c){
 
 
 // &&&&&&&&&&&&&&&&&
-bool Socket::send_response(int i, Clients *c){
+// bool Socket::send_response(int i, Clients *c){
 
-	(void)c;
-	std::cout << "Sending response" << std::endl;
-	std::fstream file;
-	file.open("../test.png", std::ios::in | std::ios::binary);
-	if (!file.is_open()){
-		std::cout << "Failed to open file - no such file" << std::endl;
-		return false;
-	}
-	int len = 0;
-	char buff[1024];
-	std::cout << "File opened" << std::endl;
-	while (1){
-		file.read(buff, sizeof(buff));
-		if (file.eof()){
-			break;
-		}
-		int s = send(_fds[i].fd, buff, sizeof(buff), 0);
-		if (s < 0){
-			close(_fds[i].fd);
-			_fds.erase(_fds.begin() + i);
-			std::cout << "here\n";
-			return false;
-		}
-		if (s == 0){
-			std::cout << "- Connection closed" << std::endl;
-			return true;
-		}
-        len += s;
-        if ((size_t)s < sizeof(buff)){
-            //+ move cursor to pos[len] and continue reading from that position
-            file.seekg(len, std::ios::beg);
-        }
-        if (len >= c->connections[_fds[i].fd].second.response_size()){
-            break;
-        }
-	}
+// 	(void)c;
+// 	std::cout << "Sending response" << std::endl;
+// 	std::fstream file;
+// 	file.open("../test.png", std::ios::in | std::ios::binary);
+// 	if (!file.is_open()){
+// 		std::cout << "Failed to open file - no such file" << std::endl;
+// 		return false;
+// 	}
+// 	int len = 0;
+// 	char buff[1024];
+// 	std::cout << "File opened" << std::endl;
+// 	while (1){
+// 		file.read(buff, sizeof(buff));
+// 		if (file.eof()){
+// 			break;
+// 		}
+// 		int s = send(_fds[i].fd, buff, sizeof(buff), 0);
+// 		if (s < 0){
+// 			close(_fds[i].fd);
+// 			_fds.erase(_fds.begin() + i);
+// 			std::cout << "here\n";
+// 			return false;
+// 		}
+// 		if (s == 0){
+// 			std::cout << "- Connection closed" << std::endl;
+// 			return true;
+// 		}
+//         len += s;
+//         if ((size_t)s < sizeof(buff)){
+//             //+ move cursor to pos[len] and continue reading from that position
+//             file.seekg(len, std::ios::beg);
+//         }
+//         if (len >= c->connections[_fds[i].fd].second.response_size()){
+//             break;
+//         }
+// 	}
 
-	// close the file if keep_alive is false
-	if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
-		std::cout << "Closing socket - keepAlive = false" << std::endl;
-		close(_fds[i].fd);
-		_fds.erase(_fds.begin() + i);
-	}
-	else // when the request is complete switch the type of event to POLLIN
-		_fds[i].events = POLLIN;
-    //- remove node client from the map
-	c->remove_clients(_fds[i].fd);
-	return true;
-}
+// 	// close the file if keep_alive is false
+// 	if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
+// 		std::cout << "Closing socket - keepAlive = false" << std::endl;
+// 		close(_fds[i].fd);
+// 		_fds.erase(_fds.begin() + i);
+// 	}
+// 	else // when the request is complete switch the type of event to POLLIN
+// 		_fds[i].events = POLLIN;
+//     //- remove node client from the map
+// 	c->remove_clients(_fds[i].fd);
+// 	return true;
+// }
