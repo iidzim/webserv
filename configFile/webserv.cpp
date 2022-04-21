@@ -14,7 +14,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "request.hpp"
+#include "../includes/Request.hpp"
 
 int main(int argc, char **argv)
 {
@@ -31,17 +31,20 @@ int main(int argc, char **argv)
     // else
     //     std::cout<<"ERROR\n The program should take a config file as argument !"<<std::endl;
   
-    char buffer[1024] = "GET URI HTTP/1.1";
-   // char buf[1024] = ;
+//     char buffer[1024] = "GET URI HTTP/1.1";
+//    // char buf[1024] = ;
     
+//     request a;
+//     a.parse(buffer, 16);
+//     char buf [1024] = ("\r\nAccept: ok\r\nHost: 8080\r\nTest_header: pwd\r\n\r\nok ok");
+//     //!   a.setBuffer(buf);
+
+//     a.parse(buf, strlen(buf));
+
+//     char body[1024] = "tesetestest\r\n\r\n";
+//     a.parse(body, 15);
+    std::string value="   ok                    ";
     request a;
-    a.parse(buffer, 16);
-    char buf [1024] = ("\r\nAccept: ok\r\nHost: 8080\r\nTest_header: pwd\r\n\r\nok ok");
-    //!   a.setBuffer(buf);
-
-    a.parse(buf, strlen(buf));
-
-    char body[1024] = "tesetestest\r\n\r\n";
-    a.parse(body, 15);
+    a.deleteOptionalWithespaces(value);
    // b.parse();
 }

@@ -12,7 +12,7 @@
 
 NAME = web_server
 C = c++
-FLAGS = -Wall -Wextra -Werror -std=c++98 -fsanitize=address
+FLAGS = -Wall -Wextra -Werror -std=c++98 #-fsanitize=address
 SRC = main.cpp srcs/*.cpp
 
 all: $(NAME)
@@ -23,6 +23,7 @@ clean:
 
 fclean: clean
 	@ rm -f $(NAME)
+	@rm -f body*
 re: fclean all
 	@ ./web_server server.conf
 

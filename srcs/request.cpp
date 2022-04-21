@@ -40,11 +40,10 @@ request::request(): _headersComplete(false), _bodyComplete(false), _isChunked(fa
     _rqst.URI = "";
     _rqst.versionHTTP = "";
     _rqst.query = "";
-    _rqst.statusCode = 0;
-    //generate random name for the file
+    _rqst.statusCode = 200;
+    _contentLength = 0;
     
     std::cout<<"request called !"<<std::endl;
-    //open it
 }
 request::request(const request& obj)
 {
@@ -58,11 +57,22 @@ request& request::operator=(const request& obj)
     _bodyComplete = obj._bodyComplete;
     _isChunked = obj._isChunked;
     _isBodyExcpected = obj._isBodyExcpected;
+    _contentLength = obj._contentLength;
     _data = obj._data;
     return *this;
 }
 
 request::~request(){}
+
+void request::deleteOptionalWithespaces(std::string & fieldValue)
+{
+    while (std::isspace(fieldValue[0]))
+        fieldValue.erase(0, 1);
+    while (std::isspace(fieldValue[fieldValue.size()-1]))
+        fieldValue.erase(fieldValue.size()-1);
+
+    std::cout<<"["<<fieldValue<<"]"<<std::endl;
+}
 
 bool request::isFieldNameValid(const std::string &str)
 {
@@ -108,7 +118,7 @@ void    request::requestLine(std::istringstream &istr)
     if (words[0] != "GET" && words[0] != "POST" && words[0] != "DELETE")
         _rqst.statusCode = 501; //! 501 method not implemented || 405 method not allowed
     _rqst.method = words[0];
-    if (_rqst.method == "POST")
+    if (_rqst.method == "POST" || _rqst.method == "DELETE")
     {
         srand(time(0));
         std::stringstream str;
@@ -162,6 +172,7 @@ void    request::getHeaders(std::istringstream & istr)
             if (isFieldNameValid(fieldName))
             {
                 std::string fieldValue = line.substr(pos+1, line.size()-1);
+                deleteOptionalWithespaces(fieldValue);
                 if (fieldName == "Transfer-Encoding" && fieldValue == "chunked")
                 //! could be several values separated by a comma
                     _isChunked = true;
@@ -178,6 +189,11 @@ void    request::getHeaders(std::istringstream & istr)
             _rqst.statusCode = 400;
           //  std::cout<<"400 Bad Request"<<std::endl; exit(EXIT_FAILURE);
         }   
+    }
+    if (!_isChunked && _rqst.headers.find("content-length") == _rqst.headers.end())
+    {
+        _rqst.statusCode = 411; // length required
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -205,7 +221,7 @@ s_requestInfo request::getRequest()
 
 void request::parse(char *buffer, size_t r)
 {
-    std::cout<<"parsing called !"<<std::endl;
+   // std::cout<<"parsing called !"<<std::endl;
     size_t i ;
     if (!_headersComplete)
     {
@@ -215,13 +231,12 @@ void request::parse(char *buffer, size_t r)
             _data+=buffer[i];i++;
         }
     }
-    else if (_headersComplete && _isBodyExcpected)
+    else if (_headersComplete && _isBodyExcpected && !_isChunked)
     {
-       // std::cout<<"["<<buffer<<"]"<<std::endl;
         size_t i = 0;
-        while (i < r)
+        while (i < r && _contentLength < stoul(_rqst.headers["content-length"]))
         {
-         //   std::cout<<buffer[i]<<std::endl;
+            _contentLength++;
             my_file<<buffer[i];i++;
         }
     }
@@ -232,29 +247,35 @@ void request::parse(char *buffer, size_t r)
             _headersComplete = true;
             requestLine(istr);
             getHeaders(istr);
-            // if content length not found => status code 411 length required
-            //put the rest of data in body if body excpected 
-            if (_isBodyExcpected)
+            if (_isBodyExcpected && !_isChunked)
             {
-                //std::cout<<"data inside file "<<_data.substr(pos+4, _data.size()-1)<<std::endl;
-                my_file<<_data.substr(pos+4, _data.size()-1);
+                std::string leftdata = _data.substr(pos+4, _data.size()-1);
+                //compare contentlength
+                size_t i = 0;
+                while (i < leftdata.size() && _contentLength < stoul(_rqst.headers["content-length"]))
+                {
+                    _contentLength++;
+                    my_file<<leftdata[i];
+                    i++;
+                    std::cout<<"my content-length "<<_contentLength<<std::endl;
+                    std::cout<<"stoul "<<stoul(_rqst.headers["content-length"])<<std::endl;
+                }
             }
             _data.clear();
-            //! if the body is expected
             print_request();
     }
     //if body excpected of course
     if (_headersComplete && _isBodyExcpected && !_bodyComplete)
     {
-       // std::cout<<"Number of bytes read !"<<r<<std::endl;
-
-        if (endBodyisFound("\r\n") && !_isChunked)
+        if (_contentLength >= stoul(_rqst.headers["content-length"]) && !_isChunked)
         {
+            //I should erase the unwanted data
             std::cout<<"end body found"<<std::endl;
             _bodyComplete = true;
         }
         else if (_isChunked && endBodyisFound("0\r\n\r\n"))
         {
+            ///check the size && put the rest in a file
             _bodyComplete = true;
         }
         // if (i < r)
@@ -302,7 +323,6 @@ void request::print_request()
         it++;
     }
     //! print the body
-
 }
 
 bool request::isComplete()

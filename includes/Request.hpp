@@ -33,6 +33,7 @@ class request
         std::fstream    my_file;
         bool            _isChunked;
         bool            _isBodyExcpected;
+        size_t          _contentLength;
 
         void requestLine(std::istringstream & istr); // Method URI VERSION
         void getHeaders(std::istringstream & str); //all the available headers in MJS
@@ -42,8 +43,8 @@ class request
         bool isBodyExpected(); // based on the parsed data
         bool isFieldNameValid(const std::string &str);
         bool endBodyisFound(std::string lastLine);
-        void deleteOptionalWithespaces(std::string fieldValue); 
     public:
+        void deleteOptionalWithespaces(std::string &fieldValue); 
         request();
         request(const request& obj);
         request& operator=(const request& obj);
