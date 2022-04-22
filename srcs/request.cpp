@@ -33,8 +33,9 @@
 //! A message body that uses the chunked transfer coding is incomplete if the zero-sized chunk that terminates the encoding has not been received.
 //! A message that uses a valid Content-Length is incomplete if the size of the message body received (in octets) is less than the value given by Content-Length.
 
+request::request(){}
 
-request::request(): _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
+request::request(serverInfo server):  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false), _server(server)
 {
     _rqst.method = "";
     _rqst.URI = "";
@@ -58,6 +59,7 @@ request& request::operator=(const request& obj)
     _isChunked = obj._isChunked;
     _isBodyExcpected = obj._isBodyExcpected;
     _contentLength = obj._contentLength;
+    _server = obj._server;
     _data = obj._data;
     return *this;
 }
@@ -71,7 +73,7 @@ void request::deleteOptionalWithespaces(std::string & fieldValue)
     while (std::isspace(fieldValue[fieldValue.size()-1]))
         fieldValue.erase(fieldValue.size()-1);
 
-    std::cout<<"["<<fieldValue<<"]"<<std::endl;
+   // std::cout<<"["<<fieldValue<<"]"<<std::endl;
 }
 
 bool request::isFieldNameValid(const std::string &str)
@@ -100,8 +102,7 @@ void    request::requestLine(std::istringstream &istr)
     if (line.empty() || line[line.size() - 1] != '\r')
     {
         _rqst.statusCode = 400;
-        // std::cout<<"400 Bad Request !"<<std::endl; //! throw an exception instead
-        // exit(EXIT_FAILURE);
+        throw request::RequestNotValid();
     }
     while ((pos=line.find(" ")) != std::string::npos)
     {
@@ -112,13 +113,15 @@ void    request::requestLine(std::istringstream &istr)
     if (words.size() != 3)//! should only be one space between them
     {
         _rqst.statusCode = 400;
-        // std::cout<<"400 Bad Request!"<<std::endl;
-        // exit(EXIT_FAILURE);
+        throw request::RequestNotValid();
     }
     if (words[0] != "GET" && words[0] != "POST" && words[0] != "DELETE")
+    {
         _rqst.statusCode = 501; //! 501 method not implemented || 405 method not allowed
+        throw request::RequestNotValid();
+    }
     _rqst.method = words[0];
-    if (_rqst.method == "POST" || _rqst.method == "DELETE")
+    if (_rqst.method == "POST")
     {
         srand(time(0));
         std::stringstream str;
@@ -140,8 +143,21 @@ void    request::requestLine(std::istringstream &istr)
     //! erase \r at the end of the line
     words[2].erase(words[2].end() - 1);
     if (words[2] != "HTTP/1.1") //! rfc 
-       _rqst.statusCode = 505;
+    {
+        _rqst.statusCode = 505;
+        throw request::RequestNotValid();
+    }
     _rqst.versionHTTP = words[2]; 
+}
+
+bool isNumber(std::string value)
+{
+    for (size_t i = 0 ; i < value.size();i++)
+    {
+        if (!std::isdigit(value[i]))
+            return false;
+    }
+    return true;
 }
 
 void    request::getHeaders(std::istringstream & istr)
@@ -155,7 +171,10 @@ void    request::getHeaders(std::istringstream & istr)
         if (line[0] == '\r') //the end of the headers
             return;
         if (line[line.size() - 1] != '\r')
+        {
             _rqst.statusCode = 400;
+            throw request::RequestNotValid();
+        }
         line.erase(line.end()-1);
 
         //! put the expected headers in the right position
@@ -174,27 +193,38 @@ void    request::getHeaders(std::istringstream & istr)
                 std::string fieldValue = line.substr(pos+1, line.size()-1);
                 deleteOptionalWithespaces(fieldValue);
                 if (fieldName == "Transfer-Encoding" && fieldValue == "chunked")
-                //! could be several values separated by a comma
                     _isChunked = true;
                (_rqst.headers).insert(std::pair<std::string, std::string>(fieldName, fieldValue)) ;
             }
             else
             {
                 _rqst.statusCode = 400;
-              //  std::cout<<"400 Bad Request test !"<<std::endl; exit(EXIT_FAILURE);
+              throw request::RequestNotValid();
             }
         }
         else
         {
             _rqst.statusCode = 400;
-          //  std::cout<<"400 Bad Request"<<std::endl; exit(EXIT_FAILURE);
+            throw request::RequestNotValid();
         }   
     }
-    if (!_isChunked && _rqst.headers.find("content-length") == _rqst.headers.end())
+    if (!_isChunked)
     {
-        _rqst.statusCode = 411; // length required
-        exit(EXIT_FAILURE);
+        std::cout<<"Is not chunked ! I should test negative value of content-length"<<std::endl;
+        if (_rqst.headers.find("content-length") == _rqst.headers.end() || !isNumber(_rqst.headers.find("content-length")->second))
+        {
+            std::cout<<" ttttetsvfegrer  "<<_rqst.headers.find("content-length")->second<<std::endl;
+            _rqst.statusCode = 411; // length required
+            throw request::RequestNotValid();
+        }
     }
+}
+
+
+
+const char* request::RequestNotValid::what()const throw()
+{
+    return "Request Not Valid !";
 }
 
 bool request::endBodyisFound(std::string lastLine)
@@ -207,7 +237,6 @@ bool request::endBodyisFound(std::string lastLine)
     {
         if (line.find("\r") != std::string::npos)
         {
-            std::cout<<"found !"<<std::endl;
             return true;
         }
     }
@@ -257,8 +286,6 @@ void request::parse(char *buffer, size_t r)
                     _contentLength++;
                     my_file<<leftdata[i];
                     i++;
-                    std::cout<<"my content-length "<<_contentLength<<std::endl;
-                    std::cout<<"stoul "<<stoul(_rqst.headers["content-length"])<<std::endl;
                 }
             }
             _data.clear();
@@ -278,32 +305,6 @@ void request::parse(char *buffer, size_t r)
             ///check the size && put the rest in a file
             _bodyComplete = true;
         }
-        // if (i < r)
-        // {
-        //     while (i < r)
-        //     {
-        //         my_file<<buffer[i];i++;
-        //     }
-        // }
-        // else
-        // { i = 0;
-        // while (i < r)
-        // {
-        //     my_file << buffer[i]; i++;
-        // }
-        
-       // }my_file.close();//_bodyComplete = true;
-        // my_file.open(_rqst.bodyFile, std::ios::in);
-        // std::string line;
-        // if (my_file.is_open())
-        //     std::cout<<"YES BODY EXPECTED !"<<std::endl;
-        // while (getline(my_file, line))
-        // {
-        //     std::cout<<line<<std::endl;   
-        // }
-        //_bodyComplete = true;
-        //if !_isChunked && found (\r\n\r\n) => parse not hcunked request => easy
-        //else if is_chunked && found 0\r\n\r\n => parse not chunked request
     }
 }
 
@@ -335,6 +336,12 @@ bool request::isComplete()
     return false;
 }
 
+void request::forceStopParsing()
+{
+    _headersComplete = true;
+    if (_isBodyExcpected)
+        _bodyComplete = true;
+}
 
 // void        request::clearRequest()
 // {

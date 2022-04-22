@@ -12,7 +12,7 @@
 
 #include "../includes/Socket.hpp"
 
-Socket::Socket(void){
+Socket::Socket(){
 
 	struct sockaddr_in address;
 	int socket_fd, x = 1;
@@ -53,10 +53,10 @@ Socket::Socket(void){
 	_msg = "Failed to listen";
 	check(listen(socket_fd, BACKLOG), socket_fd);
 	_socket_fd.push_back(socket_fd);
-	socketio();
+	socketio(server_conf);
 }
 
-Socket::Socket(int port){
+Socket::Socket(serverInfo server_conf){
 
 	struct sockaddr_in address;
 	int socket_fd, x = 1;
@@ -68,7 +68,7 @@ Socket::Socket(int port){
 	check(fcntl(socket_fd, F_SETFL, O_NONBLOCK), socket_fd);
 	memset((char *)&address, 0, sizeof(address));
 	address.sin_family = AF_INET;
-	address.sin_port = htons(port);
+	address.sin_port = htons(server_conf.port);
 	address.sin_addr.s_addr = inet_addr("127.0.0.1");
 	if (address.sin_addr.s_addr == INADDR_NONE){
 		memset((char *)&address, 0, sizeof(address));
@@ -81,7 +81,7 @@ Socket::Socket(int port){
 	_msg = "Failed to listen";
 	check(listen(socket_fd, BACKLOG), socket_fd);
 	_socket_fd.push_back(socket_fd);
-	socketio();
+	socketio(server_conf);
 }
 
 Socket& Socket::operator=(const Socket& sock){
@@ -157,7 +157,9 @@ void Socket::recv_request(int i, Clients *c){
 	// }
 	// std::cout << ">>> Received " << r << " bytes" << "\n" << "|" << _buffer << "|" << std::endl;
 	//& parse the buffer
+	//try 
 	c->connections[_fds[i].fd].first.parse(_buffer, r);
+	//catch => forceStopParsing => isComplete
 	memset(_buffer, 0, sizeof(_buffer));
 	//& when the request is complete switch the type of event to POLLOUT
 	if (c->connections[_fds[i].fd].first.isComplete()){
@@ -168,7 +170,7 @@ void Socket::recv_request(int i, Clients *c){
 
 // bool send_response(int i, Clients *c){}
 
-void Socket::socketio(){
+void Socket::socketio(serverInfo server_conf){
 
 	Clients c;
 
@@ -201,7 +203,7 @@ void Socket::socketio(){
 				if (find(_socket_fd.begin() ,_socket_fd.end(), _fds[i].fd) != _socket_fd.end())
 					accept_connection(i);
 				else{
-					c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
+					c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(server_conf), Response())));
 					recv_request(i, &c);
 				}
 			}

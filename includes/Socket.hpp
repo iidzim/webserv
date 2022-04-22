@@ -50,7 +50,7 @@ class Socket{
 				}
 		};
 
-		void socketio(void);
+		void socketio(serverInfo server_conf);
 		void fill_fds(void);
 		void accept_connection(int i);
 		void recv_request(int i, Clients *c);
@@ -61,7 +61,7 @@ class Socket{
 	public:
 
 		Socket(void);
-		Socket(int port);
+		Socket(serverInfo server_conf);
 		Socket(const Socket& sock){ *this = sock; }
 		Socket& operator=(const Socket& sock);
 		~Socket(void);

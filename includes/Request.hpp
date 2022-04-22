@@ -7,6 +7,7 @@
 #include <string>
 #include <fstream>
 #include <string>
+#include "configurationReader.hpp"
 #define CRLF "\r\n\r\n"
 typedef struct t_requestInfo
 {
@@ -34,6 +35,7 @@ class request
         bool            _isChunked;
         bool            _isBodyExcpected;
         size_t          _contentLength;
+        serverInfo      _server;
 
         void requestLine(std::istringstream & istr); // Method URI VERSION
         void getHeaders(std::istringstream & str); //all the available headers in MJS
@@ -44,8 +46,9 @@ class request
         bool isFieldNameValid(const std::string &str);
         bool endBodyisFound(std::string lastLine);
     public:
-        void deleteOptionalWithespaces(std::string &fieldValue); 
         request();
+        void deleteOptionalWithespaces(std::string &fieldValue); 
+        request(serverInfo server);
         request(const request& obj);
         request& operator=(const request& obj);
 
@@ -54,11 +57,17 @@ class request
         ~request();
 
         void parse(char *buffer, size_t n);
-       s_requestInfo getRequest();
-       bool isComplete();
+        s_requestInfo getRequest();
+        bool isComplete();
+        void forceStopParsing();
 
        //! for debugging
        void print_request();
+       class  RequestNotValid: public std::exception 
+        {
+            public:
+                const char* what() const throw();
+        };
 };
 
 #endif

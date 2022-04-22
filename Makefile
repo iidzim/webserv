@@ -12,7 +12,7 @@
 
 NAME = web_server
 C = c++
-FLAGS = -Wall -Wextra -Werror -std=c++98 #-fsanitize=address
+FLAGS = -Wall -Wextra -Werror -std=c++98 -fsanitize=address
 SRC = main.cpp srcs/*.cpp
 
 all: $(NAME)

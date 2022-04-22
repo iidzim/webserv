@@ -18,6 +18,7 @@
 #include <map>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <exception>
 # define INSIDESERVER   1
 # define INLOCATION     2
 # define CLOSED         0
@@ -39,7 +40,7 @@ typedef struct s_server
   //  std::string                 host; // IPV4 unsigned int interface
     unsigned int                host;
     std::string                 root;
-    std::string                 size;
+    int                         size; //0
     std::pair<std::string, std::string> errorPage; // int string
     std::vector<std::string>    serverName;
     bool                        autoindex;
@@ -70,10 +71,16 @@ class configurationReader
         void                                    setErrorPage(std::vector<std::string> words, serverInfo &server);
         void                                    setautoIndex(std::vector<std::string> words, serverInfo &server);
         unsigned int                            convertStrIPv4toUnsinedInt(const std::string& IPV4);
+        bool                                    hasDuplicatePort();
     public:
         configurationReader(std::string path);
         std::vector<serverInfo>                 getVirtualServer() const;
         void                                    parser();
+        class  invalidSyntax: public std::exception 
+        {
+            public:
+                const char* what() const throw();
+        };
 };
 
 std::ostream&                                   operator<<(std::ostream & o, configurationReader const & rhs);
