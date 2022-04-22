@@ -187,6 +187,8 @@ void configurationReader::parser()
                         server.location.push_back(location);
                         clearLocation(location);
                     }
+                    else if (_state == CLOSED)
+                        throw configurationReader::invalidSyntax();
                 }
                 else if (words[0] == "listen")
                     setPortHost(words, server);
