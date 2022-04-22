@@ -46,6 +46,10 @@ request::request():  _headersComplete(false), _bodyComplete(false), _isChunked(f
     
     std::cout<<"request called !"<<std::endl;
 }
+request::request(serverInfo server)
+{
+    (void)server;
+}
 
 request::request(const request& obj)
 {
