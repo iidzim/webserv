@@ -6,7 +6,7 @@
 /*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/08 16:51:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/21 17:17:07 by viet             ###   ########.fr       */
+/*   Updated: 2022/04/22 07:54:54 by viet             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include "configurationReader.hpp"
 #include "Request.hpp"
+#include <sys/wait.h>
 
 class Response{
 
@@ -30,17 +31,18 @@ class Response{
         std::string                     _contentType;
         std::string                     _path;
         std::string                     _connection;
-
+        std::string                     _fileName;
+        bool                            _iskeepAlive;
         s_requestInfo                   _reqInfo;
         
     public:
         Response();
         Response(request req);
         ~Response();
-        std::pair<std::string, std::string> get_response();
+        std::pair<std::string, std::string> get_response(configurationReader const &);
         std::string setErrorsHeaders(std::string , std::string);
-        void stringfyHeaders();
-        void errorsResponse(int statCode);
+        void stringfyHeaders(configurationReader const &);
+        void errorsResponse(int);
         int getContentlength();
         std::string getBody();
         std::string getHeaders();
@@ -51,6 +53,10 @@ class Response{
         int response_size();
         template<class T>
         std::string toString(T);
+        bool isFileExist(std::string );
+        std::string findMimeType(std::string);
+        int fileSize(std::string);
+
 };
 
 #endif
