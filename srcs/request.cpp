@@ -33,9 +33,9 @@
 //! A message body that uses the chunked transfer coding is incomplete if the zero-sized chunk that terminates the encoding has not been received.
 //! A message that uses a valid Content-Length is incomplete if the size of the message body received (in octets) is less than the value given by Content-Length.
 
-request::request(){}
+// request::request(){}
 
-request::request(serverInfo server):  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false), _server(server)
+request::request():  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)//, _server(server)
 {
     _rqst.method = "";
     _rqst.URI = "";
@@ -46,6 +46,7 @@ request::request(serverInfo server):  _headersComplete(false), _bodyComplete(fal
     
     std::cout<<"request called !"<<std::endl;
 }
+
 request::request(const request& obj)
 {
     *this = obj;
@@ -59,7 +60,7 @@ request& request::operator=(const request& obj)
     _isChunked = obj._isChunked;
     _isBodyExcpected = obj._isBodyExcpected;
     _contentLength = obj._contentLength;
-    _server = obj._server;
+    // _server = obj._server;
     _data = obj._data;
     return *this;
 }

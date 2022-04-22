@@ -50,7 +50,8 @@ class Socket{
 				}
 		};
 
-		void socketio(serverInfo server_conf);
+		// void socketio(serverInfo server_conf);
+		void socketio();
 		void fill_fds(void);
 		void accept_connection(int i);
 		void recv_request(int i, Clients *c);

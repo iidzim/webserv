@@ -53,7 +53,7 @@ Socket::Socket(){
 	_msg = "Failed to listen";
 	check(listen(socket_fd, BACKLOG), socket_fd);
 	_socket_fd.push_back(socket_fd);
-	socketio(server_conf);
+	socketio();
 }
 
 Socket::Socket(serverInfo server_conf){
@@ -81,7 +81,9 @@ Socket::Socket(serverInfo server_conf){
 	_msg = "Failed to listen";
 	check(listen(socket_fd, BACKLOG), socket_fd);
 	_socket_fd.push_back(socket_fd);
-	socketio(server_conf);
+	// socketio(server_conf);
+	(void)server_conf;
+	socketio();
 }
 
 Socket& Socket::operator=(const Socket& sock){
@@ -170,7 +172,60 @@ void Socket::recv_request(int i, Clients *c){
 
 // bool send_response(int i, Clients *c){}
 
-void Socket::socketio(serverInfo server_conf){
+// void Socket::socketio(serverInfo server_conf){
+
+// 	Clients c;
+
+// 	//? Set up the initial listening socket for connections
+// 	fill_fds();
+// 	//? Loop waiting for incoming connects or for incoming data on any of the connected sockets
+// 	while (1){
+
+// 		//+ If the value of timeout is -1, poll() shall block until a requested event occurs or until the call is interrupted.
+// 		for (size_t i = 0; i < _fds.size(); i++){
+
+// 			std::cout << "\n\nPolling ... " << std::endl;
+// 			int p = poll(&_fds.front(), _fds.size(), -1);
+// 			std::cout << "********************\np = " << p << std::endl;
+// 			if (p < 0){
+// 				// throw SocketException("Poll failed: Unexpected event occured"); // !! do not exit on error
+// 				std::cout << "Poll failed: Unexpected event occured" << std::endl;
+// 				break;
+// 			}
+// 			else if (p == 0){
+// 				std::cout << "No new connection" << std::endl; //!!!!
+// 				break;
+// 			}
+// 			if (!_fds[i].revents){
+// 				std::cout << "No r events - _fds[" << i << "] = " << _fds[i].fd << std::endl; //!!!
+// 				continue;
+// 			}
+// 			else if (_fds[i].revents & POLLIN){
+
+// 				if (find(_socket_fd.begin() ,_socket_fd.end(), _fds[i].fd) != _socket_fd.end())
+// 					accept_connection(i);
+// 				else{
+// 					c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(server_conf), Response())));
+// 					recv_request(i, &c);
+// 				}
+// 			}
+// 			else if (_fds[i].revents & POLLOUT){
+// 				c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first);
+// 				send_response(i, &c);
+// 				std::cout << "Sent response" << std::endl;
+// 			}
+// 			else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
+// 				close(_fds[i].fd);
+// 				_fds.erase(_fds.begin() + i);
+// 				break;
+// 			}
+// 		}
+// 	}
+// 	//? Terminate the connection
+// 	close_fd();
+// }
+
+void Socket::socketio(){
 
 	Clients c;
 
@@ -203,7 +258,7 @@ void Socket::socketio(serverInfo server_conf){
 				if (find(_socket_fd.begin() ,_socket_fd.end(), _fds[i].fd) != _socket_fd.end())
 					accept_connection(i);
 				else{
-					c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(server_conf), Response())));
+					c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
 					recv_request(i, &c);
 				}
 			}
