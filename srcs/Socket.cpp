@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/20 06:10:21 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/22 00:05:48 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/22 17:18:04 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,9 +38,13 @@ Socket::Socket(void){
 	//+ Bind the socket
 	memset((char *)&address, 0, sizeof(address));
 	address.sin_family = AF_INET;
-	// address.sin_addr.s_addr = inet_addr("127.0.0.1");
-	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(PORT);
+	address.sin_addr.s_addr = inet_addr("127.0.0.1");
+	if (address.sin_addr.s_addr == INADDR_NONE){
+		memset((char *)&address, 0, sizeof(address));
+		_msg = "Invalid address";
+		check(-1, socket_fd);
+	}
 	_msg = "Failed to bind socket";
 	check(bind(socket_fd, (struct sockaddr *)&address, sizeof(address)), socket_fd);
 	_address.push_back(address);
@@ -52,18 +56,18 @@ Socket::Socket(void){
 	socketio();
 }
 
-Socket::Socket(int domain, int type, int protocol, int port, int backlog){
+Socket::Socket(int port){
 
 	struct sockaddr_in address;
 	int socket_fd, x = 1;
 	_msg = "socket creation failure";
-	check((socket_fd = socket(domain, type, protocol)), -1);
+	check((socket_fd = socket(AF_INET, SOCK_STREAM, 0)), -1);
 	_msg = "Address already in use";
 	check(setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (char*)&x, sizeof(x)), socket_fd);
 	_msg = "Failed to set non-blocking mode";
 	check(fcntl(socket_fd, F_SETFL, O_NONBLOCK), socket_fd);
 	memset((char *)&address, 0, sizeof(address));
-	address.sin_family = domain;
+	address.sin_family = AF_INET;
 	address.sin_port = htons(port);
 	address.sin_addr.s_addr = inet_addr("127.0.0.1");
 	if (address.sin_addr.s_addr == INADDR_NONE){
@@ -75,7 +79,7 @@ Socket::Socket(int domain, int type, int protocol, int port, int backlog){
 	check(bind(socket_fd, (struct sockaddr *)&address, sizeof(address)), socket_fd);
 	_address.push_back(address);
 	_msg = "Failed to listen";
-	check(listen(socket_fd, backlog), socket_fd);
+	check(listen(socket_fd, BACKLOG), socket_fd);
 	_socket_fd.push_back(socket_fd);
 	socketio();
 }
@@ -283,7 +287,7 @@ int file_size(std::fstream file){
 // 	(void)c;
 // 	std::cout << "Sending response" << std::endl;
 // 	std::fstream file;
-// 	file.open("./srcs/Socket.cpp", std::ios::in | std::ios::binary);
+// 	file.open("main.cpp", std::ios::in | std::ios::binary);
 // 	if (!file.is_open()){
 // 		std::cout << "Failed to open file - no such file" << std::endl;
 // 		return false;
@@ -303,7 +307,9 @@ int file_size(std::fstream file){
 // 			std::cout << "End Of File" << std::endl;
 // 			break;
 // 		}
-// 		if ((size_t)(size - len) >= sizeof(buff)){
+// 		int lps = size - len;
+// 		std::cout << "lps >>>>>>>>>> " << lps << " - len = " << len << std::endl;
+// 		if ((size_t)lps >= sizeof(buff)){
 // 			file.read(buff, sizeof(buff));
 // 			s = send(_fds[i].fd, buff, sizeof(buff), 0);
 // 			if (s < 0){
@@ -314,7 +320,6 @@ int file_size(std::fstream file){
 // 			}
 // 		}
 // 		else{
-// 			int lps = size - len;
 // 			std::cout << "Last packet size = " << lps << std::endl;
 // 			file.read(buff, lps);
 // 			s = send(_fds[i].fd, buff, sizeof(lps), 0);
@@ -339,6 +344,7 @@ int file_size(std::fstream file){
 // 		}
 // 		memset(buff, 0, sizeof(buff));
 // 	}
+// 	std::cout << "------------------- len = " << len << std::endl;
 // 	file.close();
 // 	std::cout << "File closed" << std::endl;
 // 	// close the file if keep_alive is false

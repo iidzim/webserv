@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/20 06:28:08 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/22 17:16:36 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,7 @@ class Socket{
 	public:
 
 		Socket(void);
-		Socket(int domain, int type, int protocol, int port, int backlog);
+		Socket(int port);
 		Socket(const Socket& sock){ *this = sock; }
 		Socket& operator=(const Socket& sock);
 		~Socket(void);
