@@ -174,7 +174,7 @@ void    request::getHeaders(std::istringstream & istr)
     while (getline(istr, line))
     {
         if (line[0] == '\r') //the end of the headers
-            return;
+            break;
         if (line[line.size() - 1] != '\r')
         {
             _rqst.statusCode = 400;
@@ -204,7 +204,7 @@ void    request::getHeaders(std::istringstream & istr)
             else
             {
                 _rqst.statusCode = 400;
-              throw request::RequestNotValid();
+                throw request::RequestNotValid();
             }
         }
         else
@@ -215,10 +215,9 @@ void    request::getHeaders(std::istringstream & istr)
     }
     if (!_isChunked)
     {
-        std::cout<<"Is not chunked ! I should test negative value of content-length"<<std::endl;
+       // std::cout<<"Is not chunked ! I should test negative value of content-length"<<std::endl;
         if (_rqst.headers.find("content-length") == _rqst.headers.end() || !isNumber(_rqst.headers.find("content-length")->second))
         {
-            std::cout<<" ttttetsvfegrer  "<<_rqst.headers.find("content-length")->second<<std::endl;
             _rqst.statusCode = 411; // length required
             throw request::RequestNotValid();
         }
