@@ -3,16 +3,20 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/19 03:41:20 by oel-yous          #+#    #+#             */
-/*   Updated: 2022/04/22 08:06:16 by viet             ###   ########.fr       */
+/*   Updated: 2022/04/23 00:58:38 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Response.hpp"
 
 Response::Response(): _headers(""), _body("") {
+}
+
+Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()) {
+    std::cout << " port = " << s.port << std::endl;
 }
 
 Response::Response(request req):  _headers(""), _body(""), _reqInfo(req.getRequest()) {

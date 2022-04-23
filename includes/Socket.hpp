@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/22 17:16:36 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/23 01:26:53 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,23 +50,24 @@ class Socket{
 				}
 		};
 
-		// void socketio(serverInfo server_conf);
+		friend void socketio(std::vector<serverInfo> server_conf, std::vector<int>	_socket_fd, std::string	_msg, std::vector<struct sockaddr_in> _address, std::vector<struct pollfd> _fds);
 		void socketio();
 		void fill_fds(void);
-		void accept_connection(int i);
-		void recv_request(int i, Clients *c);
-		bool send_response(int i, Clients *c);
+		friend void accept_connection(int i);
+		friend void recv_request(int i, Clients *c);
+		friend bool send_response(int i, Clients *c);
 		void check(int res, int fd);
 		void close_fd(void);
 
 	public:
 
 		Socket(void);
-		Socket(serverInfo server_conf);
+		Socket(int port);
 		Socket(const Socket& sock){ *this = sock; }
 		Socket& operator=(const Socket& sock);
 		~Socket(void);
 };
+
 
 #endif
 
@@ -103,3 +104,4 @@ class Socket{
 
 //* Search for all read/recv/write/send on a socket and check that if an error returned the client is removed
 //? accept/poll on a socket and check that if an error returned the client is removed and the socket is closed -> program continues
+//& Writing or reading ANY file descriptor without going through the select (or equivalent) is strictly FORBIDDEN

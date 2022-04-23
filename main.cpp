@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/22 17:18:34 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/23 00:36:34 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,8 @@ int main(int argc, char** argv){
     		std::vector<serverInfo> virtualServer = cfg_reader.getVirtualServer();
 			//std::cout<<cfg_reader<<std::endl;
     		for (size_t i = 0; i < virtualServer.size(); i++)
-			 	Socket b(virtualServer[i]);
+			 	Socket b(virtualServer[i].port);
+			socket_io(virtualServer);
 		}
 	}
 	catch (std::exception &e){

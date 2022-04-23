@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/08 16:51:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/22 07:54:54 by viet             ###   ########.fr       */
+/*   Updated: 2022/04/23 00:59:07 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@ class Response{
         
     public:
         Response();
+        Response(request req, serverInfo serv);
         Response(request req);
         ~Response();
         std::pair<std::string, std::string> get_response(configurationReader const &);
