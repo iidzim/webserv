@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/20 06:10:21 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/23 01:32:25 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/23 23:22:01 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,7 +175,6 @@ void socketio(std::vector<serverInfo> server_conf, std::vector<int>	_socket_fd, 
 	Clients c;
 	size_t j = 0;
 
-	
 	//? Loop waiting for incoming connects or for incoming data on any of the connected sockets
 	while (1){
 
@@ -225,58 +224,58 @@ void socketio(std::vector<serverInfo> server_conf, std::vector<int>	_socket_fd, 
 	close_fd();
 }
 
-// void Socket::socketio(){
+void Socket::socketio(){
 
-// 	Clients c;
+	Clients c;
 
-// 	//? Set up the initial listening socket for connections
-// 	fill_fds();
-// 	//? Loop waiting for incoming connects or for incoming data on any of the connected sockets
-// 	while (1){
+	//? Set up the initial listening socket for connections
+	fill_fds();
+	//? Loop waiting for incoming connects or for incoming data on any of the connected sockets
+	while (1){
 
-// 		//+ If the value of timeout is -1, poll() shall block until a requested event occurs or until the call is interrupted.
-// 		for (size_t i = 0; i < _fds.size(); i++){
+		//+ If the value of timeout is -1, poll() shall block until a requested event occurs or until the call is interrupted.
+		for (size_t i = 0; i < _fds.size(); i++){
 
-// 			std::cout << "\n\nPolling ... " << std::endl;
-// 			int p = poll(&_fds.front(), _fds.size(), -1);
-// 			std::cout << "********************\np = " << p << std::endl;
-// 			if (p < 0){
-// 				// throw SocketException("Poll failed: Unexpected event occured"); // !! do not exit on error
-// 				std::cout << "Poll failed: Unexpected event occured" << std::endl;
-// 				break;
-// 			}
-// 			else if (p == 0){
-// 				std::cout << "No new connection" << std::endl; //!!!!
-// 				break;
-// 			}
-// 			if (!_fds[i].revents){
-// 				std::cout << "No r events - _fds[" << i << "] = " << _fds[i].fd << std::endl; //!!!
-// 				continue;
-// 			}
-// 			else if (_fds[i].revents & POLLIN){
+			std::cout << "\n\nPolling ... " << std::endl;
+			int p = poll(&_fds.front(), _fds.size(), -1);
+			std::cout << "********************\np = " << p << std::endl;
+			if (p < 0){
+				// throw SocketException("Poll failed: Unexpected event occured"); // !! do not exit on error
+				std::cout << "Poll failed: Unexpected event occured" << std::endl;
+				break;
+			}
+			else if (p == 0){
+				std::cout << "No new connection" << std::endl; //!!!!
+				break;
+			}
+			if (!_fds[i].revents){
+				std::cout << "No r events - _fds[" << i << "] = " << _fds[i].fd << std::endl; //!!!
+				continue;
+			}
+			else if (_fds[i].revents & POLLIN){
 
-// 				if (find(_socket_fd.begin() ,_socket_fd.end(), _fds[i].fd) != _socket_fd.end())
-// 					accept_connection(i);
-// 				else{
-// 					c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
-// 					recv_request(i, &c);
-// 				}
-// 			}
-// 			else if (_fds[i].revents & POLLOUT){
-// 				c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first);
-// 				send_response(i, &c);
-// 				std::cout << "Sent response" << std::endl;
-// 			}
-// 			else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
-// 				close(_fds[i].fd);
-// 				_fds.erase(_fds.begin() + i);
-// 				break;
-// 			}
-// 		}
-// 	}
-// 	//? Terminate the connection
-// 	close_fd();
-// }
+				if (find(_socket_fd.begin() ,_socket_fd.end(), _fds[i].fd) != _socket_fd.end())
+					accept_connection(i);
+				else{
+					c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
+					recv_request(i, &c);
+				}
+			}
+			else if (_fds[i].revents & POLLOUT){
+				c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first);
+				send_response(i, &c);
+				std::cout << "Sent response" << std::endl;
+			}
+			else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
+				close(_fds[i].fd);
+				_fds.erase(_fds.begin() + i);
+				break;
+			}
+		}
+	}
+	//? Terminate the connection
+	close_fd();
+}
 
 // &&&&&&&&&&&&&&&&& static response
 //= use this function for simple test 

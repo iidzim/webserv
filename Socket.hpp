@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/19 18:25:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/23 01:26:53 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/23 22:03:48 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,9 +53,9 @@ class Socket{
 		friend void socketio(std::vector<serverInfo> server_conf, std::vector<int>	_socket_fd, std::string	_msg, std::vector<struct sockaddr_in> _address, std::vector<struct pollfd> _fds);
 		void socketio();
 		void fill_fds(void);
-		friend void accept_connection(int i);
-		friend void recv_request(int i, Clients *c);
-		friend bool send_response(int i, Clients *c);
+		void accept_connection(int i);
+		void recv_request(int i, Clients *c);
+		bool send_response(int i, Clients *c);
 		void check(int res, int fd);
 		void close_fd(void);
 
@@ -67,6 +67,8 @@ class Socket{
 		Socket& operator=(const Socket& sock);
 		~Socket(void);
 };
+
+
 
 
 #endif
