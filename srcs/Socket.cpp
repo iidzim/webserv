@@ -159,8 +159,15 @@ void Socket::recv_request(int i, Clients *c){
 	// }
 	// std::cout << ">>> Received " << r << " bytes" << "\n" << "|" << _buffer << "|" << std::endl;
 	//& parse the buffer
-	//try 
-	c->connections[_fds[i].fd].first.parse(_buffer, r);
+	try
+	{
+		c->connections[_fds[i].fd].first.parse(_buffer, r);
+	}
+	catch(request::RequestNotValid &e)
+	{
+		c->connections[_fds[i].fd].first.forceStopParsing();
+		std::cout<<e.what()<<std::endl;
+	}
 	//catch => forceStopParsing => isComplete
 	memset(_buffer, 0, sizeof(_buffer));
 	//& when the request is complete switch the type of event to POLLOUT

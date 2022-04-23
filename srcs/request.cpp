@@ -35,6 +35,9 @@
 
 // request::request(){}
 
+
+//! The default, NGINX timeout is 60 seconds => error 504: Gateway Timeout
+
 request::request():  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)//, _server(server)
 {
     _rqst.method = "";
@@ -64,7 +67,6 @@ request& request::operator=(const request& obj)
     _isChunked = obj._isChunked;
     _isBodyExcpected = obj._isBodyExcpected;
     _contentLength = obj._contentLength;
-    // _server = obj._server;
     _data = obj._data;
     return *this;
 }
@@ -77,8 +79,6 @@ void request::deleteOptionalWithespaces(std::string & fieldValue)
         fieldValue.erase(0, 1);
     while (std::isspace(fieldValue[fieldValue.size()-1]))
         fieldValue.erase(fieldValue.size()-1);
-
-   // std::cout<<"["<<fieldValue<<"]"<<std::endl;
 }
 
 bool request::isFieldNameValid(const std::string &str)
