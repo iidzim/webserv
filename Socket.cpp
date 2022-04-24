@@ -6,11 +6,11 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/20 06:10:21 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/23 23:22:01 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/23 23:48:36 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/Socket.hpp"
+#include "./Socket.hpp"
 
 Socket::Socket(){
 

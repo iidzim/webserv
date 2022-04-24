@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/23 23:23:23 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/23 23:52:05 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@ int main(int argc, char** argv){
 	try{
 		if (argc == 1)
 			//* add default configuration file
-			// Socket a;
 			new_sock a;
 		else
 		{
