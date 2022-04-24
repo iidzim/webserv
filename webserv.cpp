@@ -14,7 +14,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "../includes/Request.hpp"
+#include "includes/Server.hpp"
+#include "includes/configurationReader.hpp"
 
 int main(int argc, char **argv)
 {
@@ -43,8 +44,9 @@ int main(int argc, char **argv)
 
 //     char body[1024] = "tesetestest\r\n\r\n";
 //     a.parse(body, 15);
-    std::string value="   ok                    ";
+    std::string value="fff89";
     request a;
-    a.deleteOptionalWithespaces(value);
+    std::cout<< "test "<<a.convertHexToDecimal(value);
+   // a.deleteOptionalWithespaces(value);
    // b.parse();
 }

@@ -223,7 +223,7 @@ void    request::getHeaders(std::istringstream & istr)
             throw request::RequestNotValid();
         }   
     }
-    if (!_isChunked)
+    if (_isBodyExcpected && !_isChunked)
     {
        // std::cout<<"Is not chunked ! I should test negative value of content-length"<<std::endl;
         if (_rqst.headers.find("content-length") == _rqst.headers.end() || !isNumber(_rqst.headers.find("content-length")->second))
@@ -241,25 +241,65 @@ const char* request::RequestNotValid::what()const throw()
     return "Request Not Valid !";
 }
 
-bool request::endBodyisFound(std::string lastLine)
+// bool request::endBodyisFound(std::string lastLine)
+// {
+//     std::string line;
+//     (void)lastLine;
+//     my_file.close();
+//     my_file.open(_rqst.bodyFile, std::ios::in);
+//     while (std::getline(my_file, line))
+//     {
+//         if (line.find("\r") != std::string::npos)
+//         {
+//             return true;
+//         }
+//     }
+//     return false;
+// }
+bool request::isHexadecimalFormat(std::string &number)
 {
-    std::string line;
-    (void)lastLine;
-    my_file.close();
-    my_file.open(_rqst.bodyFile, std::ios::in);
-    while (std::getline(my_file, line))
+    for (size_t i = 0; i < number.size(); i++)
     {
-        if (line.find("\r") != std::string::npos)
+        if (!isxdigit(number[i]))
+            return false;
+    }
+    return true;
+}
+
+size_t request::convertHexToDecimal(std::string value)
+{
+    int base = 1;
+    size_t result = 0;
+
+    for (int i = value.length() - 1; i >= 0 ; i--)
+    {
+        if (value[i] >= '0' && value[i]<='9')
         {
-            return true;
+            result +=(value[i]- 48) * base; 
+            base*= 16;
+        }
+        else if (value[i] >= 'A' && value[i] <= 'F')
+        {
+            result +=(value[i] - 55)* base;
+            base *=16;
+        }
+        else if (value[i] >= 'a' && value[i] <= 'f')
+        {
+            result += (value[i] - 87) * base;
+            base*=16;
         }
     }
-    return false;
+    return result;
 }
 
 s_requestInfo request::getRequest()
 {
     return _rqst;
+}
+
+void request::isBodyValid()
+{
+    _bodyComplete = true;
 }
 
 void request::parse(char *buffer, size_t r)
@@ -274,13 +314,35 @@ void request::parse(char *buffer, size_t r)
             _data+=buffer[i];i++;
         }
     }
-    else if (_headersComplete && _isBodyExcpected && !_isChunked)
+    else if (_headersComplete && _isBodyExcpected)
     {
-        size_t i = 0;
-        while (i < r && _contentLength < stoul(_rqst.headers["content-length"]))
+        if (!_isChunked)
         {
-            _contentLength++;
-            my_file<<buffer[i];i++;
+            size_t i = 0;
+            while (i < r) //&& _contentLength < stoul(_rqst.headers["content-length"]))
+            {
+                if (_contentLength == stoul(_rqst.headers["content-lengh"]))
+                {
+                    _bodyComplete = true;
+                    break;
+                }
+                _contentLength++;
+                my_file<<buffer[i];i++;
+            }
+        }
+        else
+        {
+            size_t i = 0;
+            while(i < r)
+            {
+                _data+=buffer[i]; i++;
+            }
+            my_file<<_data;
+            if (_data.find("0\r\n\r\n") != std::string::npos)
+            {
+                isBodyValid();
+                _data.clear();
+            }
         }
     }
     size_t pos = 0;
@@ -290,36 +352,45 @@ void request::parse(char *buffer, size_t r)
             _headersComplete = true;
             requestLine(istr);
             getHeaders(istr);
-            if (_isBodyExcpected && !_isChunked)
+            if (_isBodyExcpected)
             {
                 std::string leftdata = _data.substr(pos+4, _data.size()-1);
-                //compare contentlength
-                size_t i = 0;
-                while (i < leftdata.size() && _contentLength < stoul(_rqst.headers["content-length"]))
+                if (!_isChunked)
                 {
-                    _contentLength++;
-                    my_file<<leftdata[i];
-                    i++;
+                    size_t i = 0;
+                    while (i < leftdata.size()) //&& _contentLength < stoul(_rqst.headers["content-length"]))
+                    {
+                        if (_contentLength == stoul(_rqst.headers["content-length"]))
+                        {
+                            _bodyComplete = true;
+                            break;
+                        }
+                        _contentLength++;
+                        my_file<<leftdata[i];
+                        i++;
+                    }
+                }
+                else
+                {
+                    my_file<<leftdata;
+                    if (leftdata.find("0\r\n\r\n") != std::string::npos)
+                        isBodyValid();
                 }
             }
             _data.clear();
-            print_request();
     }
     //if body excpected of course
-    if (_headersComplete && _isBodyExcpected && !_bodyComplete)
-    {
-        if (_contentLength >= stoul(_rqst.headers["content-length"]) && !_isChunked)
-        {
-            //I should erase the unwanted data
-            std::cout<<"end body found"<<std::endl;
-            _bodyComplete = true;
-        }
-        else if (_isChunked && endBodyisFound("0\r\n\r\n"))
-        {
-            ///check the size && put the rest in a file
-            _bodyComplete = true;
-        }
-    }
+    // if (_headersComplete && _isBodyExcpected && !_bodyComplete)
+    // {
+    //     if (_contentLength == stoul(_rqst.headers["content-length"]) && !_isChunked)
+    //         _bodyComplete = true;
+    //     // else if (_isChunked && endBodyisFound("0\r\n\r\n"))
+    //     // {
+    //     //     ///check the size && put the rest in a file
+    //     //     //if everything is correct =. else throw error !!
+    //     //         _bodyComplete = true;
+    //     // }
+    // }
 }
 
 void request::print_request()

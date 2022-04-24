@@ -9,6 +9,11 @@
 #include <string>
 #include "configurationReader.hpp"
 #define CRLF "\r\n\r\n"
+#include <cctype>
+#include <cstring>
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
 typedef struct t_requestInfo
 {
     std::string method;
@@ -25,8 +30,6 @@ typedef struct t_requestInfo
 class request
 {
     private:
-        //char            *_buffer;
-      //  int             _rBytes;
         std::string     _data;
         s_requestInfo   _rqst;
         bool            _headersComplete;
@@ -44,9 +47,15 @@ class request
         void putBufferIntoFile();
         bool isBodyExpected(); // based on the parsed data
         bool isFieldNameValid(const std::string &str);
-        bool endBodyisFound(std::string lastLine);
+        //bool endBodyisFound(std::string lastLine);
+        void isBodyValid();
+
+        //! Not implemented yet 
+        bool isHexadecimalFormat(std::string &number); // use xdigit
+        
     public:
         request();
+        size_t convertHexToDecimal(std::string value);
         void deleteOptionalWithespaces(std::string &fieldValue); 
         request(serverInfo server);
         request(const request& obj);
