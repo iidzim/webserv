@@ -9,7 +9,6 @@
 /*   Updated: 2022/04/14 17:42:48 by framdani         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 #ifndef CONFIGURATIONREADER_HPP
 # define CONFIGURATIONREADER_HPP
 #include <iostream>
@@ -29,6 +28,7 @@ typedef struct s_location
 {
     std::string     index;
     std::string     root;
+    std::vector<std::string> allow_methods;
 }               locationInfos;
 
 typedef struct s_server
@@ -56,13 +56,12 @@ class configurationReader
         std::vector<serverInfo>     _virtualServer;
         int                         _state;
         std::ifstream               _infile;
-
-        configurationReader();
         
         bool                                    isValidPath();
         bool                                    isCommentOrEmptyLine(std::string & line);
         std::vector<std::string>                splitbySpace(std::string & line);
         
+        void                                    setAllowedMethods(std::vector<std::string> words, locationInfos &location);
         void                                    setPortHost(std::vector<std::string> words, serverInfo &server);
         void                                    setServerName(std::vector<std::string> words, serverInfo &server);
         void                                    setRoot(std::vector<std::string> words, serverInfo &server, locationInfos &location);
@@ -73,7 +72,10 @@ class configurationReader
         unsigned int                            convertStrIPv4toUnsinedInt(const std::string& IPV4);
         bool                                    hasDuplicatePort();
     public:
+        configurationReader();
         configurationReader(std::string path);
+        configurationReader(const configurationReader &obj);
+        configurationReader& operator=(const configurationReader &obj);
         std::vector<serverInfo>                 getVirtualServer() const;
         void                                    parser();
         class  invalidSyntax: public std::exception 

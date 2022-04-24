@@ -72,6 +72,7 @@ void Server::recv_request(int i, Clients *c){
 	}
 	catch(request::RequestNotValid &e){
 		c->connections[_fds[i].fd].first.forceStopParsing();
+		std::cout<<"******** Request exception ****** "<<e.what()<<std::endl;
 		//! send error response - bad request 400 -
 	}
 	//catch => forceStopParsing => isComplete

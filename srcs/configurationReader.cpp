@@ -4,6 +4,16 @@ configurationReader::configurationReader(){}
 
 configurationReader::configurationReader(std::string path):_path(path), _state(CLOSED) {}
 
+configurationReader::configurationReader(const configurationReader& obj):_path(obj._path), _virtualServer(obj._virtualServer), _state(obj._state)
+{}
+
+configurationReader& configurationReader::operator=(const configurationReader &obj)
+{
+    _path = obj._path;
+    _virtualServer = obj._virtualServer;
+    _state = obj._state;
+    return *this;
+}
 //* listen describes all addresses and ports that should accept connections for the server
 //! if it's missing port by default is 80
 
@@ -54,6 +64,18 @@ void configurationReader::setIndex(std::vector<std::string> words, locationInfos
     location.index = words[1];
 }
 
+void configurationReader::setAllowedMethods(std::vector<std::string> words, locationInfos& location)
+{
+    if (words.size() <= 1 || _state != INLOCATION)
+        throw configurationReader::invalidSyntax();
+    for (size_t i = 1; i < words.size(); i++)
+    {
+        if (words[i].empty())
+            continue;
+        location.allow_methods.push_back(words[i]);
+    }
+}
+
 void configurationReader::setRoot(std::vector<std::string> words, serverInfo& server, locationInfos &location)
 {
     if (words.size() != 2 || _state == CLOSED)
@@ -100,6 +122,7 @@ void clearLocation(locationInfos & location)
 {
     location.index = "";
     location.root = "";
+    location.allow_methods.clear();
 }
 
 void resetServer(serverInfo & server)
@@ -210,6 +233,8 @@ void configurationReader::parser()
                     setErrorPage(words, server);
                 else if (words[0] == "autoindex")
                     setautoIndex(words, server);
+                else if (words[0] == "allow_methods")
+                    setAllowedMethods(words, location);
                 else
                     throw configurationReader::invalidSyntax();
             }
@@ -267,6 +292,12 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
         {      
             o << "index     "<<virtualServer[i].location[k].index<<std::endl;
             o << "root      "<<virtualServer[i].location[k].root<<std::endl;
+            o << "Allowed methods "<<std::endl;
+            for (size_t l = 0; l < virtualServer[i].location[k].allow_methods.size(); l++)
+            {
+                o << virtualServer[i].location[k].allow_methods[l] << " | ";
+            }
+            o << std::endl;
         }
     }
     return o;

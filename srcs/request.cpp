@@ -38,20 +38,29 @@
 
 //! The default, NGINX timeout is 60 seconds => error 504: Gateway Timeout
 
-request::request():  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)//, _server(server)
+request::request()//  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
 {
-    _rqst.method = "";
+    // _rqst.method = "";
+    // _rqst.URI = "";
+    // _rqst.versionHTTP = "";
+    // _rqst.query = "";
+    // _rqst.statusCode = 200;
+    // _contentLength = 0;
+    
+    std::cout<<"request called default !"<<std::endl;
+}
+
+request::request(serverInfo server):  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
+{
+    _server = server;
+     _rqst.method = "";
     _rqst.URI = "";
     _rqst.versionHTTP = "";
     _rqst.query = "";
     _rqst.statusCode = 200;
     _contentLength = 0;
     
-    std::cout<<"request called !"<<std::endl;
-}
-request::request(serverInfo server)
-{
-    (void)server;
+    std::cout<<"request called with parameter!"<<std::endl;
 }
 
 request::request(const request& obj)
@@ -68,6 +77,7 @@ request& request::operator=(const request& obj)
     _isBodyExcpected = obj._isBodyExcpected;
     _contentLength = obj._contentLength;
     _data = obj._data;
+    _server = obj._server;
     return *this;
 }
 
@@ -335,6 +345,7 @@ bool request::isComplete()
     if (_headersComplete && (_bodyComplete || !_isBodyExcpected))
     {
         my_file.close();
+        print_request();
         return true;
     }
     return false;
