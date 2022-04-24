@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/19 03:41:20 by oel-yous          #+#    #+#             */
-/*   Updated: 2022/04/23 00:58:38 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/24 06:29:11 by viet             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,8 @@
 Response::Response(): _headers(""), _body("") {
 }
 
-Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()) {
-    std::cout << " port = " << s.port << std::endl;
+Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s) {
+    // std::cout << " port = " << s.port << std::endl;
 }
 
 Response::Response(request req):  _headers(""), _body(""), _reqInfo(req.getRequest()) {
@@ -26,7 +26,6 @@ Response::Response(request req):  _headers(""), _body(""), _reqInfo(req.getReque
 Response::~Response(){
 
 }
-
 
 std::string Response::setErrorsHeaders(std::string ErrorMsg, std::string cLentgh){
     std::ostringstream headers;
@@ -49,7 +48,9 @@ void Response::errorsResponse(int statCode){
     std::string currPath(getcwd(cwd, sizeof(cwd)));
     int ret;
     
-    _body = currPath + "/../error_pages/" + toString(statCode) + ".html"; 
+    _body = currPath + "/../error_pages/" + toString(statCode) + ".html";
+    if (!isFileExist(_body))
+        _body = ""; // 
     ret = fileSize(_body);
     if (_reqInfo.statusCode == 400)
         _headers = setErrorsHeaders("400 Bad Request", toString(ret));
@@ -57,23 +58,30 @@ void Response::errorsResponse(int statCode){
         _headers = setErrorsHeaders("403 Forbidden", toString(ret));
     else if (_reqInfo.statusCode == 404)
         _headers = setErrorsHeaders("404 Not Found", toString(ret));
+    else if (_reqInfo.statusCode == 405)
+        _headers = setErrorsHeaders("405 Not Method Not Allowed", toString(ret));
     else if (_reqInfo.statusCode == 500)
         _headers = setErrorsHeaders("500 Internal Server Error", toString(ret));
     else if (_reqInfo.statusCode == 501)
         _headers = setErrorsHeaders("501 Not Implemented", toString(ret));
+    else if (_reqInfo.statusCode == 504)
+        _headers = setErrorsHeaders("504 gateaway timeout", toString(ret));
     else if (_reqInfo.statusCode == 505)
         _headers = setErrorsHeaders("505 HTTP Version Not Supported", toString(ret));
-    _iskeepAlive = false; // connection closed
-}
-
-void Response::PostMethod(){
-    
+    _iskeepAlive = true; // connection closed
 }
 
 
-void Response::GetMethod(){
+void Response::GetandPostMethod(){
     std::ostringstream headers;
-    // std::string mimeType;
+    std::map<std::string, std::string> mimetype(_mime.getTypes());
+    std::string mType;
+    std::map<std::string, std::string>::iterator it = mimetype.find(".html");
+    
+    if (it != mimetype.end())
+        mType = it->second;
+    else
+        mType = "text/html";
     std::string connect = _reqInfo.headers.find("Connection")->second;
     if (connect == "keep-alive") {
         connect = "Keep-Alive";
@@ -83,10 +91,7 @@ void Response::GetMethod(){
         connect = "Closed";
         _iskeepAlive = false;
     }
-    // mimeType = findMimeType(_fileName);
-    headers << "HTTP/1.1 200 OK\r\nContent-type: ";
-    // headers << mimeType;
-    headers << "\r\nContent-lenght: " << fileSize(_fileName) <<  "\r\nConnection: " <<  connect <<  "\r\n\r\n";
+    headers << "HTTP/1.1 200 OK\r\nContent-type: " << mType << "\r\nConnection: " <<  connect <<  "\r\n\r\n";
     _headers = headers.str();
 }
 
@@ -117,27 +122,31 @@ void Response::DeleteMethod(){
 
 
 
-void Response::stringfyHeaders(configurationReader const & conf){
-    std::vector<serverInfo> confInfo = conf.getVirtualServer();
-    _fileName = confInfo[0].root + "/" + _reqInfo.URI;
-    _body = _reqInfo.bodyFile;
+void Response::stringfyHeaders(){
+    if (_reqInfo.URI == "/"){
+        _fileName = _servInfo.root + "/" + "index.html";
+        _body = _fileName;
+    }
+    else{
+        _fileName = _servInfo.root + "/" + _reqInfo.URI;
+        _body = _reqInfo.bodyFile;
+        
+    }
     if (!isFileExist(_fileName)){
         errorsResponse(404);
         return ;
     }
-    if (_reqInfo.method == "GET")
-        GetMethod();
-    else if (_reqInfo.method == "POST")
-        PostMethod();
+    if (_reqInfo.method == "GET" || _reqInfo.method == "POST")
+        GetandPostMethod();
     else
         DeleteMethod();
 }
 
-std::pair<std::string, std::string> Response::get_response(configurationReader const &conf){
+std::pair<std::string, std::string> Response::get_response(){
     if (_reqInfo.statusCode != 200)
         errorsResponse(_reqInfo.statusCode);
     else
-        stringfyHeaders(conf);
+        stringfyHeaders();
    return (std::make_pair(_headers, _body));
 }
 
@@ -149,14 +158,11 @@ std::string Response::getHeaders(){
     return _headers;
 }
 
-// std::string findMimeType(std::string filename){
-//     return "i still need to implement this one";
-// }
+
 
 int Response::fileSize(std::string fileName){
     int fd = open(fileName.c_str(), O_RDONLY);
     int ret = 0;
-
     if (fd >= 0){
         ret = lseek(fd, 0, SEEK_END);
         lseek(fd, 0, SEEK_SET);

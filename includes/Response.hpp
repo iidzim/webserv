@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/08 16:51:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/23 00:59:07 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/24 06:22:29 by viet             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,35 +22,34 @@
 #include "configurationReader.hpp"
 #include "Request.hpp"
 #include <sys/wait.h>
+#include "mimeTypes.hpp"
+#include "configurationReader.hpp"
 
 class Response{
 
     private:
-        std::string                     _headers;
-        std::string                     _body;
-        std::string                     _contentType;
-        std::string                     _path;
-        std::string                     _connection;
-        std::string                     _fileName;
-        bool                            _iskeepAlive;
-        s_requestInfo                   _reqInfo;
-        
+        std::string                         _headers;
+        std::string                         _body;
+        std::string                         _fileName;
+        bool                                _iskeepAlive;
+        s_requestInfo                       _reqInfo;
+        mimeTypes                            _mime;
+        serverInfo                          _servInfo;
     public:
         Response();
         Response(request req, serverInfo serv);
         Response(request req);
         ~Response();
-        std::pair<std::string, std::string> get_response(configurationReader const &);
+        std::pair<std::string, std::string> get_response();
         std::string setErrorsHeaders(std::string , std::string);
-        void stringfyHeaders(configurationReader const &);
+        void stringfyHeaders();
         void errorsResponse(int);
         int getContentlength();
         std::string getBody();
         std::string getHeaders();
-        void PostMethod();
-        void GetMethod();
+        void GetandPostMethod();
         void DeleteMethod();
-        bool IsKeepAlive();//! ra definit function hna ghi bach tcompila ta tatzidiha f .cpp 7it makaynach
+        bool IsKeepAlive();
         int response_size();
         template<class T>
         std::string toString(T);
