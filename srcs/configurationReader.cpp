@@ -122,6 +122,7 @@ void clearLocation(locationInfos & location)
 {
     location.index = "";
     location.root = "";
+    location.uri = "";
     location.allow_methods.clear();
 }
 
@@ -135,8 +136,9 @@ void resetServer(serverInfo & server)
     server.errorPage.second = "";
     server.autoindex = OFF;
     server.serverName.clear();
-    for (size_t i = 0; i < server.location.size(); i++)
-        clearLocation(server.location[i]);
+    server.location.clear();
+    // for (size_t i = 0; i < server.location.size(); i++)
+    //     clearLocation(server.location[i]);
 }
 
 bool configurationReader::isCommentOrEmptyLine(std::string & line)
@@ -189,9 +191,6 @@ void configurationReader::parser()
                 if (words[1] != "{" || words.size() != 2 || _state == INSIDESERVER)
                         throw configurationReader::invalidSyntax();
                     _state = INSIDESERVER;
-                    
-                 //   server.port = "80"; //default port
-                  //  server.host = "0.0.0.0"; //default host
                 }
                 else if (words[0] == "}" && words.size() == 1)
                 {
@@ -227,6 +226,7 @@ void configurationReader::parser()
                 {
                     if (words.size() != 3 || words[2] != "{" || _state != INSIDESERVER)
                         throw configurationReader::invalidSyntax();
+                    location.uri = words[1];
                     _state = INLOCATION;
                 }  
                 else if (words[0] == "error_page")
@@ -289,7 +289,8 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
         std::cout<<std::endl;
         o << "[Location]    "<<std::endl;
         for (size_t k = 0; k < virtualServer[i].location.size(); k++)
-        {      
+        {
+            o << "URI "<<virtualServer[i].location[k].uri <<std::endl;
             o << "index     "<<virtualServer[i].location[k].index<<std::endl;
             o << "root      "<<virtualServer[i].location[k].root<<std::endl;
             o << "Allowed methods "<<std::endl;

@@ -25,7 +25,8 @@
 # define OFF false
 
 typedef struct s_location
-{
+{   
+    std::string     uri;
     std::string     index;
     std::string     root;
     std::vector<std::string> allow_methods;
