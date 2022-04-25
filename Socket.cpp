@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mac <mac@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/20 06:10:21 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/23 23:48:36 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/25 07:12:32 by mac              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -218,7 +218,7 @@ void socketio(std::vector<serverInfo> server_conf, std::vector<int>	_socket_fd, 
 				j = _fds.size() - _socket_fd.size() + i;
 				c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, server_conf[j]);
 				send_response(i, &c);
-				std::cout << "Done" << std::endl;
+				// std::cout << "Done" << std::endl;
 			}
 			else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
 				close(_fds[i].fd);

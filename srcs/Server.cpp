@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mac <mac@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/25 00:37:22 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/25 17:51:20 by mac              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,6 +115,7 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 
 	Clients c;
 	size_t j = 0;
+	int l;
 
     while (1){
 
@@ -153,8 +154,8 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 			else if (_fds[i].revents & POLLOUT){
 				j = i - _fds.size() + _socket_fd.size();
 				c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, server_conf[j]);
-				send_response(i, &c);
-				std::cout << "Done" << std::endl;
+				send_response(i, &c, &l);
+				// std::cout << "Done" << std::endl;
 			}
 			else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
 				close(_fds[i].fd);
@@ -205,27 +206,33 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 // }
 
 // &&&&&&&&&&&&&&&&&
-bool Server::send_response(int i, Clients *c){
+bool Server::send_response(int i, Clients *c, int *l){
 
-	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
+	(void)l;
 	std::cout << "Sending response" << std::endl;
+	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
 	std::fstream file;
 	file.open(rep.second, std::ios::in | std::ios::binary);
-	std::cout << "file name = " << rep.second << std::endl;
 	if (!file.is_open()){
 		std::cout << "Failed to open file - no such file" << std::endl;
 		return false;
 	}
 	int s, len = 0;
 	char buff[1024];
+
 	std::cout << "File opened" << std::endl;
 	std::streampos begin, end;
 	begin = file.tellg();
 	file.seekg(0, std::ios::end);
 	end = file.tellg();
-	int size = end - begin;
+	int file_size = end - begin;
 	file.seekg(0, std::ios::beg);
-	// std::cout << "File size = " << size << std::endl;
+
+	std::cout << "File size = " << file_size << std::endl;
+	std::cout << "headers size = " << rep.first.size() << std::endl;
+	int size = file_size + rep.first.size();
+	std::cout << "total size = " << size << std::endl;
+	
 	while (1){ // ! blocking send
 		if (file.eof()){
 			std::cout << "End Of File" << std::endl;
@@ -233,43 +240,68 @@ bool Server::send_response(int i, Clients *c){
 		}
 		int lps = size - len;
 		std::cout << "lps >>>>>>>>>> " << lps << " - len = " << len << std::endl;
-		// if ((size_t)lps >= sizeof(buff)){
+		if ((size_t)lps >= sizeof(buff)){ //? if total_size > 1024
 			std::cout << "here111111\n";
-			file.read(buff, sizeof(buff));
-			s = send(_fds[i].fd, buff, sizeof(buff), 0);
-			if (s < 0){
-				close(_fds[i].fd);
-				_fds.erase(_fds.begin() + i);
-				std::cout << "hereeee\n";
-				break;
+			if ((size_t)len < rep.first.size() && sizeof(buff) > rep.first.size()){ //? headers not send yet
+
+				std::cout << "send headers" << std::endl;
+				char bf[sizeof(buff) - (rep.first.size() - len)];
+				file.read(bf, sizeof(bf));
+				(rep.first.substr(len)).append(bf);
+				s = send(_fds[i].fd, rep.first.c_str(), sizeof(rep.first), 0);
+				std::cout << "**********************************************" << s << std::endl;
+				memset(bf, 0, sizeof(bf));
 			}
-		// }
-		// else{
-		// 	std::cout << "Last packet size = " << lps << std::endl;
-		// 	std::cout << "here222222\n";
-		// 	file.read(buff, lps);
-		// 	s = send(_fds[i].fd, buff, sizeof(lps), 0);
-		// 	std::cout << "s = " << s << std::endl;
-		// 	if (s < 0){
-		// 		close(_fds[i].fd);
-		// 		_fds.erase(_fds.begin() + i);
-		// 		std::cout << "hereeee\n";
-		// 		break;
-		// 	}
-		// }
+			else{
+				std::cout << "send body" << std::endl;
+				file.read(buff, sizeof(buff));
+				s = send(_fds[i].fd, buff, sizeof(buff), 0);
+				memset(buff, 0, sizeof(buff));
+			}
+		}
+		else{ //? if total_size(lps) < 1024
+			std::cout << "Last packet size = " << lps << std::endl;
+			if ((size_t)len < rep.first.size()){
+
+				std::cout << "send headers" << std::endl;
+				int x = lps - (rep.first.size() - len);
+				char bf[x];
+				file.read(bf, sizeof(bf));
+				if (!file)
+					std::cout << "read failure" << std::endl;
+				// std::cout << "bf -> " << bf << std::endl;  //& bf 
+				rep.first.substr(len).append(bf); //! dynamic-stack-buffer-overflow
+				s = send(_fds[i].fd, rep.first.c_str(), sizeof(rep.first), 0);
+				std::cout << "**********************************************" << s << std::endl;
+				memset(bf, 0, sizeof(bf));
+			}
+			else{
+				std::cout << "send body" << std::endl;
+				char bu[lps - len];
+				file.read(bu, sizeof(bu));
+				s = send(_fds[i].fd, bu, sizeof(bu), 0);
+				memset(bu, 0, sizeof(bu));
+			}
+		}
+		if (s < 0){
+			close(_fds[i].fd);
+			_fds.erase(_fds.begin() + i);
+			std::cout << "hereeee s < 0\n";
+			break;
+		}
 		if (s == 0){
 			std::cout << "- Connection closed" << std::endl;
 			return true;
 		}
+		
         len += s;
-        //+ move cursor to pos[len] and continue reading from that position
-        file.seekg(len, std::ios::beg);
-        // if (len >= c->connections[_fds[i].fd].second.response_size()){
+        //+ move cursor to pos[len] and continue reading from that position //? if we sent all headers
+		if ((size_t)len > rep.first.size())
+        	file.seekg((len - rep.first.size()), std::ios::beg);
         if (len >= size){
 			std::cout << "here3333333\n";
 			break;
 		}
-		memset(buff, 0, sizeof(buff));
 	}
 	std::cout << "------------------- len = " << len << std::endl;
 	file.close();
@@ -288,3 +320,40 @@ bool Server::send_response(int i, Clients *c){
 	std::cout << "client removed" << std::endl;
 	return true;
 }
+
+
+// bool Server::send_response(int i, Clients *c, int *len){
+
+// 	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
+	
+// 	// std::cout << "***** rep.sec ===== "<< rep.first << std::endl;
+// 	// std::cout << "***** rep.sec ===== "<< rep.second << std::endl;
+// 	std::cout << "Sending response" << std::endl;
+// 	std::string headers = rep.first;
+// 	int header_size = rep.first.size();
+// 	std::cout << "headers size = " << header_size << std::endl;
+// 	while (1)
+// 	{
+// 		int s = send(_fds[i].fd, headers.c_str(), sizeof(headers.c_str()), 0);
+// 		std::cout << "s = " << s << std::endl;
+// 		if (s <= 0){
+// 			close(_fds[i].fd);
+// 			std::cout << "send failed" << std::endl;
+// 			return false;
+// 		}
+// 		*len += s;
+// 		std::cout << "len = " << *len << std::endl;
+// 		// std::cout << headers << std::endl;
+// 		if (*len < header_size){
+// 			headers.substr(*len);
+// 		}
+// 		// std::cout << headers << std::endl;
+		
+// 		if (*len >= header_size){
+// 			std::cout << "headers sent √" << std::endl;
+// 			_fds[i].events = POLLIN;
+// 			break;
+// 		}
+// 	}
+// 	return true;
+// }

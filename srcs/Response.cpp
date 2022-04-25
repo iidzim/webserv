@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mac <mac@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/19 03:41:20 by oel-yous          #+#    #+#             */
-/*   Updated: 2022/04/25 01:58:07 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/04/25 07:28:08 by mac              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,15 +70,15 @@ void Response::errorsResponse(int statCode){
 
 void Response::GetandPostMethod(){
     std::ostringstream headers;
-    std::map<std::string, std::string> mimetype(_mime.getTypes());
+    // std::map<std::string, std::string> mimetype(_mime.getTypes());
     std::string mType;
-    int pos = _reqInfo.URI.find(".");
-    std::map<std::string, std::string>::iterator it = mimetype.find(_reqInfo.URI.substr(pos));
+    // int pos = _reqInfo.URI.find(".");
+    // std::map<std::string, std::string>::iterator it = mimetype.find(_reqInfo.URI.substr(pos));
     
-    if (it != mimetype.end())
-        mType = it->second;
-    else
-        mType = "text/html";
+    // if (it != mimetype.end())
+    //     mType = it->second;
+    // else
+     mType = "text/html";
     std::string connect = _reqInfo.headers.find("Connection")->second;
     if (connect == "keep-alive") {
         connect = "Keep-Alive";
@@ -88,7 +88,7 @@ void Response::GetandPostMethod(){
         connect = "Closed";
         _iskeepAlive = false;
     }
-    headers << "HTTP/1.1 200 OK\r\nContent-type: " << mType << "\r\n\r\nContent-length: " << fileSize(_body) <<  "\r\n\r\n";
+    headers << "HTTP/1.1 200 OK\r\nContent-type: " << mType << "\r\nContent-length: " << fileSize(_body) <<  "\r\n\r\n";
     _headers = headers.str();
 }
 
@@ -122,29 +122,30 @@ void Response::DeleteMethod(){
 void Response::stringfyHeaders(){
     std::string root;
     
-    for (int i = 0; i < _servInfo.location.size(); i++){
-        if (_reqInfo.URI == _servInfo.location[i].uri || _reqInfo.URI.find(_servInfo.location.uri) == 0){
-            root = _servInfo.location[i].root;
-            if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods, 
-                _reqInfo.method) == _servInfo.location[i].method.end()){
-                    _servInfo.statusCode = 405;
-                    errorsResponse(405);
-                    return ;
-                }
-            break ;
-        }
-        else
-            root = _servInfo.root;
-    }
+    // for (int i = 0; i < _servInfo.location.size(); i++){
+    //     if (_reqInfo.URI == _servInfo.location[i].uri || _reqInfo.URI.find(_servInfo.location.uri) == 0){
+    //         root = _servInfo.location[i].root;
+    //         if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods, 
+    //             _reqInfo.method) == _servInfo.location[i].method.end()){
+    //                 _servInfo.statusCode = 405;
+    //                 errorsResponse(405);
+    //                 return ;
+    //             }
+    //         break ;
+    //     }
+    //     else
+    //         root = _servInfo.root;
+    // }
     if (_reqInfo.URI == "/"){
-        _fileName = root + "/" + "index.html";
+        _fileName = "/Users/mac/Desktop/webserv/var/www/html/" + toString("index.html");
         _body = _fileName;
     }
     else{
-        _fileName = root + "/" + _reqInfo.URI;
+        _fileName = _servInfo.root + "/" + _reqInfo.URI;
         _body = _reqInfo.bodyFile;
         
     }
+    // std::cout <<  "filename ===== "<< _fileName << "body" <<_body << std::endl;
     if (!isFileExist(_fileName)){
         errorsResponse(404);
         return ;
@@ -160,7 +161,12 @@ std::pair<std::string, std::string> Response::get_response(){
         errorsResponse(_reqInfo.statusCode);
     else
         stringfyHeaders();
-   return (std::make_pair(_headers, _body));
+    std::pair<std::string, std::string> p;
+    p.first = _headers;
+    p.second = _body;
+    // std::cout << "headers in response === " << _headers << "\n";
+    // std::cout << "_body in response === " << _body << "\n";
+   return (p);
 }
 
 std::string Response::getBody(){

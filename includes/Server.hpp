@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mac <mac@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/24 00:08:06 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/25 06:23:26 by mac              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,8 @@ class Server{
 		void socketio(std::vector<serverInfo> server_conf);
 		void accept_connection(int i);
 		void recv_request(int i, Clients *c);
-		bool send_response(int i, Clients *c);
+		// bool send_response(int i, Clients *c);
+		bool send_response(int i, Clients *c, int *len);
 		void close_fd(void);
 
 	public:
