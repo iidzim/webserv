@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/08 16:51:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/24 06:22:29 by viet             ###   ########.fr       */
+/*   Updated: 2022/04/25 01:34:58 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,6 @@ class Response{
     public:
         Response();
         Response(request req, serverInfo serv);
-        Response(request req);
         ~Response();
         std::pair<std::string, std::string> get_response();
         std::string setErrorsHeaders(std::string , std::string);

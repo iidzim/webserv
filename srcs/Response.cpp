@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/19 03:41:20 by oel-yous          #+#    #+#             */
-/*   Updated: 2022/04/24 22:49:29 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/25 01:37:49 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,12 +16,8 @@ Response::Response(): _headers(""), _body("") {
 }
 
 Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s) {
-    // std::cout << " port = " << s.port << std::endl;
 }
 
-Response::Response(request req):  _headers(""), _body(""), _reqInfo(req.getRequest()) {
-
-}
 
 Response::~Response(){
 
@@ -91,7 +87,7 @@ void Response::GetandPostMethod(){
         connect = "Closed";
         _iskeepAlive = false;
     }
-    headers << "HTTP/1.1 200 OK\r\nContent-type: " << mType << "\r\nConnection: " <<  connect <<  "\r\n\r\n";
+    headers << "HTTP/1.1 200 OK\r\nContent-type: " << mType << "\r\n\r\nContent-length: " << fileName(_body) <<  "\r\n\r\n";
     _headers = headers.str();
 }
 
@@ -123,13 +119,28 @@ void Response::DeleteMethod(){
 
 
 void Response::stringfyHeaders(){
+    std::string root;
+    
+    for (int i = 0; i < _servInfo.location.size(); i++){
+        if (_reqInfo.URI == _servInfo.location[i].uri || _reqInfo.URI.find(_servInfo.location.uri) == 0){
+            root = _servInfo.location[i].root;
+            if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods, 
+                _reqInfo.method) == _servInfo.location[i].method.end()){
+                    _servInfo.statusCode = 405;
+                    errorsResponse(405);
+                    return ;
+                }
+            break ;
+        }
+        else
+            root = _servInfo.root;
+    }
     if (_reqInfo.URI == "/"){
-        _fileName = _servInfo.root + "/" + "index.html";
+        _fileName = root + "/" + "index.html";
         _body = _fileName;
-        std::cout << "_body ===== " <<_body << std::endl;
     }
     else{
-        _fileName = _servInfo.root + "/" + _reqInfo.URI;
+        _fileName = root + "/" + _reqInfo.URI;
         _body = _reqInfo.bodyFile;
         
     }
@@ -144,14 +155,10 @@ void Response::stringfyHeaders(){
 }
 
 std::pair<std::string, std::string> Response::get_response(){
-    if (_reqInfo.statusCode != 200){
-
-        std::cout << "hereeeee " << _reqInfo.statusCode << std::endl;
+    if (_reqInfo.statusCode != 200)
         errorsResponse(_reqInfo.statusCode);
-    }
-    else{
+    else
         stringfyHeaders();
-    }
    return (std::make_pair(_headers, _body));
 }
 
