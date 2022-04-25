@@ -6,7 +6,7 @@
 /*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/19 03:41:20 by oel-yous          #+#    #+#             */
-/*   Updated: 2022/04/25 01:40:22 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/04/25 01:58:07 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,8 @@ void Response::GetandPostMethod(){
     std::ostringstream headers;
     std::map<std::string, std::string> mimetype(_mime.getTypes());
     std::string mType;
-    std::map<std::string, std::string>::iterator it = mimetype.find(".html");
+    int pos = _reqInfo.URI.find(".");
+    std::map<std::string, std::string>::iterator it = mimetype.find(_reqInfo.URI.substr(pos));
     
     if (it != mimetype.end())
         mType = it->second;
