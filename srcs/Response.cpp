@@ -6,7 +6,7 @@
 /*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/19 03:41:20 by oel-yous          #+#    #+#             */
-/*   Updated: 2022/04/25 01:37:49 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/04/25 01:40:22 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,7 +87,7 @@ void Response::GetandPostMethod(){
         connect = "Closed";
         _iskeepAlive = false;
     }
-    headers << "HTTP/1.1 200 OK\r\nContent-type: " << mType << "\r\n\r\nContent-length: " << fileName(_body) <<  "\r\n\r\n";
+    headers << "HTTP/1.1 200 OK\r\nContent-type: " << mType << "\r\n\r\nContent-length: " << fileSize(_body) <<  "\r\n\r\n";
     _headers = headers.str();
 }
 
