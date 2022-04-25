@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/19 03:41:20 by oel-yous          #+#    #+#             */
-/*   Updated: 2022/04/24 06:29:11 by viet             ###   ########.fr       */
+/*   Updated: 2022/04/24 22:49:29 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,6 +126,7 @@ void Response::stringfyHeaders(){
     if (_reqInfo.URI == "/"){
         _fileName = _servInfo.root + "/" + "index.html";
         _body = _fileName;
+        std::cout << "_body ===== " <<_body << std::endl;
     }
     else{
         _fileName = _servInfo.root + "/" + _reqInfo.URI;
@@ -143,10 +144,14 @@ void Response::stringfyHeaders(){
 }
 
 std::pair<std::string, std::string> Response::get_response(){
-    if (_reqInfo.statusCode != 200)
+    if (_reqInfo.statusCode != 200){
+
+        std::cout << "hereeeee " << _reqInfo.statusCode << std::endl;
         errorsResponse(_reqInfo.statusCode);
-    else
+    }
+    else{
         stringfyHeaders();
+    }
    return (std::make_pair(_headers, _body));
 }
 

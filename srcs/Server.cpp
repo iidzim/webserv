@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/24 00:13:56 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/25 00:37:22 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,25 +84,25 @@ void Server::recv_request(int i, Clients *c){
 	}
 }
 
-bool Server::send_response(int i, Clients *c){
+// bool Server::send_response(int i, Clients *c){
 
-	(void)c;
-	std::cout << "Sending response" << std::endl;
-	std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
-	int s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
-	if (s <= 0){
-		close(_fds[i].fd);
-		_fds.erase(_fds.begin() + i);
-		std::cout << "here\n";
-		return false;
-	}
-	if (s == 0){
-		std::cout << "- Connection closed" << std::endl;
-		return true;
-	}
-	_fds[i].events = POLLIN;
-	return true;
-}
+// 	(void)c;
+// 	std::cout << "Sending response" << std::endl;
+// 	std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
+// 	int s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
+// 	if (s <= 0){
+// 		close(_fds[i].fd);
+// 		_fds.erase(_fds.begin() + i);
+// 		std::cout << "here\n";
+// 		return false;
+// 	}
+// 	if (s == 0){
+// 		std::cout << "- Connection closed" << std::endl;
+// 		return true;
+// 	}
+// 	_fds[i].events = POLLIN;
+// 	return true;
+// }
 
 void Server::close_fd(void){
 
@@ -205,81 +205,86 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 // }
 
 // &&&&&&&&&&&&&&&&&
-// bool Server::send_response(int i, Clients *c){
+bool Server::send_response(int i, Clients *c){
 
-// 	(void)c;
-// 	std::cout << "Sending response" << std::endl;
-// 	std::fstream file;
-// 	file.open("main.cpp", std::ios::in | std::ios::binary);
-// 	if (!file.is_open()){
-// 		std::cout << "Failed to open file - no such file" << std::endl;
-// 		return false;
-// 	}
-// 	int s, len = 0;
-// 	char buff[1024];
-// 	std::cout << "File opened" << std::endl;
-// 	std::streampos begin, end;
-// 	begin = file.tellg();
-// 	file.seekg(0, std::ios::end);
-// 	end = file.tellg();
-// 	int size = end - begin;
-// 	file.seekg(0, std::ios::beg);
-// 	std::cout << "File size = " << size << std::endl;
-// 	while (1){
-// 		if (file.eof()){
-// 			std::cout << "End Of File" << std::endl;
-// 			break;
-// 		}
-// 		int lps = size - len;
-// 		std::cout << "lps >>>>>>>>>> " << lps << " - len = " << len << std::endl;
-// 		if ((size_t)lps >= sizeof(buff)){
-// 			file.read(buff, sizeof(buff));
-// 			s = send(_fds[i].fd, buff, sizeof(buff), 0);
-// 			if (s < 0){
-// 				close(_fds[i].fd);
-// 				_fds.erase(_fds.begin() + i);
-// 				std::cout << "hereeee\n";
-// 				break;
-// 			}
-// 		}
-// 		else{
-// 			std::cout << "Last packet size = " << lps << std::endl;
-// 			file.read(buff, lps);
-// 			s = send(_fds[i].fd, buff, sizeof(lps), 0);
-// 			if (s < 0){
-// 				close(_fds[i].fd);
-// 				_fds.erase(_fds.begin() + i);
-// 				std::cout << "hereeee\n";
-// 				break;
-// 			}
-// 		}
-// 		if (s == 0){
-// 			std::cout << "- Connection closed" << std::endl;
-// 			return true;
-// 		}
-//         len += s;
-//         //+ move cursor to pos[len] and continue reading from that position
-//         file.seekg(len, std::ios::beg);
-//         // if (len >= c->connections[_fds[i].fd].second.response_size()){
-//         if (len >= size){
-// 			std::cout << "here\n";
-// 			break;
-// 		}
-// 		memset(buff, 0, sizeof(buff));
-// 	}
-// 	std::cout << "------------------- len = " << len << std::endl;
-// 	file.close();
-// 	std::cout << "File closed" << std::endl;
-// 	// close the file if keep_alive is false
-// 	if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
-// 		std::cout << "Closing socket - keepAlive = false" << std::endl;
-// 		_fds.erase(_fds.begin() + i);
-// 	}
-// 	else // when the request is complete switch the type of event to POLLIN
-// 		_fds[i].events = POLLIN;
-// 	close(_fds[i].fd);
-//     //- remove node client from the map
-// 	c->remove_clients(_fds[i].fd);
-// 	std::cout << "client removed" << std::endl;
-// 	return true;
-// }
+	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
+	std::cout << "Sending response" << std::endl;
+	std::fstream file;
+	file.open(rep.second, std::ios::in | std::ios::binary);
+	std::cout << "file name = " << rep.second << std::endl;
+	if (!file.is_open()){
+		std::cout << "Failed to open file - no such file" << std::endl;
+		return false;
+	}
+	int s, len = 0;
+	char buff[1024];
+	std::cout << "File opened" << std::endl;
+	std::streampos begin, end;
+	begin = file.tellg();
+	file.seekg(0, std::ios::end);
+	end = file.tellg();
+	int size = end - begin;
+	file.seekg(0, std::ios::beg);
+	// std::cout << "File size = " << size << std::endl;
+	while (1){ // ! blocking send
+		if (file.eof()){
+			std::cout << "End Of File" << std::endl;
+			break;
+		}
+		int lps = size - len;
+		std::cout << "lps >>>>>>>>>> " << lps << " - len = " << len << std::endl;
+		// if ((size_t)lps >= sizeof(buff)){
+			std::cout << "here111111\n";
+			file.read(buff, sizeof(buff));
+			s = send(_fds[i].fd, buff, sizeof(buff), 0);
+			if (s < 0){
+				close(_fds[i].fd);
+				_fds.erase(_fds.begin() + i);
+				std::cout << "hereeee\n";
+				break;
+			}
+		// }
+		// else{
+		// 	std::cout << "Last packet size = " << lps << std::endl;
+		// 	std::cout << "here222222\n";
+		// 	file.read(buff, lps);
+		// 	s = send(_fds[i].fd, buff, sizeof(lps), 0);
+		// 	std::cout << "s = " << s << std::endl;
+		// 	if (s < 0){
+		// 		close(_fds[i].fd);
+		// 		_fds.erase(_fds.begin() + i);
+		// 		std::cout << "hereeee\n";
+		// 		break;
+		// 	}
+		// }
+		if (s == 0){
+			std::cout << "- Connection closed" << std::endl;
+			return true;
+		}
+        len += s;
+        //+ move cursor to pos[len] and continue reading from that position
+        file.seekg(len, std::ios::beg);
+        // if (len >= c->connections[_fds[i].fd].second.response_size()){
+        if (len >= size){
+			std::cout << "here3333333\n";
+			break;
+		}
+		memset(buff, 0, sizeof(buff));
+	}
+	std::cout << "------------------- len = " << len << std::endl;
+	file.close();
+	std::cout << "File closed" << std::endl;
+	// close the file if keep_alive is false
+	int file_descriptor = _fds[i].fd;
+	if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
+		std::cout << "Closing socket - keepAlive = false" << std::endl;
+		close(_fds[i].fd);
+		_fds.erase(_fds.begin() + i);
+	}
+	else // when the request is complete switch the type of event to POLLIN
+		_fds[i].events = POLLIN;
+    //- remove node client from the map
+	c->remove_clients(file_descriptor);
+	std::cout << "client removed" << std::endl;
+	return true;
+}

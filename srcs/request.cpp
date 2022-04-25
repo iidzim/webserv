@@ -223,15 +223,15 @@ void    request::getHeaders(std::istringstream & istr)
             throw request::RequestNotValid();
         }   
     }
-    if (!_isChunked)
-    {
-       // std::cout<<"Is not chunked ! I should test negative value of content-length"<<std::endl;
-        if (_rqst.headers.find("content-length") == _rqst.headers.end() || !isNumber(_rqst.headers.find("content-length")->second))
-        {
-            _rqst.statusCode = 411; // length required
-            throw request::RequestNotValid();
-        }
-    }
+    // if (!_isChunked)
+    // {
+    //    // std::cout<<"Is not chunked ! I should test negative value of content-length"<<std::endl;
+    //     if (_rqst.headers.find("content-length") == _rqst.headers.end() || !isNumber(_rqst.headers.find("content-length")->second))
+    //     {
+    //         _rqst.statusCode = 411; // length required
+    //         throw request::RequestNotValid();
+    //     }
+    // }
 }
 
 
