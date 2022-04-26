@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mac <mac@student.42.fr>                    +#+  +:+       +#+        */
+/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/19 03:41:20 by oel-yous          #+#    #+#             */
-/*   Updated: 2022/04/25 07:28:08 by mac              ###   ########.fr       */
+/*   Updated: 2022/04/26 00:41:47 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@ Response::Response(): _headers(""), _body("") {
 }
 
 Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s) {
+    _iskeepAlive = true;
 }
 
 
@@ -33,8 +34,10 @@ std::string Response::setErrorsHeaders(std::string ErrorMsg, std::string cLentgh
 
 bool Response::isFileExist(std::string pathName){
     int fd = open(pathName.c_str(), O_RDONLY);
-    if (fd < 0)
+    if (fd < 0){
+        std::cout << "failed to open " << pathName << std::endl;
         return false;
+    }
     close(fd);
     return true;
 }
@@ -70,23 +73,28 @@ void Response::errorsResponse(int statCode){
 
 void Response::GetandPostMethod(){
     std::ostringstream headers;
-    // std::map<std::string, std::string> mimetype(_mime.getTypes());
+    std::map<std::string, std::string> mimetype(_mime.getTypes());
     std::string mType;
-    // int pos = _reqInfo.URI.find(".");
-    // std::map<std::string, std::string>::iterator it = mimetype.find(_reqInfo.URI.substr(pos));
-    
-    // if (it != mimetype.end())
-    //     mType = it->second;
-    // else
-     mType = "text/html";
-    std::string connect = _reqInfo.headers.find("Connection")->second;
-    if (connect == "keep-alive") {
-        connect = "Keep-Alive";
-        _iskeepAlive = true;
+    size_t pos = _reqInfo.URI.find(".");
+    if (pos != std::string::npos){
+        std::map<std::string, std::string>::iterator it2 = mimetype.find(_reqInfo.URI.substr(pos));
+        if (it2 != mimetype.end())
+            mType = it2->second;
+        else
+            mType = "text/html";
     }
-    else {
-        connect = "Closed";
-        _iskeepAlive = false;
+    else
+        mType = "text/html";
+    std::map<std::string, std::string>::iterator it = _reqInfo.headers.find("Connection");
+    if( it != _reqInfo.headers.end()){
+        std::string connect = it->second;
+        if (connect == "keep-alive") {
+            connect = "Keep-Alive";
+        }
+        else {
+            connect = "Closed";
+            _iskeepAlive = false;
+        }
     }
     headers << "HTTP/1.1 200 OK\r\nContent-type: " << mType << "\r\nContent-length: " << fileSize(_body) <<  "\r\n\r\n";
     _headers = headers.str();
@@ -107,7 +115,6 @@ void Response::DeleteMethod(){
         std::string connect =  _reqInfo.headers.find("Connection")->second;;
         if (connect == "keep-alive") {
             connect = "Keep-Alive";
-            _iskeepAlive = true;
         }
         else {
             connect = "Closed";
@@ -122,50 +129,51 @@ void Response::DeleteMethod(){
 void Response::stringfyHeaders(){
     std::string root;
     
-    // for (int i = 0; i < _servInfo.location.size(); i++){
-    //     if (_reqInfo.URI == _servInfo.location[i].uri || _reqInfo.URI.find(_servInfo.location.uri) == 0){
-    //         root = _servInfo.location[i].root;
-    //         if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods, 
-    //             _reqInfo.method) == _servInfo.location[i].method.end()){
-    //                 _servInfo.statusCode = 405;
-    //                 errorsResponse(405);
-    //                 return ;
-    //             }
-    //         break ;
-    //     }
-    //     else
-    //         root = _servInfo.root;
-    // }
+    for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
+        if (_reqInfo.URI == _servInfo.location[i].uri || _reqInfo.URI.find(_servInfo.location[i].uri) == 0){
+            root = _servInfo.location[i].root;
+            if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods.end(), 
+                _reqInfo.method) == _servInfo.location[i].allow_methods.end()){
+                    _reqInfo.statusCode = 405;
+                    errorsResponse(405);
+                    return ;
+                }
+            break ;
+        }
+        else
+            root = _servInfo.root;
+    }
     if (_reqInfo.URI == "/"){
-        _fileName = "/Users/mac/Desktop/webserv/var/www/html/" + toString("index.html");
+        _fileName = root + "/" + toString("index.html");
         _body = _fileName;
     }
     else{
-        _fileName = _servInfo.root + "/" + _reqInfo.URI;
+        _fileName = root +"/" + toString("index.html");
         _body = _reqInfo.bodyFile;
-        
     }
-    // std::cout <<  "filename ===== "<< _fileName << "body" <<_body << std::endl;
-    if (!isFileExist(_fileName)){
+
+    if (isFileExist(_fileName) == false){
+        std::cout << "hereee " << std::endl;
         errorsResponse(404);
         return ;
     }
-    if (_reqInfo.method == "GET" || _reqInfo.method == "POST")
+    if (_reqInfo.method == "GET" || _reqInfo.method == "POST"){
         GetandPostMethod();
+    }
     else
         DeleteMethod();
+
 }
 
 std::pair<std::string, std::string> Response::get_response(){
     if (_reqInfo.statusCode != 200)
         errorsResponse(_reqInfo.statusCode);
-    else
+    else{
         stringfyHeaders();
+    }
     std::pair<std::string, std::string> p;
     p.first = _headers;
     p.second = _body;
-    // std::cout << "headers in response === " << _headers << "\n";
-    // std::cout << "_body in response === " << _body << "\n";
    return (p);
 }
 

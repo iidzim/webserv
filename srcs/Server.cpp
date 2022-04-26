@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mac <mac@student.42.fr>                    +#+  +:+       +#+        */
+/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/25 17:51:20 by mac              ###   ########.fr       */
+/*   Updated: 2022/04/26 00:43:46 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,8 +84,10 @@ void Server::recv_request(int i, Clients *c){
 	}
 }
 
-// bool Server::send_response(int i, Clients *c){
+//! test with this function - static reponse
+// bool Server::send_response(int i, Clients *c, int *l){
 
+// 	(void)l;
 // 	(void)c;
 // 	std::cout << "Sending response" << std::endl;
 // 	std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
@@ -169,7 +171,7 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 	close_fd();
 }
 
-// &&&&&&&&&&&&&&&&&
+// error
 // bool Server::send_response(int i, Clients *c){
 
 // 	// std::cout << "Sending response" << std::endl;
@@ -211,8 +213,14 @@ bool Server::send_response(int i, Clients *c, int *l){
 	(void)l;
 	std::cout << "Sending response" << std::endl;
 	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
+	std::cout << rep.first << " - " << rep.second << std::endl;
+
+	std::string headers = rep.first;
+	std::string filename = rep.second;
+
+	std::cout << "test test" << std::endl;
 	std::fstream file;
-	file.open(rep.second, std::ios::in | std::ios::binary);
+	file.open(filename, std::ios::in | std::ios::binary);
 	if (!file.is_open()){
 		std::cout << "Failed to open file - no such file" << std::endl;
 		return false;
@@ -229,10 +237,10 @@ bool Server::send_response(int i, Clients *c, int *l){
 	file.seekg(0, std::ios::beg);
 
 	std::cout << "File size = " << file_size << std::endl;
-	std::cout << "headers size = " << rep.first.size() << std::endl;
-	int size = file_size + rep.first.size();
+	std::cout << "headers size = " << headers.size() << std::endl;
+	int size = file_size + headers.size();
 	std::cout << "total size = " << size << std::endl;
-	
+
 	while (1){ // ! blocking send
 		if (file.eof()){
 			std::cout << "End Of File" << std::endl;
@@ -242,13 +250,13 @@ bool Server::send_response(int i, Clients *c, int *l){
 		std::cout << "lps >>>>>>>>>> " << lps << " - len = " << len << std::endl;
 		if ((size_t)lps >= sizeof(buff)){ //? if total_size > 1024
 			std::cout << "here111111\n";
-			if ((size_t)len < rep.first.size() && sizeof(buff) > rep.first.size()){ //? headers not send yet
+			if ((size_t)len < headers.size() && sizeof(buff) > headers.size()){ //? headers not send yet
 
 				std::cout << "send headers" << std::endl;
-				char bf[sizeof(buff) - (rep.first.size() - len)];
+				char bf[sizeof(buff) - (headers.size() - len)];
 				file.read(bf, sizeof(bf));
-				(rep.first.substr(len)).append(bf);
-				s = send(_fds[i].fd, rep.first.c_str(), sizeof(rep.first), 0);
+				(headers.substr(len)).append(bf);
+				s = send(_fds[i].fd, headers.c_str(), sizeof(headers), 0);
 				std::cout << "**********************************************" << s << std::endl;
 				memset(bf, 0, sizeof(bf));
 			}
@@ -261,17 +269,19 @@ bool Server::send_response(int i, Clients *c, int *l){
 		}
 		else{ //? if total_size(lps) < 1024
 			std::cout << "Last packet size = " << lps << std::endl;
-			if ((size_t)len < rep.first.size()){
+			if ((size_t)len < headers.size()){
 
 				std::cout << "send headers" << std::endl;
-				int x = lps - (rep.first.size() - len);
+				const int x = lps - (headers.size() - len);
 				char bf[x];
+				std::cout << "x = " << sizeof(bf) << std::endl;
+				// memset(bf, 0, sizeof(bf));
 				file.read(bf, sizeof(bf));
 				if (!file)
 					std::cout << "read failure" << std::endl;
-				// std::cout << "bf -> " << bf << std::endl;  //& bf 
-				rep.first.substr(len).append(bf); //! dynamic-stack-buffer-overflow
-				s = send(_fds[i].fd, rep.first.c_str(), sizeof(rep.first), 0);
+				std::cout << "bf -> " << bf << std::endl;  //& bf
+				headers.substr(len).append(bf); //! dynamic-stack-buffer-overflow
+				s = send(_fds[i].fd, headers.c_str(), sizeof(headers), 0);
 				std::cout << "**********************************************" << s << std::endl;
 				memset(bf, 0, sizeof(bf));
 			}
@@ -296,8 +306,8 @@ bool Server::send_response(int i, Clients *c, int *l){
 		
         len += s;
         //+ move cursor to pos[len] and continue reading from that position //? if we sent all headers
-		if ((size_t)len > rep.first.size())
-        	file.seekg((len - rep.first.size()), std::ios::beg);
+		if ((size_t)len > headers.size())
+        	file.seekg((len - headers.size()), std::ios::beg);
         if (len >= size){
 			std::cout << "here3333333\n";
 			break;
