@@ -6,7 +6,7 @@
 /*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/19 03:41:20 by oel-yous          #+#    #+#             */
-/*   Updated: 2022/04/26 00:41:47 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/04/26 01:11:37 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,16 +47,18 @@ void Response::errorsResponse(int statCode){
     std::string currPath(getcwd(cwd, sizeof(cwd)));
     int ret;
     
-    _body = currPath + "/../error_pages/" + toString(statCode) + ".html";
-    if (!isFileExist(_body))
+    _reqInfo.statusCode = statCode;
+    _body = currPath + "/error_pages/" + toString(statCode) + ".html";
+    if (isFileExist(_body) == false)
         _body = ""; // 
     ret = fileSize(_body);
     if (_reqInfo.statusCode == 400)
         _headers = setErrorsHeaders("400 Bad Request", toString(ret));
     else if (_reqInfo.statusCode == 403)
         _headers = setErrorsHeaders("403 Forbidden", toString(ret));
-    else if (_reqInfo.statusCode == 404)
+    else if (_reqInfo.statusCode == 404){
         _headers = setErrorsHeaders("404 Not Found", toString(ret));
+    }
     else if (_reqInfo.statusCode == 405)
         _headers = setErrorsHeaders("405 Not Method Not Allowed", toString(ret));
     else if (_reqInfo.statusCode == 500)
@@ -67,7 +69,6 @@ void Response::errorsResponse(int statCode){
         _headers = setErrorsHeaders("504 gateaway timeout", toString(ret));
     else if (_reqInfo.statusCode == 505)
         _headers = setErrorsHeaders("505 HTTP Version Not Supported", toString(ret));
-    _iskeepAlive = true; // connection closed
 }
 
 
@@ -130,7 +131,8 @@ void Response::stringfyHeaders(){
     std::string root;
     
     for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
-        if (_reqInfo.URI == _servInfo.location[i].uri || _reqInfo.URI.find(_servInfo.location[i].uri) == 0){
+        if (_reqInfo.URI == _servInfo.location[i].uri || (_reqInfo.URI.find(_servInfo.location[i].uri) == 0 && _servInfo.location[i].uri.size() > 1)) {
+            
             root = _servInfo.location[i].root;
             if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods.end(), 
                 _reqInfo.method) == _servInfo.location[i].allow_methods.end()){
@@ -144,16 +146,13 @@ void Response::stringfyHeaders(){
             root = _servInfo.root;
     }
     if (_reqInfo.URI == "/"){
-        _fileName = root + "/" + toString("index.html");
-        _body = _fileName;
+        _body = root + "/" + toString("index.html");
     }
     else{
-        _fileName = root +"/" + toString("index.html");
-        _body = _reqInfo.bodyFile;
+        _body = root + "/" + _reqInfo.URI;
     }
 
-    if (isFileExist(_fileName) == false){
-        std::cout << "hereee " << std::endl;
+    if (isFileExist(_body) == false){
         errorsResponse(404);
         return ;
     }
