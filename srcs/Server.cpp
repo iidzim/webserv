@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/26 00:43:46 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/27 01:20:28 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,10 +84,15 @@ void Server::recv_request(int i, Clients *c){
 	}
 }
 
-//! test with this function - static reponse
-// bool Server::send_response(int i, Clients *c, int *l){
+void Server::close_fd(void){
 
-// 	(void)l;
+	for (size_t i = 0; i < _fds.size(); i++){
+		shutdown(_fds[i].fd, 2);
+	}
+}
+//! test with this function - static reponse
+// void Server::send_response(int i, Clients *c){
+
 // 	(void)c;
 // 	std::cout << "Sending response" << std::endl;
 // 	std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
@@ -96,37 +101,28 @@ void Server::recv_request(int i, Clients *c){
 // 		close(_fds[i].fd);
 // 		_fds.erase(_fds.begin() + i);
 // 		std::cout << "here\n";
-// 		return false;
+// 		return;
 // 	}
 // 	if (s == 0){
 // 		std::cout << "- Connection closed" << std::endl;
-// 		return true;
+// 		return;
 // 	}
 // 	_fds[i].events = POLLIN;
-// 	return true;
+// 	return;
 // }
 
-void Server::close_fd(void){
-
-	for (size_t i = 0; i < _fds.size(); i++){
-		shutdown(_fds[i].fd, 2);
-	}
-}
 
 void Server::socketio(std::vector<serverInfo> server_conf){
 
 	Clients c;
 	size_t j = 0;
-	int l;
 
     while (1){
 
 		for (size_t i = 0; i < _fds.size(); i++){
 
-			// std::cout << "fds size = " <<_fds.size() << std::endl;
 			std::cout << "Polling ... " << std::endl;
 			int p = poll(&_fds.front(), _fds.size(), -1);
-			// std::cout << "p = " << p << std::endl;
 			if (p < 0){
 				// throw SocketException("Poll failed: Unexpected event occured"); // !! do not exit on error
 				std::cout << "Poll failed: Unexpected event occured" << std::endl;
@@ -145,10 +141,7 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 				if (find(_socket_fd.begin() ,_socket_fd.end(), _fds[i].fd) != _socket_fd.end())
 					accept_connection(i);
 				else{
-					// std::cout << "here\n";
-					// std::cout << "fds.size = " << _fds.size() << " - _socket_fd size = " << _socket_fd.size() << std::endl;
 					j = i - _fds.size() + _socket_fd.size();
-					// std::cout << "j = " << j << std::endl;
 					c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(server_conf[j]), Response())));
 					recv_request(i, &c);
 				}
@@ -156,214 +149,139 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 			else if (_fds[i].revents & POLLOUT){
 				j = i - _fds.size() + _socket_fd.size();
 				c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, server_conf[j]);
-				send_response(i, &c, &l);
-				// std::cout << "Done" << std::endl;
+				send_response(i, &c);
 			}
 			else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
 				break;
 			}
-			// std::cout << "********************\n" << std::endl;
 		}
 	}
 	//? Terminate the connection
 	close_fd();
 }
 
-// error
-// bool Server::send_response(int i, Clients *c){
+void Server::send_response(int i, Clients *c){
 
-// 	// std::cout << "Sending response" << std::endl;
-// 	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
-// 	std::string header = rep.first;
-// 	size_t s = send(_fds[i].fd, rep.first.c_str(), rep.first.length(), 0);
-// 	if (s <= 0){
-// 		c->remove_clients(_fds[i].fd);
-// 		close(_fds[i].fd);
-// 		_fds.erase(_fds.begin() + i);
-// 		return false;
-// 	}
-// 	if (s == rep.first.size()){
-// 		//+ when the request is complete switch the type of event to POLLIN
-// 		_fds[i].events = POLLIN;
-// 		// close(_fds[i].fd);
-// 		// _fds.erase(_fds.begin() + i);
-// 		//+ unlink body_file
-// 		// if (unlink(rep.second.c_str()))
-// 			// std::cout << "Failed to unlink file" << std::endl;
-// 	}
-// 	return true;
-// }
-
-// int Server::file_size(std::fstream file){
-
-// 	std::streampos begin, end;
-// 	begin = file.tellg();
-// 	file.seekg(0, std::ios::end);
-// 	end = file.tellg();
-// 	int size = end - begin;
-// 	file.seekg(0, std::ios::beg);
-// 	return size;
-// }
-
-// &&&&&&&&&&&&&&&&&
-bool Server::send_response(int i, Clients *c, int *l){
-
-	(void)l;
 	std::cout << "Sending response" << std::endl;
 	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
-	std::cout << rep.first << " - " << rep.second << std::endl;
 
-	std::string headers = rep.first;
 	std::string filename = rep.second;
+	std::string headers = rep.first;
+	int hs = headers.size();
 
-	std::cout << "test test" << std::endl;
 	std::fstream file;
 	file.open(filename, std::ios::in | std::ios::binary);
 	if (!file.is_open()){
 		std::cout << "Failed to open file - no such file" << std::endl;
-		return false;
+		return;
 	}
-	int s, len = 0;
-	char buff[1024];
+	int s, len = c->connections[_fds[i].fd].second.get_cursor();
+	char buff[1050];
+	// int cnx_closed = 0;
 
-	std::cout << "File opened" << std::endl;
 	std::streampos begin, end;
 	begin = file.tellg();
 	file.seekg(0, std::ios::end);
 	end = file.tellg();
 	int file_size = end - begin;
 	file.seekg(0, std::ios::beg);
+	int total_size = file_size + hs - len;
+	std::cout << "File size = " << file_size;
+	std::cout << "  - headers size = " << headers.size();
+	std::cout << "  - total size = " << total_size << std::endl;
 
-	std::cout << "File size = " << file_size << std::endl;
-	std::cout << "headers size = " << headers.size() << std::endl;
-	int size = file_size + headers.size();
-	std::cout << "total size = " << size << std::endl;
 
-	while (1){ // ! blocking send
+	if (file.eof()){
+		std::cout << "End Of File" << std::endl;
+		return;
+	}
+	std::cout << "total_size >>>>>>>>>> " << total_size << " - cursor = " << len << std::endl;
+
+	if (len < hs){
+		std::cout << "send headers" << std::endl;
+		file.seekg(0, std::ios::beg);
+		int x;
+		if (total_size > BUFF_SIZE)// && (size_t)hs < BUFF_SIZE)
+			x = BUFF_SIZE - (hs - len);
+		else
+			x = total_size - (hs - len);
+		std::cout << "x = " << x << std::endl;
+		file.read(buff, x);
+		if (!file)
+			std::cout << "read failure !!!!!!!!!!!!!!!" << std::endl;
 		if (file.eof()){
 			std::cout << "End Of File" << std::endl;
-			break;
+			return;
 		}
-		int lps = size - len;
-		std::cout << "lps >>>>>>>>>> " << lps << " - len = " << len << std::endl;
-		if ((size_t)lps >= sizeof(buff)){ //? if total_size > 1024
-			std::cout << "here111111\n";
-			if ((size_t)len < headers.size() && sizeof(buff) > headers.size()){ //? headers not send yet
-
-				std::cout << "send headers" << std::endl;
-				char bf[sizeof(buff) - (headers.size() - len)];
-				file.read(bf, sizeof(bf));
-				(headers.substr(len)).append(bf);
-				s = send(_fds[i].fd, headers.c_str(), sizeof(headers), 0);
-				std::cout << "**********************************************" << s << std::endl;
-				memset(bf, 0, sizeof(bf));
-			}
-			else{
-				std::cout << "send body" << std::endl;
-				file.read(buff, sizeof(buff));
-				s = send(_fds[i].fd, buff, sizeof(buff), 0);
-				memset(buff, 0, sizeof(buff));
-			}
-		}
-		else{ //? if total_size(lps) < 1024
-			std::cout << "Last packet size = " << lps << std::endl;
-			if ((size_t)len < headers.size()){
-
-				std::cout << "send headers" << std::endl;
-				const int x = lps - (headers.size() - len);
-				char bf[x];
-				std::cout << "x = " << sizeof(bf) << std::endl;
-				// memset(bf, 0, sizeof(bf));
-				file.read(bf, sizeof(bf));
-				if (!file)
-					std::cout << "read failure" << std::endl;
-				std::cout << "bf -> " << bf << std::endl;  //& bf
-				headers.substr(len).append(bf); //! dynamic-stack-buffer-overflow
-				s = send(_fds[i].fd, headers.c_str(), sizeof(headers), 0);
-				std::cout << "**********************************************" << s << std::endl;
-				memset(bf, 0, sizeof(bf));
-			}
-			else{
-				std::cout << "send body" << std::endl;
-				char bu[lps - len];
-				file.read(bu, sizeof(bu));
-				s = send(_fds[i].fd, bu, sizeof(bu), 0);
-				memset(bu, 0, sizeof(bu));
-			}
-		}
-		if (s < 0){
-			close(_fds[i].fd);
-			_fds.erase(_fds.begin() + i);
-			std::cout << "hereeee s < 0\n";
-			break;
-		}
-		if (s == 0){
-			std::cout << "- Connection closed" << std::endl;
-			return true;
-		}
-		
-        len += s;
-        //+ move cursor to pos[len] and continue reading from that position //? if we sent all headers
-		if ((size_t)len > headers.size())
-        	file.seekg((len - headers.size()), std::ios::beg);
-        if (len >= size){
-			std::cout << "here3333333\n";
-			break;
-		}
+		std::string str = headers.substr(len);
+		str.append(buff);
+		s = send(_fds[i].fd, str.c_str(), sizeof(str), 0);
+		std::cout << "*****************************************" << s << std::endl;
+		memset(buff, 0, BUFF_SIZE);
 	}
-	std::cout << "------------------- len = " << len << std::endl;
-	file.close();
-	std::cout << "File closed" << std::endl;
-	// close the file if keep_alive is false
-	int file_descriptor = _fds[i].fd;
-	if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
-		std::cout << "Closing socket - keepAlive = false" << std::endl;
+	else{
+		std::cout << "send body" << std::endl;
+    	file.seekg((len - hs), std::ios::beg);
+		int x;
+		if (total_size > BUFF_SIZE)
+			x = BUFF_SIZE;
+		else
+			x = file_size - (len - hs);
+		std::cout << "x = " << x << std::endl;
+		file.read(buff, x);
+		if (!file)
+			std::cout << "read failure" << std::endl;
+		s = send(_fds[i].fd, buff, BUFF_SIZE, 0);
+		std::cout << "**********************************************" << s << std::endl;
+		memset(buff, 0, BUFF_SIZE);
+	}
+    len += s;
+	std::cout << "cursor ==== " << len << std::endl;
+	if (s < 0){
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
+		std::cout << "hereeee s < 0\n";
+		return;
 	}
-	else // when the request is complete switch the type of event to POLLIN
-		_fds[i].events = POLLIN;
-    //- remove node client from the map
-	c->remove_clients(file_descriptor);
-	std::cout << "client removed" << std::endl;
-	return true;
+	if (s == 0){
+		std::cout << "- Connection closed" << std::endl;
+		return;
+	}
+    // if (len >= total_size){
+	if (c->connections[_fds[i].fd].second.is_complete(len)){
+		std::cout << "response is complete\n";
+		int file_descriptor = _fds[i].fd;
+		if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
+			std::cout << "Closing socket - keepAlive = false" << std::endl;
+			close(_fds[i].fd);
+			_fds.erase(_fds.begin() + i);
+		}
+		else
+			_fds[i].events = POLLIN;
+    	//- remove node client from the map
+		c->remove_clients(file_descriptor);
+		std::cout << "client removed" << std::endl;
+		//& unlink file if necessary
+		// unlink(filename.c_str());
+	}
+	file.close();
+	std::cout << "File closed" << std::endl;
 }
 
+// bool Response::is_complete(int len){
 
-// bool Server::send_response(int i, Clients *c, int *len){
-
-// 	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
-	
-// 	// std::cout << "***** rep.sec ===== "<< rep.first << std::endl;
-// 	// std::cout << "***** rep.sec ===== "<< rep.second << std::endl;
-// 	std::cout << "Sending response" << std::endl;
-// 	std::string headers = rep.first;
-// 	int header_size = rep.first.size();
-// 	std::cout << "headers size = " << header_size << std::endl;
-// 	while (1)
-// 	{
-// 		int s = send(_fds[i].fd, headers.c_str(), sizeof(headers.c_str()), 0);
-// 		std::cout << "s = " << s << std::endl;
-// 		if (s <= 0){
-// 			close(_fds[i].fd);
-// 			std::cout << "send failed" << std::endl;
-// 			return false;
-// 		}
-// 		*len += s;
-// 		std::cout << "len = " << *len << std::endl;
-// 		// std::cout << headers << std::endl;
-// 		if (*len < header_size){
-// 			headers.substr(*len);
-// 		}
-// 		// std::cout << headers << std::endl;
-		
-// 		if (*len >= header_size){
-// 			std::cout << "headers sent √" << std::endl;
-// 			_fds[i].events = POLLIN;
-// 			break;
-// 		}
-// 	}
-// 	return true;
+// 	std::fstream file;
+// 	file.open(_fileName, std::ios::in | std::ios::binary);
+// 	std::cout << "File opened" << std::endl;
+// 	std::streampos begin, end;
+// 	begin = file.tellg();
+// 	file.seekg(0, std::ios::end);
+// 	end = file.tellg();
+// 	int file_size = end - begin;
+// 	file.seekg(0, std::ios::beg);
+// 	if (len >= file_size + _headers.size())
+// 		return true;
+// 	return false;
 // }

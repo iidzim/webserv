@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
+/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/19 03:41:20 by oel-yous          #+#    #+#             */
-/*   Updated: 2022/04/26 00:41:47 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/04/27 01:10:30 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 Response::Response(): _headers(""), _body("") {
 }
 
-Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s) {
+Response::Response(request req, serverInfo s): _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
     _iskeepAlive = true;
 }
 
@@ -213,4 +213,28 @@ int Response::response_size(){
 
 bool Response::IsKeepAlive(){
     return _iskeepAlive;
-} 
+}
+
+
+//!!!!!!!!!!!!
+bool Response::is_complete(int len){
+
+	std::fstream file;
+	file.open(_fileName, std::ios::in | std::ios::binary);
+	std::cout << "File opened" << std::endl;
+	std::streampos begin, end;
+	begin = file.tellg();
+	file.seekg(0, std::ios::end);
+	end = file.tellg();
+	int file_size = end - begin;
+	file.seekg(0, std::ios::beg);
+    _cursor += len;
+    std::cout << "sending ... " << _cursor << std::endl;
+	if ((size_t)_cursor >= file_size + _headers.size())
+		return true;
+	return false;
+}
+
+int Response::get_cursor(){
+    return _cursor;
+}

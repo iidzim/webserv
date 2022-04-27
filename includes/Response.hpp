@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
+/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/08 16:51:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/25 01:34:58 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/04/27 01:10:20 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ class Response{
         s_requestInfo                       _reqInfo;
         mimeTypes                            _mime;
         serverInfo                          _servInfo;
+        int                                 _cursor;
     public:
         Response();
         Response(request req, serverInfo serv);
@@ -55,6 +56,10 @@ class Response{
         bool isFileExist(std::string );
         std::string findMimeType(std::string);
         int fileSize(std::string);
+
+        //!!
+        bool is_complete(int len);
+        int get_cursor();
 
 };
 
