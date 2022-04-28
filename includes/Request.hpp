@@ -40,6 +40,10 @@ class request
         size_t          _contentLength;
         serverInfo      _server;
 
+        std::fstream     tmpFile;
+
+        size_t          _originContentLength;
+
         void requestLine(std::istringstream & istr); // Method URI VERSION
         void getHeaders(std::istringstream & str); //all the available headers in MJS
         void clearRequest(); //! not sure if necessary
