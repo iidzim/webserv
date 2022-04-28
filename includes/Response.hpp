@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/08 16:51:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/27 01:10:20 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/28 02:44:29 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,12 +55,12 @@ class Response{
         std::string toString(T);
         bool isFileExist(std::string );
         std::string findMimeType(std::string);
-        int fileSize(std::string);
 
         //!!
-        bool is_complete(int len);
+        bool is_complete(int len, std::string filename);
         int get_cursor();
 
 };
 
+        int fileSize(std::string);
 #endif

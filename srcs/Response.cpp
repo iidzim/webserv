@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/19 03:41:20 by oel-yous          #+#    #+#             */
-/*   Updated: 2022/04/27 01:10:30 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/28 02:45:06 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -185,9 +185,7 @@ std::string Response::getHeaders(){
     return _headers;
 }
 
-
-
-int Response::fileSize(std::string fileName){
+int fileSize(std::string fileName){
     int fd = open(fileName.c_str(), O_RDONLY);
     int ret = 0;
     if (fd >= 0){
@@ -217,21 +215,12 @@ bool Response::IsKeepAlive(){
 
 
 //!!!!!!!!!!!!
-bool Response::is_complete(int len){
+bool Response::is_complete(int len, std::string filename){
 
-	std::fstream file;
-	file.open(_fileName, std::ios::in | std::ios::binary);
-	std::cout << "File opened" << std::endl;
-	std::streampos begin, end;
-	begin = file.tellg();
-	file.seekg(0, std::ios::end);
-	end = file.tellg();
-	int file_size = end - begin;
-	file.seekg(0, std::ios::beg);
     _cursor += len;
     std::cout << "sending ... " << _cursor << std::endl;
-	if ((size_t)_cursor >= file_size + _headers.size())
-		return true;
+	if ((size_t)_cursor >= fileSize(filename) + _headers.size())
+        return true;
 	return false;
 }
 

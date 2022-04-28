@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/27 01:20:28 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/28 02:43:47 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,91 +166,63 @@ void Server::send_response(int i, Clients *c){
 
 	std::cout << "Sending response" << std::endl;
 	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
-
 	std::string filename = rep.second;
 	std::string headers = rep.first;
-	int hs = headers.size();
-
 	std::fstream file;
 	file.open(filename, std::ios::in | std::ios::binary);
-	if (!file.is_open()){
+	int o = open(filename.c_str(), O_RDONLY);
+	if (!file.is_open() || o < 0){
 		std::cout << "Failed to open file - no such file" << std::endl;
 		return;
 	}
-	int s, len = c->connections[_fds[i].fd].second.get_cursor();
 	char buff[1050];
-	// int cnx_closed = 0;
-
-	std::streampos begin, end;
-	begin = file.tellg();
-	file.seekg(0, std::ios::end);
-	end = file.tellg();
-	int file_size = end - begin;
-	file.seekg(0, std::ios::beg);
-	int total_size = file_size + hs - len;
-	std::cout << "File size = " << file_size;
-	std::cout << "  - headers size = " << headers.size();
-	std::cout << "  - total size = " << total_size << std::endl;
-
+	int s, x, len = c->connections[_fds[i].fd].second.get_cursor();
+	int total_size = fileSize(filename) + headers.size() - len;
+	std::cout << "fd = " << _fds[i].fd << " - total_size >>>>>>>>>> " << total_size << " - cursor = " << len << std::endl;
 
 	if (file.eof()){
 		std::cout << "End Of File" << std::endl;
 		return;
 	}
-	std::cout << "total_size >>>>>>>>>> " << total_size << " - cursor = " << len << std::endl;
+	if ((size_t)len < headers.size()){
 
-	if (len < hs){
 		std::cout << "send headers" << std::endl;
-		file.seekg(0, std::ios::beg);
-		int x;
-		if (total_size > BUFF_SIZE)// && (size_t)hs < BUFF_SIZE)
-			x = BUFF_SIZE - (hs - len);
+		lseek(o, 0, SEEK_SET);
+		if (total_size > BUFF_SIZE)// && headers.size() < BUFF_SIZE)
+			x = BUFF_SIZE - (headers.size() - len);
 		else
-			x = total_size - (hs - len);
+			x = total_size - (headers.size() - len);
 		std::cout << "x = " << x << std::endl;
 		file.read(buff, x);
 		if (!file)
-			std::cout << "read failure !!!!!!!!!!!!!!!" << std::endl;
-		if (file.eof()){
-			std::cout << "End Of File" << std::endl;
-			return;
-		}
-		std::string str = headers.substr(len);
-		str.append(buff);
+			std::cout << "read failure !!!!" << std::endl;
+		std::string str = (headers.substr(len)).append(buff);
 		s = send(_fds[i].fd, str.c_str(), sizeof(str), 0);
-		std::cout << "*****************************************" << s << std::endl;
 		memset(buff, 0, BUFF_SIZE);
 	}
 	else{
 		std::cout << "send body" << std::endl;
-    	file.seekg((len - hs), std::ios::beg);
-		int x;
+		lseek(o, (len - headers.size()), SEEK_SET);
 		if (total_size > BUFF_SIZE)
 			x = BUFF_SIZE;
 		else
-			x = file_size - (len - hs);
+			x = fileSize(filename) - (len - headers.size());
 		std::cout << "x = " << x << std::endl;
 		file.read(buff, x);
 		if (!file)
 			std::cout << "read failure" << std::endl;
 		s = send(_fds[i].fd, buff, BUFF_SIZE, 0);
-		std::cout << "**********************************************" << s << std::endl;
 		memset(buff, 0, BUFF_SIZE);
 	}
     len += s;
-	std::cout << "cursor ==== " << len << std::endl;
-	if (s < 0){
+	if (s <= 0){
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
-		std::cout << "hereeee s < 0\n";
-		return;
-	}
-	if (s == 0){
-		std::cout << "- Connection closed" << std::endl;
+		std::cout << "s <= 0\n";
 		return;
 	}
     // if (len >= total_size){
-	if (c->connections[_fds[i].fd].second.is_complete(len)){
+	if (c->connections[_fds[i].fd].second.is_complete(len, filename)){
 		std::cout << "response is complete\n";
 		int file_descriptor = _fds[i].fd;
 		if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
@@ -267,6 +239,7 @@ void Server::send_response(int i, Clients *c){
 		// unlink(filename.c_str());
 	}
 	file.close();
+	close(o);
 	std::cout << "File closed" << std::endl;
 }
 
