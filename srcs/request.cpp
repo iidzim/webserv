@@ -59,6 +59,7 @@ request::request(serverInfo server):  _headersComplete(false), _bodyComplete(fal
     _rqst.query = "";
     _rqst.statusCode = 200;
     _contentLength = 0;
+    _originContentLength = 0;
     
     std::cout<<"request called with parameter!"<<std::endl;
 }
@@ -141,9 +142,13 @@ void    request::requestLine(std::istringstream &istr)
         srand(time(0));
         std::stringstream str;
         std::string st = "bodyFile";
-        _rqst.bodyFile  = st + std::to_string(rand()) +".txt";
-        my_file.open(_rqst.bodyFile, std::ios::out);
+        _rqst.bodyFile  = st + std::to_string(rand())+".txt";// +".txt";
+        my_file.open(_rqst.bodyFile, std::ios::out | std::ios::app); //! To append values instead of ecrasing it
         _isBodyExcpected = true;
+
+        //create a tmp file
+        tmpFile.open("tmp.txt", std::ios::out | std::ios::app);
+
     }
     pos = words[1].find("?");
     if (pos != std::string::npos)
@@ -202,12 +207,16 @@ void    request::getHeaders(std::istringstream & istr)
         if (pos != std::string::npos)
         {
             std::string fieldName = line.substr(0, pos);
+            //convert to lower case
+            for (size_t i = 0; i < fieldName.size(); i ++)
+                fieldName[i] = tolower(fieldName[i]);
             //! check if the header is valid
             if (isFieldNameValid(fieldName))
             {
                 std::string fieldValue = line.substr(pos+1, line.size()-1);
+               std::cout<<"["<<fieldName<<"-> "<< fieldValue<<"]"<<std::endl;
                 deleteOptionalWithespaces(fieldValue);
-                if (fieldName == "Transfer-Encoding" && fieldValue == "chunked")
+                if (fieldName == "transfer-encoding" && fieldValue == "chunked")
                     _isChunked = true;
                (_rqst.headers).insert(std::pair<std::string, std::string>(fieldName, fieldValue)) ;
             }
@@ -223,14 +232,20 @@ void    request::getHeaders(std::istringstream & istr)
             throw request::RequestNotValid();
         }   
     }
+    if (_rqst.headers.find("host") == _rqst.headers.end()) //!! or invalid value of host
+    {
+        _rqst.statusCode = 400;
+        throw request::RequestNotValid();
+    }
     if (_isBodyExcpected && !_isChunked)
     {
-       // std::cout<<"Is not chunked ! I should test negative value of content-length"<<std::endl;
+        //convert content-length
         if (_rqst.headers.find("content-length") == _rqst.headers.end() || !isNumber(_rqst.headers.find("content-length")->second))
         {
             _rqst.statusCode = 411; // length required
             throw request::RequestNotValid();
         }
+        _originContentLength = stoul(_rqst.headers.find("content-length")->second);
     }
 }
 
@@ -241,21 +256,6 @@ const char* request::RequestNotValid::what()const throw()
     return "Request Not Valid !";
 }
 
-// bool request::endBodyisFound(std::string lastLine)
-// {
-//     std::string line;
-//     (void)lastLine;
-//     my_file.close();
-//     my_file.open(_rqst.bodyFile, std::ios::in);
-//     while (std::getline(my_file, line))
-//     {
-//         if (line.find("\r") != std::string::npos)
-//         {
-//             return true;
-//         }
-//     }
-//     return false;
-// }
 bool request::isHexadecimalFormat(std::string &number)
 {
     for (size_t i = 0; i < number.size(); i++)
@@ -295,22 +295,97 @@ size_t request::convertHexToDecimal(std::string value)
 s_requestInfo request::getRequest()
 {
     return _rqst;
-}
+} 
 
 void request::isBodyValid()
 {
-    _bodyComplete = true;
+    tmpFile.close();
+    tmpFile.open("tmp.txt", std::ios::in);
+   // my_file.open(_rqst.bodyFile, std::ios::out|);
+    
+    bool isDone = false;
+    std::string line;
+    size_t size;
+    size_t totalBytes = 0;
+    while (!isDone)
+    {
+        /*  FIRST LINE = SIZE */
+        getline(tmpFile, line);
+        if (line[line.size() - 1] != '\r')
+        {
+            _rqst.statusCode = 400;
+            throw request::RequestNotValid();
+        }
+        line.erase(line.end()-1);
+        if (!isHexadecimalFormat(line))
+        {
+            _rqst.statusCode = 400;
+            throw request::RequestNotValid();
+        }
+        size = convertHexToDecimal(line);
+        if (size == 0)
+        {
+            isDone = true;
+            //test totalBytes with the size of the file
+            _bodyComplete = true;
+            tmpFile.close();
+            return;
+        }
+        totalBytes+=size; //! To compare at the end with the size of the file
+
+        //erase this line from the file
+
+        
+       /* SECOND LINE */
+        getline(tmpFile, line);
+        size_t length ;
+        if (line.length() < size)
+        {
+                line+='\n';
+                my_file<<line;
+                length=line.length(); //(\n)
+                std::string tmpLine;
+                while(getline(tmpFile, tmpLine))
+                {
+                    length+=tmpLine.length()+1;
+                    if (length>size)
+                        break;
+                    tmpLine+='\n';
+                    my_file<<tmpLine;
+                }
+                if (tmpLine[tmpLine.size() - 1] != '\r')
+                {
+                    _rqst.statusCode = 400;
+                    throw request::RequestNotValid();
+                }
+                tmpLine.erase(tmpLine.end()-1);
+                my_file<<tmpLine;
+            }
+            else
+            {
+                if (line[line.size() - 1] != '\r')
+                {
+                    _rqst.statusCode = 400;
+                    throw request::RequestNotValid();
+                }
+                line.erase(line.end()-1);
+                my_file<<line;
+          }
+     }
 }
 
 void request::parse(char *buffer, size_t r)
 {
-   // std::cout<<"parsing called !"<<std::endl;
+   std::cout<<"parsing called !"<<std::endl;
     size_t i ;
     if (!_headersComplete)
-    {
+    {   
+        // std::string tmpBuffer(buffer, r);
+        // _data+=tmpBuffer;
         i = 0;
         while (i < r)
         {
+            //Copies the first n characters from the array of characters pointed b
             _data+=buffer[i];i++;
         }
     }
@@ -318,17 +393,20 @@ void request::parse(char *buffer, size_t r)
     {
         if (!_isChunked)
         {
+            std::cout << "["<<_originContentLength <<"]"<<std::endl;
             size_t i = 0;
-            while (i < r) //&& _contentLength < stoul(_rqst.headers["content-length"]))
+            while (i < r && _contentLength < _originContentLength) //&& _contentLength < stoul(_rqst.headers["content-length"]))
             {
-                if (_contentLength == stoul(_rqst.headers["content-lengh"]))
-                {
-                    _bodyComplete = true;
-                    break;
-                }
+                // if (_contentLength == _originContentLength)//stoul(_rqst.headers["content-lengh"]))
+                // {
+                //     _bodyComplete = true;
+                //     break;
+                // }
                 _contentLength++;
+                //my_file<<buffer[i];i++;
                 my_file<<buffer[i];i++;
             }
+          //  std::cout<<"_contentLength"<<_contentLength<<std::endl;
         }
         else
         {
@@ -337,12 +415,12 @@ void request::parse(char *buffer, size_t r)
             {
                 _data+=buffer[i]; i++;
             }
-            my_file<<_data;
+            tmpFile<<_data;
             if (_data.find("0\r\n\r\n") != std::string::npos)
             {
                 isBodyValid();
-                _data.clear();
             }
+            _data.clear();
         }
     }
     size_t pos = 0;
@@ -357,27 +435,36 @@ void request::parse(char *buffer, size_t r)
                 std::string leftdata = _data.substr(pos+4, _data.size()-1);
                 if (!_isChunked)
                 {
+                    
                     size_t i = 0;
-                    while (i < leftdata.size()) //&& _contentLength < stoul(_rqst.headers["content-length"]))
+                   // std::cout << "["<<_originContentLength <<"]"<<std::endl;
+                    while (i < leftdata.size() && _contentLength < _originContentLength) //&& _contentLength < stoul(_rqst.headers["content-length"]))
                     {
-                        if (_contentLength == stoul(_rqst.headers["content-length"]))
-                        {
-                            _bodyComplete = true;
-                            break;
-                        }
+                        // if (_contentLength == _originContentLength)//stoul(_rqst.headers["content-length"]))
+                        // {
+                        //     _bodyComplete = true;
+                        //     break;
+                        // }
                         _contentLength++;
+                        //my_file<<leftdata[i];
                         my_file<<leftdata[i];
                         i++;
                     }
                 }
                 else
                 {
-                    my_file<<leftdata;
+                   // std::cout<<"---------- Should be here one time----------"<<std::endl;
+                    tmpFile<<leftdata;
                     if (leftdata.find("0\r\n\r\n") != std::string::npos)
                         isBodyValid();
                 }
             }
             _data.clear();
+    }
+    if (_isBodyExcpected && !_isChunked)
+    {
+        if (_contentLength == _originContentLength)
+            _bodyComplete = true;
     }
     //if body excpected of course
     // if (_headersComplete && _isBodyExcpected && !_bodyComplete)
@@ -416,7 +503,10 @@ bool request::isComplete()
     if (_headersComplete && (_bodyComplete || !_isBodyExcpected))
     {
         my_file.close();
-        print_request();
+       // print_request();
+       //remove tmp
+       tmpFile.close();
+       std::remove("tmp.txt");
         return true;
     }
     return false;
