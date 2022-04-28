@@ -16,6 +16,7 @@ class Response{
         mimeTypes                            _mime;
         serverInfo                          _servInfo;
         int                                 _cursor;
+        bool                                _autoIndex;
 
     public:
         Response();

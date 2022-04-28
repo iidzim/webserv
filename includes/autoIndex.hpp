@@ -15,7 +15,7 @@ class autoIndex{
     public:
         autoIndex();
         ~autoIndex();
-        std::string getBody();
+        std::string getBodyName();
         void setAutoIndexBody(std::string uri, std::string PathName);
         std::string lastTimeModified(std::string fileName);
         bool isError();

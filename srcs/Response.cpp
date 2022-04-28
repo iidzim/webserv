@@ -6,6 +6,7 @@ Response::Response(): _headers(""), _body("") {
 
 Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
     _iskeepAlive = true;
+    _autoIndex = false;
 }
 
 
@@ -120,8 +121,9 @@ void Response::stringfyHeaders(){
     
     for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
         if (_reqInfo.URI == _servInfo.location[i].uri || (_reqInfo.URI.find(_servInfo.location[i].uri) == 0 && _servInfo.location[i].uri.size() > 1)) {
-            
             root = _servInfo.location[i].root;
+            // if (_servInfo.location[i].autoIndex == true)
+                // _autoIndex = true;
             if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods.end(), 
                 _reqInfo.method) == _servInfo.location[i].allow_methods.end()){
                     _reqInfo.statusCode = 405;
@@ -133,6 +135,17 @@ void Response::stringfyHeaders(){
         else
             root = _servInfo.root;
     }
+    // if (_autoIndex == true || (root == _reqInfo.URI && _servInfo.autoIndex == true)){
+    //    autoIndex indx;
+    //     indx.setAutoIndexBody(_reqInfo.URI, root + "/" + _reqInfo.URI);
+    //     if (indx.isError() == true){
+    //         errorsResponse(indx.getErrorCode());
+    //         return ;
+    //     }
+    //     _body = indx.getBodyName();
+    //     _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: " << fileSize(_body) <<  "\r\n\r\n";
+    //     return ;
+    // }
     if (_reqInfo.URI == "/")
         _body = root + "/" + toString("index.html");
     else
