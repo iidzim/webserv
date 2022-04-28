@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/28 02:43:47 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/28 02:57:15 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ void Server::accept_connection(int i){
 		throw::new_sock::SocketException(_msg);
 		std::cout << _msg << std::endl;
 		return ;
-		//&&&&&&&&&& recode this cond - behaviour ?
+		//----------- recode this cond - behaviour ?
 	}
 	struct pollfd new_fd;
 	new_fd.fd = accept_fd;
@@ -66,7 +66,6 @@ void Server::recv_request(int i, Clients *c){
 		return;
 	}
 	// std::cout << ">>> Received " << r << " bytes" << "\n" << "|" << _buffer << "|" << std::endl;
-	//& parse the buffer
 	try{
 		c->connections[_fds[i].fd].first.parse(_buffer, r);
 	}
@@ -137,7 +136,7 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 				continue;
 			}
 			else if (_fds[i].revents & POLLIN){
-			
+
 				if (find(_socket_fd.begin() ,_socket_fd.end(), _fds[i].fd) != _socket_fd.end())
 					accept_connection(i);
 				else{
@@ -242,19 +241,3 @@ void Server::send_response(int i, Clients *c){
 	close(o);
 	std::cout << "File closed" << std::endl;
 }
-
-// bool Response::is_complete(int len){
-
-// 	std::fstream file;
-// 	file.open(_fileName, std::ios::in | std::ios::binary);
-// 	std::cout << "File opened" << std::endl;
-// 	std::streampos begin, end;
-// 	begin = file.tellg();
-// 	file.seekg(0, std::ios::end);
-// 	end = file.tellg();
-// 	int file_size = end - begin;
-// 	file.seekg(0, std::ios::beg);
-// 	if (len >= file_size + _headers.size())
-// 		return true;
-// 	return false;
-// }
