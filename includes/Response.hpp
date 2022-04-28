@@ -1,29 +1,9 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Response.hpp                                       :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/04/08 16:51:13 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/28 02:44:29 by iidzim           ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #ifndef RESPONSE_HPP
 # define RESPONSE_HPP
-#include <iostream>
-#include <fstream>
-#include <unistd.h>
-#include <string>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include "configurationReader.hpp"
-#include "Request.hpp"
-#include <sys/wait.h>
-#include "mimeTypes.hpp"
-#include "configurationReader.hpp"
+
+
+#include "webserv.hpp"
 
 class Response{
 
@@ -36,6 +16,7 @@ class Response{
         mimeTypes                            _mime;
         serverInfo                          _servInfo;
         int                                 _cursor;
+
     public:
         Response();
         Response(request req, serverInfo serv);
@@ -51,16 +32,15 @@ class Response{
         void DeleteMethod();
         bool IsKeepAlive();
         int response_size();
-        template<class T>
-        std::string toString(T);
         bool isFileExist(std::string );
         std::string findMimeType(std::string);
-
-        //!!
         bool is_complete(int len, std::string filename);
         int get_cursor();
 
 };
 
-        int fileSize(std::string);
+template<class T>
+std::string toString(T);
+int fileSize(std::string);
+
 #endif

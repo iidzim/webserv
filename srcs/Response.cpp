@@ -1,21 +1,10 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Response.cpp                                       :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/04/19 03:41:20 by oel-yous          #+#    #+#             */
-/*   Updated: 2022/04/28 02:47:38 by iidzim           ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #include "../includes/Response.hpp"
 
 Response::Response(): _headers(""), _body("") {
 }
 
-Response::Response(request req, serverInfo s): _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
+Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
     _iskeepAlive = true;
 }
 
@@ -56,9 +45,8 @@ void Response::errorsResponse(int statCode){
         _headers = setErrorsHeaders("400 Bad Request", toString(ret));
     else if (_reqInfo.statusCode == 403)
         _headers = setErrorsHeaders("403 Forbidden", toString(ret));
-    else if (_reqInfo.statusCode == 404){
+    else if (_reqInfo.statusCode == 404)
         _headers = setErrorsHeaders("404 Not Found", toString(ret));
-    }
     else if (_reqInfo.statusCode == 405)
         _headers = setErrorsHeaders("405 Not Method Not Allowed", toString(ret));
     else if (_reqInfo.statusCode == 500)
@@ -113,7 +101,7 @@ void Response::DeleteMethod(){
         }
     }
     else {
-        std::string connect =  _reqInfo.headers.find("Connection")->second;;
+        std::string connect =  _reqInfo.headers.find("Connection")->second;
         if (connect == "keep-alive") {
             connect = "Keep-Alive";
         }
@@ -145,12 +133,10 @@ void Response::stringfyHeaders(){
         else
             root = _servInfo.root;
     }
-    if (_reqInfo.URI == "/"){
+    if (_reqInfo.URI == "/")
         _body = root + "/" + toString("index.html");
-    }
-    else{
+    else
         _body = root + "/" + _reqInfo.URI;
-    }
 
     if (isFileExist(_body) == false){
         errorsResponse(404);
@@ -184,6 +170,27 @@ std::string Response::getHeaders(){
     return _headers;
 }
 
+bool Response::IsKeepAlive(){
+    return _iskeepAlive;
+} 
+
+
+int Response::response_size(){
+    return (fileSize(_body) + _headers.size());
+}
+
+
+
+template<class T>
+std::string toString(T i){
+    std::ostringstream ret;
+    ret  << i;
+    return ret.str();
+}
+
+
+
+
 int fileSize(std::string fileName){
     int fd = open(fileName.c_str(), O_RDONLY);
     int ret = 0;
@@ -194,24 +201,6 @@ int fileSize(std::string fileName){
     }
     return (ret);
 }
-
-template<class T>
-std::string Response::toString(T i){
-    std::ostringstream ret;
-    ret  << i;
-    return ret.str();
-}
-
-
-int Response::response_size(){
-    return (fileSize(_body) + _headers.size());
-}
-
-
-bool Response::IsKeepAlive(){
-    return _iskeepAlive;
-}
-
 
 //!!!!!!!!!!!!
 bool Response::is_complete(int len, std::string filename){
