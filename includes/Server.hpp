@@ -3,23 +3,23 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mac <mac@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/27 00:39:11 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/29 05:09:51 by mac              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include "new_sock.hpp"
+#include "Socket.hpp"
 #define BUFF_SIZE 1024
 
 class Server{
 
 	private:
-		// std::vector<new_sock>			_socket;
+
 		std::vector<int>				_socket_fd;
 		std::string						_msg;
 		std::vector<struct sockaddr_in>	_address;
@@ -33,7 +33,7 @@ class Server{
 
 	public:
 
-		Server(std::vector<new_sock> s, std::vector<serverInfo> server_conf);
+		Server(std::vector<Socket> s, std::vector<serverInfo> server_conf);
 		~Server();
 
 };

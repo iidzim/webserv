@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   new_sock.hpp                                       :+:      :+:    :+:   */
+/*   Socket.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef NEW_SOCKET_HPP
-# define NEW_SOCKET_HPP
+#ifndef SOCKET_HPP
+# define SOCKET_HPP
 
 #include <iostream>
 #include <unistd.h>
@@ -29,7 +29,7 @@
 #define PORT 8080
 #define BACKLOG 1024
 
-class new_sock{
+class Socket{
 
 	private:
 		int					_socketfd;
@@ -39,9 +39,9 @@ class new_sock{
 
 	public:
 
-		new_sock(void);
-		new_sock(int port);
-		~new_sock(void);
+		Socket(void);
+		Socket(int port);
+		~Socket(void);
         struct sockaddr_in get_address(void);
         int get_fd(void);
         void check(int res, int fd);

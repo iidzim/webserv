@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   new_sock.cpp                                       :+:      :+:    :+:   */
+/*   Socket.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mac <mac@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,12 +10,12 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/new_sock.hpp"
+#include "../includes/Socket.hpp"
 
-new_sock::new_sock(void){
+Socket::Socket(void){
 
     int x = 1;
-    _msg = "socket creation failure";
+    _msg = "Socket creation failure";
     check((_socketfd = socket(AF_INET, SOCK_STREAM, 0)), -1);
     _msg = "Address already in use";
     check(setsockopt(_socketfd, SOL_SOCKET, SO_REUSEADDR, (char*)&x, sizeof(x)), _socketfd);
@@ -30,17 +30,17 @@ new_sock::new_sock(void){
     	_msg = "Invalid address";
     	check(-1, _socketfd);
     }
-    _msg = "Failed to bind socket";
+    _msg = "Failed to bind Socket";
     check(bind(_socketfd, (struct sockaddr *)&_address, sizeof(_address)), _socketfd);
     //+ Set the listen back log to 1024
     _msg = "Failed to listen";
     check(listen(_socketfd, BACKLOG), _socketfd);
 }
 
-new_sock::new_sock(int port){
+Socket::Socket(int port){
 
     int x = 1;
-    _msg = "socket creation failure";
+    _msg = "Socket creation failure";
     check((_socketfd = socket(AF_INET, SOCK_STREAM, 0)), -1);
     _msg = "Address already in use";
     check(setsockopt(_socketfd, SOL_SOCKET, SO_REUSEADDR, (char*)&x, sizeof(x)), _socketfd);
@@ -55,28 +55,28 @@ new_sock::new_sock(int port){
     	_msg = "Invalid address";
     	check(-1, _socketfd);
     }
-    _msg = "Failed to bind socket";
+    _msg = "Failed to bind Socket";
     check(bind(_socketfd, (struct sockaddr *)&_address, sizeof(_address)), _socketfd);
     //+ Set the listen back log to 1024
     _msg = "Failed to listen";
     check(listen(_socketfd, BACKLOG), _socketfd);
 }
 
-struct sockaddr_in new_sock::get_address(void){
+struct sockaddr_in Socket::get_address(void){
 	return _address;
 }
 
-int new_sock::get_fd(void){
+int Socket::get_fd(void){
     return _socketfd;
 }
 
-void new_sock::check(int res, int fd){
+void Socket::check(int res, int fd){
 
     if (res < 0){
     	if (fd > -1)
     		close(fd);
-    	throw new_sock::SocketException(_msg);
+    	throw Socket::SocketException(_msg);
     }
 }
 
-new_sock::~new_sock(void){}
+Socket::~Socket(void){}

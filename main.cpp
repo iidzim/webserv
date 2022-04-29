@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mac <mac@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/23 23:52:05 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/29 05:10:17 by mac              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,10 +23,10 @@ int main(int argc, char** argv){
 	try{
 		if (argc == 1)
 			//* add default configuration file
-			new_sock a;
+			Socket a;
 		else
 		{
-			std::vector<new_sock> sockets;
+			std::vector<Socket> sockets;
 			std::vector<struct sockaddr_in> add;
 			std::string path = argv[1];
 			configurationReader cfg_reader(path);
@@ -36,7 +36,7 @@ int main(int argc, char** argv){
     		std::vector<serverInfo> virtualServer = cfg_reader.getVirtualServer();
 			std::cout<<cfg_reader<<std::endl;
     		for (size_t i = 0; i < virtualServer.size(); i++)
-				sockets.push_back(new_sock(virtualServer[i].port));
+				sockets.push_back(Socket(virtualServer[i].port));
 			Server s(sockets, virtualServer);
 		}
 	}

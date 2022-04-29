@@ -3,16 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mac <mac@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/29 01:44:37 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/29 05:12:31 by mac              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Server.hpp"
 
-Server::Server(std::vector<new_sock> s, std::vector<serverInfo> server_conf){
+Server::Server(std::vector<Socket> s, std::vector<serverInfo> server_conf){
 
 	//& initialize class attribute
 	for (size_t i = 0; i < s.size(); i++){
@@ -43,7 +43,7 @@ void Server::accept_connection(int i){
 	_msg = "Failed to accept connection";
 	//!!!! do not exit on error
 	if (accept_fd < 0){
-		throw::new_sock::SocketException(_msg);
+		throw::Socket::SocketException(_msg);
 		std::cout << _msg << std::endl;
 		return ;
 		//----------- recode this cond - behaviour ?
@@ -178,7 +178,7 @@ void Server::send_response(int i, Clients *c){
 	char buff[1050];
 	int s, x, len = c->connections[_fds[i].fd].second.get_cursor();
 	int total_size = fileSize(filename) + headers.size() - len;
-	std::cout << "fd = " << _fds[i].fd << " - total_size >>>>>>>>>> " << total_size << " - cursor = " << len << std::endl;
+	// std::cout << "fd = " << _fds[i].fd << " - total_size >>>>>>>>>> " << total_size << " - cursor = " << len << std::endl;
 
 	if (file.eof()){
 		std::cout << "End Of File" << std::endl;
@@ -186,28 +186,28 @@ void Server::send_response(int i, Clients *c){
 	}
 	if ((size_t)len < headers.size()){
 
-		std::cout << "send headers" << std::endl;
+		// std::cout << "send headers" << std::endl;
 		lseek(o, 0, SEEK_SET);
-		if (total_size > BUFF_SIZE)// && headers.size() < BUFF_SIZE)
-			x = BUFF_SIZE - (headers.size() - len);
+		if (total_size > BUFF_SIZE)// && headers.size() < BUFF_SIZE) 
+			x = BUFF_SIZE - (headers.size() - len); //? make sure that the headers are not bigger than BUFF_SIZE
 		else
 			x = total_size - (headers.size() - len);
-		std::cout << "x = " << x << std::endl;
+		// std::cout << "x = " << x << std::endl;
 		file.read(buff, x);
-		// if (!file)
-		// 	std::cout << "read failure !!!!" << std::endl;
+		if (!file)
+			std::cout << "read failure !!!!" << std::endl;
 		std::string str = (headers.substr(len)).append(buff);
 		s = send(_fds[i].fd, str.c_str(), sizeof(str), 0);
 		memset(buff, 0, BUFF_SIZE);
 	}
 	else{
-		std::cout << "send body" << std::endl;
+		// std::cout << "send body" << std::endl;
 		lseek(o, (len - headers.size()), SEEK_SET);
 		if (total_size > BUFF_SIZE)
 			x = BUFF_SIZE;
 		else
 			x = fileSize(filename) - (len - headers.size());
-		std::cout << "x = " << x << std::endl;
+		// std::cout << "x = " << x << std::endl;
 		file.read(buff, x);
 		if (!file)
 			std::cout << "read failure" << std::endl;
@@ -217,16 +217,14 @@ void Server::send_response(int i, Clients *c){
 	if (s <= 0){
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
-		std::cout << "s <= 0\n";
+		std::cout << "send failure s <= 0\n";
 		return;
 	}
-    // if (len >= total_size){
-	// std::cout << _fds[i].fd << std::endl;
 	if (c->connections[_fds[i].fd].second.is_complete(s, filename)){
 		std::cout << "response is complete\n";
 		int file_descriptor = _fds[i].fd;
 		if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
-			std::cout << "Closing socket - keepAlive = false" << std::endl;
+			// std::cout << "Closing socket - keepAlive = false" << std::endl;
 			close(_fds[i].fd);
 			_fds.erase(_fds.begin() + i);
 		}
@@ -235,10 +233,10 @@ void Server::send_response(int i, Clients *c){
     	//- remove node client from the map
 		c->remove_clients(file_descriptor);
 		std::cout << "client removed" << std::endl;
-		//& unlink file if necessary
+		//& unlink file
 		// unlink(filename.c_str());
 	}
 	file.close();
 	close(o);
-	std::cout << "File closed" << std::endl;
+	// std::cout << "File closed" << std::endl;
 }
