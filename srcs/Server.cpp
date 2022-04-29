@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/28 02:57:15 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/04/29 01:44:37 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,7 +147,8 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 			}
 			else if (_fds[i].revents & POLLOUT){
 				j = i - _fds.size() + _socket_fd.size();
-				c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, server_conf[j]);
+				if (c.connections[_fds[i].fd].second.get_cursor() == 0)
+					c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, server_conf[j]);
 				send_response(i, &c);
 			}
 			else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
@@ -193,8 +194,8 @@ void Server::send_response(int i, Clients *c){
 			x = total_size - (headers.size() - len);
 		std::cout << "x = " << x << std::endl;
 		file.read(buff, x);
-		if (!file)
-			std::cout << "read failure !!!!" << std::endl;
+		// if (!file)
+		// 	std::cout << "read failure !!!!" << std::endl;
 		std::string str = (headers.substr(len)).append(buff);
 		s = send(_fds[i].fd, str.c_str(), sizeof(str), 0);
 		memset(buff, 0, BUFF_SIZE);
@@ -213,7 +214,6 @@ void Server::send_response(int i, Clients *c){
 		s = send(_fds[i].fd, buff, BUFF_SIZE, 0);
 		memset(buff, 0, BUFF_SIZE);
 	}
-    len += s;
 	if (s <= 0){
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
@@ -221,7 +221,8 @@ void Server::send_response(int i, Clients *c){
 		return;
 	}
     // if (len >= total_size){
-	if (c->connections[_fds[i].fd].second.is_complete(len, filename)){
+	// std::cout << _fds[i].fd << std::endl;
+	if (c->connections[_fds[i].fd].second.is_complete(s, filename)){
 		std::cout << "response is complete\n";
 		int file_descriptor = _fds[i].fd;
 		if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){

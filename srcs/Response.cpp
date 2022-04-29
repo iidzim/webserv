@@ -1,14 +1,13 @@
 
 #include "../includes/Response.hpp"
 
-Response::Response(): _headers(""), _body("") {
+Response::Response(): _headers(""), _body(""), _cursor(0) {
 }
 
 Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
     _iskeepAlive = true;
     _autoIndex = false;
 }
-
 
 Response::~Response(){
 
@@ -218,6 +217,7 @@ int fileSize(std::string fileName){
 //!!!!!!!!!!!!
 bool Response::is_complete(int len, std::string filename){
 
+    // std::cout << "------------ " << _cursor << std::endl;
     _cursor += len;
     std::cout << "sending ... " << _cursor << std::endl;
 	if ((size_t)_cursor >= fileSize(filename) + _headers.size())
