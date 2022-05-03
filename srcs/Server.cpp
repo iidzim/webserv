@@ -6,7 +6,7 @@
 /*   By: mac <mac@student.42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/04/29 05:12:31 by mac              ###   ########.fr       */
+/*   Updated: 2022/05/03 21:06:37 by mac              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -178,40 +178,51 @@ void Server::send_response(int i, Clients *c){
 	char buff[1050];
 	int s, x, len = c->connections[_fds[i].fd].second.get_cursor();
 	int total_size = fileSize(filename) + headers.size() - len;
-	// std::cout << "fd = " << _fds[i].fd << " - total_size >>>>>>>>>> " << total_size << " - cursor = " << len << std::endl;
+	std::cout << "fd = " << _fds[i].fd << " - filesize = " << fileSize(filename) << " - total_size >>>>>>>>>> " << total_size << " - cursor = " << len << std::endl;
 
-	if (file.eof()){
-		std::cout << "End Of File" << std::endl;
-		return;
-	}
+	// if (file.eof()){
+	// 	std::cout << "End Of File" << std::endl;
+	// 	return;
+	// } // useless
+
 	if ((size_t)len < headers.size()){
 
 		// std::cout << "send headers" << std::endl;
-		lseek(o, 0, SEEK_SET);
+		// lseek(o, 0, SEEK_SET);
 		if (total_size > BUFF_SIZE)// && headers.size() < BUFF_SIZE) 
 			x = BUFF_SIZE - (headers.size() - len); //? make sure that the headers are not bigger than BUFF_SIZE
 		else
 			x = total_size - (headers.size() - len);
-		// std::cout << "x = " << x << std::endl;
-		file.read(buff, x);
-		if (!file)
+		std::cout << "x = " << x << std::endl;
+		int r = read(o, buff, x);
+		// file.read(buff, x);
+		// if (!file)
+		if (r < 0)
 			std::cout << "read failure !!!!" << std::endl;
 		std::string str = (headers.substr(len)).append(buff);
 		s = send(_fds[i].fd, str.c_str(), sizeof(str), 0);
+		std::string st = str;
+		st.resize(s);
+		std::cout << s << " bytes sent " << "\n|" << st << "|" << std::endl;
 		memset(buff, 0, BUFF_SIZE);
 	}
 	else{
 		// std::cout << "send body" << std::endl;
-		lseek(o, (len - headers.size()), SEEK_SET);
+		lseek(o, len - headers.size(), SEEK_SET);
+		std::cout << "lseek body = " << len - headers.size() << std::endl;
 		if (total_size > BUFF_SIZE)
 			x = BUFF_SIZE;
 		else
-			x = fileSize(filename) - (len - headers.size());
-		// std::cout << "x = " << x << std::endl;
-		file.read(buff, x);
-		if (!file)
+			x = total_size;
+		std::cout << "x = " << x << std::endl;
+		int r = read(o, buff, x);
+		std::cout << "buff >> " << buff << std::endl;
+		if (r < 0)
 			std::cout << "read failure" << std::endl;
 		s = send(_fds[i].fd, buff, BUFF_SIZE, 0);
+		// std::string st = buff;
+		// st.resize(s);
+		// std::cout << s << " bytes sent " << "\n|" << st << "|" << std::endl;
 		memset(buff, 0, BUFF_SIZE);
 	}
 	if (s <= 0){
