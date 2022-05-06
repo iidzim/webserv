@@ -142,7 +142,7 @@ void    request::requestLine(std::istringstream &istr)
         srand(time(0));
         std::stringstream str;
         std::string st = "bodyFile";
-        _rqst.bodyFile  = st + std::to_string(rand())+".txt";// +".txt";
+        _rqst.bodyFile  = st + std::to_string(rand())+".txt";
         my_file.open(_rqst.bodyFile, std::ios::out | std::ios::app); //! To append values instead of ecrasing it
         _isBodyExcpected = true;
 

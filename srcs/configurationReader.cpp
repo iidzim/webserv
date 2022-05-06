@@ -32,17 +32,24 @@ unsigned int    configurationReader::convertStrIPv4toUnsinedInt(const std::strin
 
 void configurationReader::setPortHost(std::vector<std::string> words, serverInfo &server)
 {
-    //! Maybe I should accept only 127.0.0.1
-    if (words.size() != 3 || _state != INSIDESERVER)
+    //!I should accept only 127.0.0.1
+    if (words.size() != 3 || _state != INSIDESERVER || words[2].empty())
         throw configurationReader::invalidSyntax();
-    server.host= convertStrIPv4toUnsinedInt(words[1]);
+    //std::cout<<"|"<<server.host<<"|"<<std::endl;
+    if (server.host != 0) //duplication
+        throw configurationReader::invalidSyntax();
+    server.host=convertStrIPv4toUnsinedInt(words[1]);
     //check if words[2] isNumber
     for (size_t i = 0; i< words[2].size(); i++)
     {
         if (!std::isdigit(words[2][i]))
             throw configurationReader::invalidSyntax();
     }
-    server.port = stoi(words[2]); //! catch exception invalid argumenet
+    try{
+        server.port = stoi(words[2]);
+    }catch(std::exception &e){throw configurationReader::invalidSyntax();}//! catch exception invalid argument
+    if (server.port < 0)
+        throw configurationReader::invalidSyntax();
 }
 
 void configurationReader::setServerName(std::vector<std::string> words, serverInfo& server)
@@ -55,13 +62,40 @@ void configurationReader::setServerName(std::vector<std::string> words, serverIn
             continue;
         server.serverName.push_back(words[i]);
     }
+    if (server.serverName.empty())
+        throw configurationReader::invalidSyntax();
 }
 
-void configurationReader::setIndex(std::vector<std::string> words, locationInfos& location)
+void configurationReader::setIndex(std::vector<std::string> words, serverInfo& server, locationInfos& location)
 {
-    if (words.size() != 2 || _state != INLOCATION)
+    // if (words.size() != 2 || _state != INLOCATION)
+    //     throw configurationReader::invalidSyntax();
+    // location.index = words[1];
+    if (words.size() < 2 || _state == CLOSED)
         throw configurationReader::invalidSyntax();
-    location.index = words[1];
+    if (_state == INLOCATION)
+    {
+        for (size_t i = 1; i < words.size(); i++)
+        {
+            if (words[i].empty())
+                continue;
+            location.index.push_back(words[i]);
+        }
+        if (location.index.empty())
+            throw configurationReader::invalidSyntax();
+    }
+    else if (_state == INSIDESERVER)
+    {
+        for (size_t i = 1; i < words.size(); i++)
+        {
+            if (words[i].empty())
+                continue;
+            server.index.push_back(words[i]);
+        }
+        if (server.index.empty())
+            throw configurationReader::invalidSyntax();
+    }
+
 }
 
 void configurationReader::setAllowedMethods(std::vector<std::string> words, locationInfos& location)
@@ -74,21 +108,25 @@ void configurationReader::setAllowedMethods(std::vector<std::string> words, loca
             continue;
         location.allow_methods.push_back(words[i]);
     }
+    if (location.allow_methods.empty())
+        throw configurationReader::invalidSyntax();
 }
 
 void configurationReader::setRoot(std::vector<std::string> words, serverInfo& server, locationInfos &location)
 {
-    if (words.size() != 2 || _state == CLOSED)
+    if (words.size() != 2 || _state == CLOSED || words[1].empty())
         throw configurationReader::invalidSyntax();
-    if (_state == INSIDESERVER)
+    if (_state == INSIDESERVER && !server.root.size())
         server.root = words[1];
-    else if (_state == INLOCATION)
+    else if (_state == INLOCATION && !location.root.size())
         location.root = words[1];
+    else
+         throw configurationReader::invalidSyntax();
 }
 
 void configurationReader::setSize(std::vector<std::string> words,serverInfo &server)
 {
-    if (words.size() != 2)
+    if (words.size() != 2 || words[1].empty() || server.size != 0 || _state != INSIDESERVER)
         throw configurationReader::invalidSyntax();
      for (size_t i = 0; i< words[1].size(); i++)
     {
@@ -98,47 +136,52 @@ void configurationReader::setSize(std::vector<std::string> words,serverInfo &ser
     server.size = stoi(words[1]);
 }
 
-void configurationReader::setErrorPage(std::vector<std::string> words, serverInfo &server)
+void configurationReader::setErrorPage(std::vector<std::string> words, serverInfo &server, locationInfos &location)
 {
-    if (words.size() != 3 || _state != INSIDESERVER)
+    if (words.size() != 3 || _state == CLOSED || words[2].empty())
         throw configurationReader::invalidSyntax();
-    server.errorPage.first = words[1];
-    server.errorPage.second = words[2]; 
+    int statusCode;
+    try{statusCode = stoi(words[1]);}catch(std::exception &e){throw invalidSyntax();}
+    if (_state == INSIDESERVER)
+        server.errorPage.insert(std::make_pair(statusCode, words[2]));
+    else if (_state == INLOCATION)
+        location.errorPage.insert(std::make_pair(statusCode, words[2]));
 }
 
-void configurationReader::setautoIndex(std::vector<std::string> words, serverInfo &server)
+void configurationReader::setautoIndex(std::vector<std::string> words, serverInfo &server, locationInfos &location)
 {
-    if (words.size() != 2 || _state != INSIDESERVER)
+    if (words.size() != 2 || _state == CLOSED || words[1] != "on")
         throw configurationReader::invalidSyntax();
-    if (words[1] == "on")
-        server.autoindex = ON;
-    else if (words[1] == "off")
-        server.autoindex = OFF;
+    if (_state == INLOCATION && location.autoindex == OFF)
+        location.autoindex = ON;
+    else if (_state == INSIDESERVER && server.autoindex == OFF)
+         server.autoindex =  ON;
     else
         throw configurationReader::invalidSyntax();
 }
 
 void clearLocation(locationInfos & location)
 {
-    location.index = "";
+    location.index.clear();
     location.root = "";
     location.uri = "";
+    location.autoindex = OFF;
     location.allow_methods.clear();
+    location.errorPage.clear();
 }
 
 void resetServer(serverInfo & server)
 {
-    server.port = 0;
+    server.port = -1;
     server.host = 0;
     server.root = "";
     server.size = 0;
-    server.errorPage.first = "";
-    server.errorPage.second = "";
     server.autoindex = OFF;
+    server.errorPage.clear();
     server.serverName.clear();
+    server.index.clear();
     server.location.clear();
-    // for (size_t i = 0; i < server.location.size(); i++)
-    //     clearLocation(server.location[i]);
+    
 }
 
 bool configurationReader::isCommentOrEmptyLine(std::string & line)
@@ -156,6 +199,15 @@ bool configurationReader::isValidPath()
     if (!_infile)
         throw configurationReader::invalidSyntax();
     return true;
+}
+
+void configurationReader::defaultForMissingValues(serverInfo &server)
+{
+    if (server.port == -1 && server.host == 0)
+    {
+        server.port = 8080;
+        server.host = convertStrIPv4toUnsinedInt("127.0.0.1");
+    }
 }
 
 std::vector<std::string> configurationReader::splitbySpace(std::string& line)
@@ -197,6 +249,7 @@ void configurationReader::parser()
                     if (_state == INSIDESERVER)
                     {
                         //! check if there is any missing mandatory directive
+                        defaultForMissingValues(server);
                         _virtualServer.push_back(server);
                         resetServer(server);
                         _state = CLOSED;
@@ -204,8 +257,6 @@ void configurationReader::parser()
                     else if (_state == INLOCATION)
                     {
                         _state = INSIDESERVER;
-                        
-                        //! check if there is any missing mandatory directive
                         server.location.push_back(location);
                         clearLocation(location);
                     }
@@ -217,7 +268,7 @@ void configurationReader::parser()
                 else if (words[0] == "server_name")
                     setServerName(words, server);
                 else if (words[0] == "index")
-                    setIndex(words, location);
+                    setIndex(words, server, location);
                 else if (words[0] == "root")
                     setRoot(words, server, location);
                 else if (words[0] == "client_max_body_size")
@@ -230,9 +281,9 @@ void configurationReader::parser()
                     _state = INLOCATION;
                 }  
                 else if (words[0] == "error_page")
-                    setErrorPage(words, server);
+                    setErrorPage(words, server, location);
                 else if (words[0] == "autoindex")
-                    setautoIndex(words, server);
+                    setautoIndex(words, server, location);
                 else if (words[0] == "allow_methods")
                     setAllowedMethods(words, location);
                 else
@@ -255,7 +306,7 @@ bool configurationReader::hasDuplicatePort()
         for (size_t j = i + 1; j < _virtualServer.size(); j++)
         {
             if (_virtualServer[i].port == _virtualServer[j].port)
-                return true;
+                return true; //check server name
         }
     }
     return false;
@@ -275,9 +326,8 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
         o << "-------server " << i << " -------"<<std::endl;
         o << "Port          "<<virtualServer[i].port<<std::endl;
         o <<"Host           "<<virtualServer[i].host<<std::endl;
-        o << "root          "<<virtualServer[i].root<<std::endl;
+        o << "root          |"<<virtualServer[i].root<<"|"<<std::endl;
         o <<"size           "<<virtualServer[i].size<<std::endl;
-        o <<"Error page     "<<virtualServer[i].errorPage.first<<" "<<virtualServer[i].errorPage.second<<std::endl;
         o << "Autoindex     ";
         if (virtualServer[i].autoindex)
             o<<"ON"<<std::endl;
@@ -287,20 +337,53 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
         for (size_t j = 0; j < virtualServer[i].serverName.size(); j++)
             o << virtualServer[i].serverName[j] <<" ";
         std::cout<<std::endl;
+        o << "index    ";
+        for (size_t j = 0; j < virtualServer[i].index.size(); j++)
+            o<<virtualServer[i].index[j]<<" ";
+        o <<std::endl;
+        std::map<int, std::string>::iterator itb = virtualServer[i].errorPage.begin();
+        std::map<int, std::string>::iterator ite = virtualServer[i].errorPage.end();
+        o << "Error pages ";
+        while (itb != ite)
+        {
+            o<<itb->first<<" "<<itb->second <<" | ";
+            itb++;
+        }
+        o << std::endl;
         o << "[Location]    "<<std::endl;
         for (size_t k = 0; k < virtualServer[i].location.size(); k++)
         {
             o << "URI "<<virtualServer[i].location[k].uri <<std::endl;
-            o << "index     "<<virtualServer[i].location[k].index<<std::endl;
+          //  o << "index     "<<virtualServer[i].location[k].index<<std::endl;
             o << "root      "<<virtualServer[i].location[k].root<<std::endl;
-            o << "Allowed methods "<<std::endl;
+            o << "Autoindex     ";
+            if (virtualServer[i].location[k].autoindex)
+                o<<"ON"<<std::endl;
+             else
+                o<<"OFF"<<std::endl;
+            o << "Allowed methods ";
             for (size_t l = 0; l < virtualServer[i].location[k].allow_methods.size(); l++)
             {
                 o << virtualServer[i].location[k].allow_methods[l] << " | ";
             }
-            o << std::endl;
+            o<< std::endl;
+            o <<"index ";
+            for (size_t l = 0; l < virtualServer[i].location[k].index.size(); l++)
+            {
+                o << virtualServer[i].location[k].index[l] << " | ";
+            }
+            o<<std::endl;
+            std::map<int, std::string>::iterator itb = virtualServer[i].location[k].errorPage.begin();
+            std::map<int, std::string>::iterator ite = virtualServer[i].location[k].errorPage.end();
+            o << "Error pages ";
+            while (itb != ite)
+            {
+                o<<itb->first<<" "<<itb->second <<" | ";
+                itb++;
+            }
+            }
+
         }
-    }
     return o;
 }
 //TODO

@@ -26,10 +26,12 @@
 
 typedef struct s_location
 {   
-    std::string     uri;
-    std::string     index;
-    std::string     root;
-    std::vector<std::string> allow_methods;
+    std::string                 uri;
+    std::vector<std::string>    index;
+    std::string                 root;
+    std::vector<std::string>    allow_methods;
+    std::map<int, std::string> errorPage;
+    bool                        autoindex;
 }               locationInfos;
 
 typedef struct s_server
@@ -39,10 +41,12 @@ typedef struct s_server
    int                          port;
     //! an address can be a host and if only address is given the port is by default 80
   //  std::string                 host; // IPV4 unsigned int interface
+    //std::vector<std::string> index;
     unsigned int                host;
+    std::vector<std::string>    index;
     std::string                 root;
-    int                         size; //0
-    std::pair<std::string, std::string> errorPage; // int string
+    int                         size;
+    std::map<int, std::string> errorPage;
     std::vector<std::string>    serverName;
     bool                        autoindex;
 
@@ -66,12 +70,13 @@ class configurationReader
         void                                    setPortHost(std::vector<std::string> words, serverInfo &server);
         void                                    setServerName(std::vector<std::string> words, serverInfo &server);
         void                                    setRoot(std::vector<std::string> words, serverInfo &server, locationInfos &location);
-        void                                    setIndex(std::vector<std::string> words, locationInfos &location);
+        void                                    setIndex(std::vector<std::string> words,serverInfo &server, locationInfos &location);
         void                                    setSize(std::vector<std::string> words, serverInfo &server);
-        void                                    setErrorPage(std::vector<std::string> words, serverInfo &server);
-        void                                    setautoIndex(std::vector<std::string> words, serverInfo &server);
+        void                                    setErrorPage(std::vector<std::string> words, serverInfo &server, locationInfos &location);
+        void                                    setautoIndex(std::vector<std::string> words, serverInfo &server, locationInfos &location);
         unsigned int                            convertStrIPv4toUnsinedInt(const std::string& IPV4);
         bool                                    hasDuplicatePort();
+        void                                    defaultForMissingValues(serverInfo &server);
     public:
         configurationReader();
         configurationReader(std::string path);
