@@ -54,16 +54,17 @@ void configurationReader::setPortHost(std::vector<std::string> words, serverInfo
 
 void configurationReader::setServerName(std::vector<std::string> words, serverInfo& server)
 {
-    if (_state != INSIDESERVER)
+    if (words.size() != 2 || words[1].empty() ||  _state != INSIDESERVER)
         throw configurationReader::invalidSyntax();
-    for (size_t i = 1; i < words.size(); i++)
-    {
-        if (words[i].empty())
-            continue;
-        server.serverName.push_back(words[i]);
-    }
-    if (server.serverName.empty())
-        throw configurationReader::invalidSyntax();
+    // for (size_t i = 1; i < words.size(); i++)
+    // {
+    //     if (words[i].empty())
+    //         continue;
+    //     server.serverName.push_back(words[i]);
+    // }
+     if (!server.serverName.empty())
+         throw configurationReader::invalidSyntax();
+    server.serverName = words[1];
 }
 
 void configurationReader::setIndex(std::vector<std::string> words, serverInfo& server, locationInfos& location)
@@ -289,7 +290,7 @@ void configurationReader::parser()
                 else
                     throw configurationReader::invalidSyntax();
             }
-            if (_state == INSIDESERVER || _state == INLOCATION || hasDuplicatePort()) //! check for duplicate port
+            if (_state == INSIDESERVER || _state == INLOCATION || communPortSameName()) //! check for duplicate port
                 throw configurationReader::invalidSyntax();
         _infile.close();
 }
@@ -299,13 +300,13 @@ const char * configurationReader::invalidSyntax::what()const throw()
     return "Syntax Error :: config file corrupted !";
 }
 
-bool configurationReader::hasDuplicatePort()
+bool configurationReader::communPortSameName()
 {
     for (size_t i = 0; i < _virtualServer.size(); i++)
     {
         for (size_t j = i + 1; j < _virtualServer.size(); j++)
         {
-            if (_virtualServer[i].port == _virtualServer[j].port)
+            if (_virtualServer[i].port == _virtualServer[j].port && _virtualServer[i].serverName == _virtualServer[j].serverName)
                 return true; //check server name
         }
     }
@@ -333,10 +334,10 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
             o<<"ON"<<std::endl;
         else
             o<<"OFF"<<std::endl;
-        o << "Server Name   ";
-        for (size_t j = 0; j < virtualServer[i].serverName.size(); j++)
-            o << virtualServer[i].serverName[j] <<" ";
-        std::cout<<std::endl;
+        o << "Server Name   "<<virtualServer[i].serverName<<std::endl;
+        // for (size_t j = 0; j < virtualServer[i].serverName.size(); j++)
+        //     o << virtualServer[i].serverName[j] <<" ";
+        // std::cout<<std::endl;
         o << "index    ";
         for (size_t j = 0; j < virtualServer[i].index.size(); j++)
             o<<virtualServer[i].index[j]<<" ";

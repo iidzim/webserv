@@ -46,8 +46,8 @@ typedef struct s_server
     std::vector<std::string>    index;
     std::string                 root;
     int                         size;
-    std::map<int, std::string> errorPage;
-    std::vector<std::string>    serverName;
+    std::map<int, std::string>  errorPage;
+    std::string                 serverName;
     bool                        autoindex;
 
     std::vector<locationInfos>  location;
@@ -75,7 +75,7 @@ class configurationReader
         void                                    setErrorPage(std::vector<std::string> words, serverInfo &server, locationInfos &location);
         void                                    setautoIndex(std::vector<std::string> words, serverInfo &server, locationInfos &location);
         unsigned int                            convertStrIPv4toUnsinedInt(const std::string& IPV4);
-        bool                                    hasDuplicatePort();
+        bool                                    communPortSameName();
         void                                    defaultForMissingValues(serverInfo &server);
     public:
         configurationReader();
