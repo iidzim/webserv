@@ -119,9 +119,11 @@ void Response::stringfyHeaders(){
     std::string root;
     DIR *folder;
     
+    // std::cout << "location size ======= " <<  _servInfo.location.size() << std::endl;
     for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
         if (_reqInfo.URI == _servInfo.location[i].uri || (_reqInfo.URI.find(_servInfo.location[i].uri) == 0 && _servInfo.location[i].uri.size() > 1)) {
             root = _servInfo.location[i].root;
+            // std::cout << "root111 ========" << root << std::endl;
             if (_servInfo.location[i].autoindex == true)
                 _autoIndex = true;
             if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods.end(), 
@@ -132,8 +134,10 @@ void Response::stringfyHeaders(){
                 }
             break ;
         }
-        else
+        else{
             root = _servInfo.root;
+            // std::cout << "root222 ========" << root << std::endl;
+        }
     }
     if (_autoIndex == true ||  _servInfo.autoindex == true){
        autoIndex indx;
@@ -172,11 +176,15 @@ void Response::stringfyHeaders(){
         return ;
     }
     else {
-        if (_reqInfo.URI == "/")
+        if (_reqInfo.URI == "/"){
+            // std::cout << "2222222" << std::endl;
             _body = root + "/" + toString("index.html");
-        else
+        }
+        else{
+            // std::cout << "555555555" << std::endl;
             _body = root + "/" + _reqInfo.URI;
-
+        }
+        // std::cout << "_body ====== "  << _body << std::endl;
         if (isFileExist(_body) == false){
             errorsResponse(404);
             return ;
@@ -191,6 +199,7 @@ void Response::stringfyHeaders(){
 }
 
 std::pair<std::string, std::string> Response::get_response(){
+    // std::cout << "status code ================== "<< _reqInfo.statusCode << std::endl;
     if (_reqInfo.statusCode != 200)
         errorsResponse(_reqInfo.statusCode);
     else{
