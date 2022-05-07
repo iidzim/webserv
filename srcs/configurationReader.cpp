@@ -177,12 +177,24 @@ void configurationReader::setRedirection(std::vector<std::string> words, serverI
         location.redirect.second = words[2];
     }
 }
+void   configurationReader::setCGI(std::vector<std::string> words, locationInfos &location)
+{
+    if (words.size() != 3 || _state != INLOCATION || words[1].empty() || words[2].empty())
+        throw configurationReader::invalidSyntax();
+    if (!location.cgi.first.empty())
+        throw configurationReader::invalidSyntax();
+    location.cgi.first=words[1];
+    location.cgi.second=words[2];
+}
+
 void clearLocation(locationInfos & location)
 {
     location.index.clear();
     location.root = "";
     location.uri = "";
     location.autoindex = OFF;
+    location.cgi.first.clear();
+    location.cgi.second.clear();
     location.redirect.first.clear();
     location.redirect.second.clear();
     location.allow_methods.clear();
@@ -319,6 +331,8 @@ void configurationReader::parser()
                     setAllowedMethods(words, location);
                 else if (words[0] == "rewrite")
                     setRedirection(words, server, location);
+                else if (words[0] == "cgi")
+                    setCGI(words, location);
                 else
                     throw configurationReader::invalidSyntax();
             }
@@ -390,6 +404,7 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
         {
             o << "URI "<<virtualServer[i].location[k].uri <<std::endl;
             o <<"redirection    "<<virtualServer[i].location[k].redirect.first<<" "<<virtualServer[i].location[k].redirect.second<<std::endl;
+            o <<"CGI    "<<virtualServer[i].location[k].cgi.first<<" "<<virtualServer[i].location[k].cgi.second<<std::endl;
             o << "root      "<<virtualServer[i].location[k].root<<std::endl;
             o << "Autoindex     ";
             if (virtualServer[i].location[k].autoindex)
