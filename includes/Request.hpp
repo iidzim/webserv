@@ -61,7 +61,7 @@ class request
         request();
         size_t convertHexToDecimal(std::string value);
         void deleteOptionalWithespaces(std::string &fieldValue); 
-        request(serverInfo server);
+        //request(serverInfo server);
         request(const request& obj);
         request& operator=(const request& obj);
 

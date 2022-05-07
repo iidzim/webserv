@@ -38,21 +38,21 @@
 
 //! The default, NGINX timeout is 60 seconds => error 504: Gateway Timeout
 
-request::request()//  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
-{
-    // _rqst.method = "";
-    // _rqst.URI = "";
-    // _rqst.versionHTTP = "";
-    // _rqst.query = "";
-    // _rqst.statusCode = 200;
-    // _contentLength = 0;
+// request::request()//  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
+// {
+//     // _rqst.method = "";
+//     // _rqst.URI = "";
+//     // _rqst.versionHTTP = "";
+//     // _rqst.query = "";
+//     // _rqst.statusCode = 200;
+//     // _contentLength = 0;
     
-    std::cout<<"request called default !"<<std::endl;
-}
+//     std::cout<<"request called default !"<<std::endl;
+// }
 
-request::request(serverInfo server):  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
+request::request():  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
 {
-    _server = server;
+   // _server = server;
      _rqst.method = "";
     _rqst.URI = "";
     _rqst.versionHTTP = "";
@@ -78,7 +78,7 @@ request& request::operator=(const request& obj)
     _isBodyExcpected = obj._isBodyExcpected;
     _contentLength = obj._contentLength;
     _data = obj._data;
-    _server = obj._server;
+   // _server = obj._server;
     return *this;
 }
 
@@ -218,6 +218,12 @@ void    request::getHeaders(std::istringstream & istr)
                 deleteOptionalWithespaces(fieldValue);
                 if (fieldName == "transfer-encoding" && fieldValue == "chunked")
                     _isChunked = true;
+                else if (fieldName == "host")
+                {
+                    size_t pos = fieldValue.find(":");
+                    if (pos != std::string::npos)
+                       fieldValue.erase(pos, fieldValue.size()-1);
+                }
                (_rqst.headers).insert(std::pair<std::string, std::string>(fieldName, fieldValue)) ;
             }
             else
@@ -237,6 +243,7 @@ void    request::getHeaders(std::istringstream & istr)
         _rqst.statusCode = 400;
         throw request::RequestNotValid();
     }
+
     if (_isBodyExcpected && !_isChunked)
     {
         //convert content-length
@@ -246,11 +253,11 @@ void    request::getHeaders(std::istringstream & istr)
             throw request::RequestNotValid();
         }
         _originContentLength = stoul(_rqst.headers.find("content-length")->second);
-        if (_originContentLength > _server.size)
-        {
-            _rqst.statusCode = 413; //request entity too large
-            throw request::RequestNotValid();
-        }
+        // if (_originContentLength > _server.size)
+        // {
+        //     _rqst.statusCode = 413; //request entity too large
+        //     throw request::RequestNotValid();
+        // }
     }
 }
 
