@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/07 13:16:38 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/07 14:28:28 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,3 +62,4 @@ int main(int argc, char** argv){
 	//? send response
 	//? close connection
 	//? repeat - handle multiple server & sockets at the same time
+
