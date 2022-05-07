@@ -161,12 +161,30 @@ void configurationReader::setautoIndex(std::vector<std::string> words, serverInf
         throw configurationReader::invalidSyntax();
 }
 
+void configurationReader::setRedirection(std::vector<std::string> words, serverInfo &server, locationInfos &location)
+{
+    //! if duplicated it takes the last value into consideration
+    if (words.size() != 3 || _state == CLOSED || words[1].empty() || words[2].empty())
+        throw configurationReader::invalidSyntax();
+    if (_state == INSIDESERVER)
+    {
+        server.redirect.first = words[1];
+        server.redirect.second = words[2];
+    }
+    else if (_state == INLOCATION)
+    {
+        location.redirect.first = words[1];
+        location.redirect.second = words[2];
+    }
+}
 void clearLocation(locationInfos & location)
 {
     location.index.clear();
     location.root = "";
     location.uri = "";
     location.autoindex = OFF;
+    location.redirect.first.clear();
+    location.redirect.second.clear();
     location.allow_methods.clear();
     location.errorPage.clear();
 }
@@ -178,6 +196,8 @@ void resetServer(serverInfo & server)
     server.root = "";
     server.size = 0;
     server.autoindex = OFF;
+    server.redirect.first.clear();
+    server.redirect.second.clear();
     server.errorPage.clear();
     server.serverName.clear();
     server.index.clear();
@@ -209,6 +229,14 @@ void configurationReader::defaultForMissingValues(serverInfo &server)
         server.port = 8080;
         server.host = convertStrIPv4toUnsinedInt("127.0.0.1");
     }
+    if (server.size == 0)
+        server.size = 1000000;
+}
+
+void configurationReader::defaultForMissingValues(locationInfos &location)
+{
+    if (location.allow_methods.empty())
+        location.allow_methods.push_back("GET");
 }
 
 std::vector<std::string> configurationReader::splitbySpace(std::string& line)
@@ -249,7 +277,7 @@ void configurationReader::parser()
                 {
                     if (_state == INSIDESERVER)
                     {
-                        //! check if there is any missing mandatory directive
+                        //! check if there is any missing mandatory directive => listen => default values !!
                         defaultForMissingValues(server);
                         _virtualServer.push_back(server);
                         resetServer(server);
@@ -258,6 +286,8 @@ void configurationReader::parser()
                     else if (_state == INLOCATION)
                     {
                         _state = INSIDESERVER;
+                        //defalut values for allow_methods
+                        defaultForMissingValues(location);
                         server.location.push_back(location);
                         clearLocation(location);
                     }
@@ -287,6 +317,8 @@ void configurationReader::parser()
                     setautoIndex(words, server, location);
                 else if (words[0] == "allow_methods")
                     setAllowedMethods(words, location);
+                else if (words[0] == "rewrite")
+                    setRedirection(words, server, location);
                 else
                     throw configurationReader::invalidSyntax();
             }
@@ -329,6 +361,7 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
         o <<"Host           "<<virtualServer[i].host<<std::endl;
         o << "root          |"<<virtualServer[i].root<<"|"<<std::endl;
         o <<"size           "<<virtualServer[i].size<<std::endl;
+        o <<"redirection    "<<virtualServer[i].redirect.first<<" "<<virtualServer[i].redirect.second<<std::endl;
         o << "Autoindex     ";
         if (virtualServer[i].autoindex)
             o<<"ON"<<std::endl;
@@ -352,10 +385,11 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
         }
         o << std::endl;
         o << "[Location]    "<<std::endl;
+         
         for (size_t k = 0; k < virtualServer[i].location.size(); k++)
         {
             o << "URI "<<virtualServer[i].location[k].uri <<std::endl;
-          //  o << "index     "<<virtualServer[i].location[k].index<<std::endl;
+            o <<"redirection    "<<virtualServer[i].location[k].redirect.first<<" "<<virtualServer[i].location[k].redirect.second<<std::endl;
             o << "root      "<<virtualServer[i].location[k].root<<std::endl;
             o << "Autoindex     ";
             if (virtualServer[i].location[k].autoindex)
