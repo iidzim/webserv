@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/07 17:37:14 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/07 17:38:25 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -193,6 +193,7 @@ void Server::send_response(int i, Clients *c){
 	char buff[2048*1000];
 	int s = 0, x, len = c->connections[_fds[i].fd].second.get_cursor();
 	int total_size = fileSize(filename) + headers.size() - len;
+	std::cout << "fd = " << _fds[i].fd << " - filesize = " << fileSize(filename) << " - total_size >>>>>>>>>> " << total_size << " - cursor = " << len << std::endl;
 
 	if ((size_t)len < headers.size()){
 
