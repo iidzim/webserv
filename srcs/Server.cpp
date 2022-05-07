@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/07 14:31:38 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/07 14:33:45 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,7 +152,7 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 						s = server_conf[i - _fds.size() + _socket_fd.size()];
 					//+ multiple server name - same port
 					for (size_t i = 0; i < server_conf.size(); i++){
-						if (c.connections[_fds[i].fd].second.first.getRequest().headers["host"] == server_conf[i].serverName){
+						if (c.connections[_fds[i].fd].first.getRequest().headers["host"] == server_conf[i].serverName){
 							s = server_conf[i];
 							break;
 						}
