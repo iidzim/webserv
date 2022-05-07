@@ -246,6 +246,11 @@ void    request::getHeaders(std::istringstream & istr)
             throw request::RequestNotValid();
         }
         _originContentLength = stoul(_rqst.headers.find("content-length")->second);
+        if (_originContentLength > _server.size)
+        {
+            _rqst.statusCode = 413; //request entity too large
+            throw request::RequestNotValid();
+        }
     }
 }
 
