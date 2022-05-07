@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/07 11:41:57 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/07 13:41:45 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,12 +114,13 @@ void Server::close_fd(void){
 void Server::socketio(std::vector<serverInfo> server_conf){
 
 	Clients c;
-	size_t j = 0;
 
     while (1){
 
 		for (size_t i = 0; i < _fds.size(); i++){
 
+			size_t j = 0;
+		
 			std::cout << "Polling ... " << std::endl;
 			int p = poll(&_fds.front(), _fds.size(), -1);
 			if (p < 0){
@@ -135,27 +136,57 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 				// std::cout << "No r events - _fds[" << i << "] = " << _fds[i].fd << std::endl; //!!!
 				continue;
 			}
-			else if (_fds[i].revents & POLLIN){
-
-				if (find(_socket_fd.begin() ,_socket_fd.end(), _fds[i].fd) != _socket_fd.end())
-					accept_connection(i);
-				else{
-					j = i - _fds.size() + _socket_fd.size();
-					c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(server_conf[j]), Response())));
-					recv_request(i, &c);
-				}
-			}
-			else if (_fds[i].revents & POLLOUT){
-				j = i - _fds.size() + _socket_fd.size();
-				if (c.connections[_fds[i].fd].second.get_cursor() == 0)
-					c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, server_conf[j]);
-				send_response(i, &c);
-			}
 			else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
 				break;
 			}
+			else{
+				// size_t j = i - _fds.size() + _socket_fd.size();
+				serverInfo s;
+				if ()
+				//+ multiple server name - same port
+				s = getBlockByServerName();
+				//+ 1 server name - 1 port
+				s = getBlockByPort();
+				
+				if (_fds[i].revents & POLLIN){
+					if (find(_socket_fd.begin() ,_socket_fd.end(), _fds[i].fd) != _socket_fd.end())
+						accept_connection(i);
+					else{
+						// c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(server_conf[j]), Response())));
+						c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
+						recv_request(i, &c);
+					}
+				}
+				if (_fds[i].revents & POLLOUT){
+					if (c.connections[_fds[i].fd].second.get_cursor() == 0)
+						// c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, server_conf[j]);
+						c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, s);
+					send_response(i, &c);
+				}	
+			}
+			// else if (_fds[i].revents & POLLIN){
+
+			// 	if (find(_socket_fd.begin() ,_socket_fd.end(), _fds[i].fd) != _socket_fd.end())
+			// 		accept_connection(i);
+			// 	else{
+			// 		j = i - _fds.size() + _socket_fd.size();
+			// 		c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(server_conf[j]), Response())));
+			// 		recv_request(i, &c);
+			// 	}
+			// }
+			// else if (_fds[i].revents & POLLOUT){
+			// 	j = i - _fds.size() + _socket_fd.size();
+			// 	if (c.connections[_fds[i].fd].second.get_cursor() == 0)
+			// 		c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, server_conf[j]);
+			// 	send_response(i, &c);
+			// }
+			// else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
+			// 	close(_fds[i].fd);
+			// 	_fds.erase(_fds.begin() + i);
+			// 	break;
+			// }
 		}
 	}
 	//? Terminate the connection

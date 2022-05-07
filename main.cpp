@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/07 11:40:12 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/07 13:16:38 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@ int main(int argc, char** argv){
 			Socket a;
 		else
 		{
+			std::vector<int> ports;
 			std::vector<Socket> sockets;
 			std::vector<struct sockaddr_in> add;
 			std::string path = argv[1];
@@ -34,8 +35,12 @@ int main(int argc, char** argv){
 			// ! pass struct cfg_reader to the socket class
     		std::vector<serverInfo> virtualServer = cfg_reader.getVirtualServer();
 			// std::cout<<cfg_reader<<std::endl;
-    		for (size_t i = 0; i < virtualServer.size(); i++)
-				sockets.push_back(Socket(virtualServer[i].port));
+    		for (size_t i = 0; i < virtualServer.size(); i++){
+				if (std::find(ports.begin(), ports.end(), virtualServer[i].port) == ports.end()){
+					ports.push_back(virtualServer[i].port);
+					sockets.push_back(Socket(virtualServer[i].port));
+				}
+			}
 			Server s(sockets, virtualServer);
 		}
 	}
