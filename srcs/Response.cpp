@@ -117,12 +117,13 @@ void Response::DeleteMethod(){
 
 void Response::stringfyHeaders(){
     std::string root;
+    DIR *folder;
     
     for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
         if (_reqInfo.URI == _servInfo.location[i].uri || (_reqInfo.URI.find(_servInfo.location[i].uri) == 0 && _servInfo.location[i].uri.size() > 1)) {
             root = _servInfo.location[i].root;
-            // if (_servInfo.location[i].autoIndex == true)
-                // _autoIndex = true;
+            if (_servInfo.location[i].autoindex == true)
+                _autoIndex = true;
             if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods.end(), 
                 _reqInfo.method) == _servInfo.location[i].allow_methods.end()){
                     _reqInfo.statusCode = 405;
@@ -134,31 +135,58 @@ void Response::stringfyHeaders(){
         else
             root = _servInfo.root;
     }
-    // if (_autoIndex == true || (root == _reqInfo.URI && _servInfo.autoIndex == true)){
-    //    autoIndex indx;
-    //     indx.setAutoIndexBody(_reqInfo.URI, root + "/" + _reqInfo.URI);
-    //     if (indx.isError() == true){
-    //         errorsResponse(indx.getErrorCode());
-    //         return ;
-    //     }
-    //     _body = indx.getBodyName();
-    //     _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: " << fileSize(_body) <<  "\r\n\r\n";
-    //     return ;
-    // }
-    if (_reqInfo.URI == "/")
-        _body = root + "/" + toString("index.html");
-    else
-        _body = root + "/" + _reqInfo.URI;
-
-    if (isFileExist(_body) == false){
-        errorsResponse(404);
+    if (_autoIndex == true ||  _servInfo.autoindex == true){
+       autoIndex indx;
+       std::string l;
+       if (_reqInfo.URI == "/"){
+           l = root + _reqInfo.URI;
+       }
+       else
+            l = _reqInfo.URI;
+        folder = opendir(l.c_str());
+        if (!folder){
+            if (errno == EACCES){
+                errorsResponse(403);
+                return ;
+            }
+            else if (errno == ENOENT){
+                errorsResponse(404);
+                return ;
+            }
+            else if (errno == ENOTDIR){
+                _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: ";
+                _headers += toString(fileSize(_body)) + "\r\nContent-Disposition: attachment;\r\n\r\n";
+                _body = l;
+                return;
+            }
+        }
+        closedir(folder);
+        indx.setAutoIndexBody(_servInfo.root, l);
+        if (indx.isError() == true){
+            errorsResponse(indx.getErrorCode());
+            return ;
+        }
+        _body = indx.getBodyName();
+        _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: ";
+        _headers += toString(fileSize(_body)) +  "\r\n\r\n";
         return ;
     }
-    if (_reqInfo.method == "GET" || _reqInfo.method == "POST"){
-        GetandPostMethod();
+    else {
+        if (_reqInfo.URI == "/")
+            _body = root + "/" + toString("index.html");
+        else
+            _body = root + "/" + _reqInfo.URI;
+
+        if (isFileExist(_body) == false){
+            errorsResponse(404);
+            return ;
+        }
+        if (_reqInfo.method == "GET" || _reqInfo.method == "POST"){
+            GetandPostMethod();
+        }
+        else
+            DeleteMethod();
     }
-    else
-        DeleteMethod();
 
 }
 
