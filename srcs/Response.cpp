@@ -214,12 +214,9 @@ int fileSize(std::string fileName){
     return (ret);
 }
 
-//!!!!!!!!!!!!
 bool Response::is_complete(int len, std::string filename){
 
-    // std::cout << "------------ " << _cursor << std::endl;
     _cursor += len;
-    std::cout << "sending ... " << len << std::endl;
 	if ((size_t)_cursor >= fileSize(filename) + _headers.size())
         return true;
 	return false;
