@@ -5,6 +5,7 @@
 a.out
 web_server
 bodyFile*
+autoindex.html
 
 # Compiled Object files
 *.slo
