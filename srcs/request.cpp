@@ -144,7 +144,7 @@ void    request::requestLine(std::istringstream &istr)
         std::string st = "bodyFile";
         _rqst.bodyFile  = st + std::to_string(rand())+".txt";
         //instead of using fstream use fd = open()
-        // fd = open(_rqst.bodyFile, )
+        _rqst.fd = open(_rqst.bodyFile.c_str(), O_CREAT | S_IRWXU);
         my_file.open(_rqst.bodyFile, std::ios::out | std::ios::app); //! To append values instead of ecrasing it
         _isBodyExcpected = true;
 
@@ -405,13 +405,14 @@ void request::parse(char *buffer, size_t r)
     {
         if (!_isChunked)
         {
-            std::cout << "["<<_originContentLength <<"]"<<std::endl;
+           // std::cout << "["<<_originContentLength <<"]"<<std::endl;
             size_t i = 0;
             while (i < r && _contentLength < _originContentLength)
             {
-                _contentLength++;
-                my_file<<buffer[i];i++;
+                _contentLength++;i++;
+                //my_file<<buffer[i];i++;
             }
+            write(_rqst.fd, buffer, _contentLength);
         }
         else
         {
@@ -488,6 +489,7 @@ bool request::isComplete()
 {
     if (_headersComplete && (_bodyComplete || !_isBodyExcpected))
     {
+        close(_rqst.fd);
         my_file.close();
        tmpFile.close();
        std::remove("tmp.txt");
