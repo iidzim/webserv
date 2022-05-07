@@ -30,9 +30,10 @@ typedef struct s_location
     std::vector<std::string>            index;
     std::string                         root;
     std::vector<std::string>            allow_methods;
-    std::map<int, std::string>          errorPage;
+    std::map<int, std::string>          errorPage;// statuscode | URL
     bool                                autoindex;
-    std::pair<std::string, std::string> redirect;
+    std::pair<std::string, std::string> redirect; //first path | second=> replacement
+    std::pair<std::string, std::string> cgi;//first => extension | second => address
 }               locationInfos;
 
 typedef struct s_server
@@ -76,6 +77,7 @@ class configurationReader
         void                                    setErrorPage(std::vector<std::string> words, serverInfo &server, locationInfos &location);
         void                                    setautoIndex(std::vector<std::string> words, serverInfo &server, locationInfos &location);
         void                                    setRedirection(std::vector<std::string> words, serverInfo &server, locationInfos &location);
+        void                                    setCGI(std::vector<std::string> words, locationInfos &location);
         unsigned int                            convertStrIPv4toUnsinedInt(const std::string& IPV4);
         bool                                    communPortSameName();
         void                                    defaultForMissingValues(serverInfo &server);
