@@ -80,22 +80,3 @@ void Socket::check(int res, int fd){
 }
 
 Socket::~Socket(void){}
-
-/*
-<p>5If you see this page, the YDA web server is successfully installed and
-				working. Further configuration is required.</p>
-	<p>6If you see this page, the YDA web server is successfully installed and
-				working. Further configuration is required.</p>
-	<p>7If you see this page, the YDA web server is successfully installed and
-				working. Further configuration is required.</p>
-	<p>8If you see this page, the YDA web server is successfully installed and
-				working. Further configuration is required.</p>
-	<p>9If you see this page, the YDA web server is successfully installed and
-				working. Further configuration is required.</p>
-	<p>10If you see this page, the YDA web server is successfully installed and
-				working. Further configuration is required.</p>
-	<p>11If you see this page, the YDA web server is successfully installed and
-				working. Further configuration is required.</p>
-	<p>12If you see this page, the YDA web server is successfully installed and
-				working. Further configuration is required.</p>
-*/

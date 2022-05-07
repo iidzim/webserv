@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mac <mac@student.42.fr>                    +#+  +:+       +#+        */
+/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/03 21:06:37 by mac              ###   ########.fr       */
+/*   Updated: 2022/05/07 11:41:57 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,6 +89,7 @@ void Server::close_fd(void){
 		shutdown(_fds[i].fd, 2);
 	}
 }
+
 //! test with this function - static reponse
 // void Server::send_response(int i, Clients *c){
 
@@ -109,7 +110,6 @@ void Server::close_fd(void){
 // 	_fds[i].events = POLLIN;
 // 	return;
 // }
-
 
 void Server::socketio(std::vector<serverInfo> server_conf){
 
@@ -168,61 +168,39 @@ void Server::send_response(int i, Clients *c){
 	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
 	std::string filename = rep.second;
 	std::string headers = rep.first;
-	std::fstream file;
-	file.open(filename, std::ios::in | std::ios::binary);
 	int o = open(filename.c_str(), O_RDONLY);
-	if (!file.is_open() || o < 0){
+	if (o < 0){
 		std::cout << "Failed to open file - no such file" << std::endl;
 		return;
 	}
 	char buff[1050];
 	int s, x, len = c->connections[_fds[i].fd].second.get_cursor();
 	int total_size = fileSize(filename) + headers.size() - len;
-	std::cout << "fd = " << _fds[i].fd << " - filesize = " << fileSize(filename) << " - total_size >>>>>>>>>> " << total_size << " - cursor = " << len << std::endl;
-
-	// if (file.eof()){
-	// 	std::cout << "End Of File" << std::endl;
-	// 	return;
-	// } // useless
 
 	if ((size_t)len < headers.size()){
 
-		// std::cout << "send headers" << std::endl;
-		// lseek(o, 0, SEEK_SET);
 		if (total_size > BUFF_SIZE)// && headers.size() < BUFF_SIZE) 
 			x = BUFF_SIZE - (headers.size() - len); //? make sure that the headers are not bigger than BUFF_SIZE
 		else
 			x = total_size - (headers.size() - len);
-		std::cout << "x = " << x << std::endl;
 		int r = read(o, buff, x);
-		// file.read(buff, x);
-		// if (!file)
 		if (r < 0)
 			std::cout << "read failure !!!!" << std::endl;
 		std::string str = (headers.substr(len)).append(buff);
 		s = send(_fds[i].fd, str.c_str(), sizeof(str), 0);
-		std::string st = str;
-		st.resize(s);
-		std::cout << s << " bytes sent " << "\n|" << st << "|" << std::endl;
 		memset(buff, 0, BUFF_SIZE);
 	}
 	else{
-		// std::cout << "send body" << std::endl;
 		lseek(o, len - headers.size(), SEEK_SET);
-		std::cout << "lseek body = " << len - headers.size() << std::endl;
 		if (total_size > BUFF_SIZE)
 			x = BUFF_SIZE;
 		else
 			x = total_size;
-		std::cout << "x = " << x << std::endl;
 		int r = read(o, buff, x);
-		std::cout << "buff >> " << buff << std::endl;
+		// std::cout << "buff >> " << buff << std::endl;
 		if (r < 0)
 			std::cout << "read failure" << std::endl;
 		s = send(_fds[i].fd, buff, BUFF_SIZE, 0);
-		// std::string st = buff;
-		// st.resize(s);
-		// std::cout << s << " bytes sent " << "\n|" << st << "|" << std::endl;
 		memset(buff, 0, BUFF_SIZE);
 	}
 	if (s <= 0){
@@ -243,11 +221,8 @@ void Server::send_response(int i, Clients *c){
 			_fds[i].events = POLLIN;
     	//- remove node client from the map
 		c->remove_clients(file_descriptor);
-		std::cout << "client removed" << std::endl;
-		//& unlink file
-		// unlink(filename.c_str());
+		// std::cout << "client removed" << std::endl;
 	}
-	file.close();
 	close(o);
 	// std::cout << "File closed" << std::endl;
 }
