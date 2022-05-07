@@ -37,11 +37,11 @@ class request
         s_requestInfo   _rqst;
         bool            _headersComplete;
         bool            _bodyComplete;
-        std::fstream    my_file;
+      //  std::fstream    my_file;
         bool            _isChunked;
         bool            _isBodyExcpected;
         size_t          _contentLength;
-        serverInfo      _server;
+       // serverInfo      _server;
 
         std::fstream     tmpFile;
 
