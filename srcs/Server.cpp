@@ -179,13 +179,10 @@ void Server::send_response(int i, Clients *c){
 	std::string filename = rep.second;
 	std::string headers = rep.first;
 	int o = open(filename.c_str(), O_RDONLY);
-	if (o < 0){
-		std::cout << "Failed to open file - no such file" << std::endl;
-		return;
-	}
 	char buff[1050];
 	int s, x, len = c->connections[_fds[i].fd].second.get_cursor();
 	int total_size = fileSize(filename) + headers.size() - len;
+	std::cout << "fd = " << _fds[i].fd << " - filesize = " << fileSize(filename) << " - total_size >>>>>>>>>> " << total_size << " - cursor = " << len << std::endl;
 
 	if ((size_t)len < headers.size()){
 
@@ -197,7 +194,8 @@ void Server::send_response(int i, Clients *c){
 		if (r < 0)
 			std::cout << "read failure !!!!" << std::endl;
 		std::string str = (headers.substr(len)).append(buff);
-		s = send(_fds[i].fd, str.c_str(), sizeof(str), 0);
+		std::cout<<"tttttttttest |"<<str<<std::endl;
+		s = send(_fds[i].fd, str.c_str(), str.length(), 0);
 		memset(buff, 0, BUFF_SIZE);
 	}
 	else{
@@ -207,7 +205,7 @@ void Server::send_response(int i, Clients *c){
 		else
 			x = total_size;
 		int r = read(o, buff, x);
-		// std::cout << "buff >> " << buff << std::endl;
+		std::cout << "buff >> " << buff << std::endl;
 		if (r < 0)
 			std::cout << "read failure" << std::endl;
 		s = send(_fds[i].fd, buff, BUFF_SIZE, 0);

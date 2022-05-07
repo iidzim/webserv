@@ -58,10 +58,11 @@ request::request():  _headersComplete(false), _bodyComplete(false), _isChunked(f
     _rqst.versionHTTP = "";
     _rqst.query = "";
     _rqst.statusCode = 200;
+    _rqst.fd = -1;
     _contentLength = 0;
     _originContentLength = 0;
     
-    std::cout<<"request called with parameter!"<<std::endl;
+    std::cout<<"default constructor called !!"<<std::endl;
 }
 
 request::request(const request& obj)
@@ -78,7 +79,6 @@ request& request::operator=(const request& obj)
     _isBodyExcpected = obj._isBodyExcpected;
     _contentLength = obj._contentLength;
     _data = obj._data;
-   // _server = obj._server;
     return *this;
 }
 
@@ -143,6 +143,8 @@ void    request::requestLine(std::istringstream &istr)
         std::stringstream str;
         std::string st = "bodyFile";
         _rqst.bodyFile  = st + std::to_string(rand())+".txt";
+        //instead of using fstream use fd = open()
+        // fd = open(_rqst.bodyFile, )
         my_file.open(_rqst.bodyFile, std::ios::out | std::ios::app); //! To append values instead of ecrasing it
         _isBodyExcpected = true;
 
@@ -392,8 +394,6 @@ void request::parse(char *buffer, size_t r)
     size_t i ;
     if (!_headersComplete)
     {   
-        // std::string tmpBuffer(buffer, r);
-        // _data+=tmpBuffer;
         i = 0;
         while (i < r)
         {
@@ -407,18 +407,11 @@ void request::parse(char *buffer, size_t r)
         {
             std::cout << "["<<_originContentLength <<"]"<<std::endl;
             size_t i = 0;
-            while (i < r && _contentLength < _originContentLength) //&& _contentLength < stoul(_rqst.headers["content-length"]))
+            while (i < r && _contentLength < _originContentLength)
             {
-                // if (_contentLength == _originContentLength)//stoul(_rqst.headers["content-lengh"]))
-                // {
-                //     _bodyComplete = true;
-                //     break;
-                // }
                 _contentLength++;
-                //my_file<<buffer[i];i++;
                 my_file<<buffer[i];i++;
             }
-          //  std::cout<<"_contentLength"<<_contentLength<<std::endl;
         }
         else
         {
@@ -452,13 +445,7 @@ void request::parse(char *buffer, size_t r)
                    // std::cout << "["<<_originContentLength <<"]"<<std::endl;
                     while (i < leftdata.size() && _contentLength < _originContentLength) //&& _contentLength < stoul(_rqst.headers["content-length"]))
                     {
-                        // if (_contentLength == _originContentLength)//stoul(_rqst.headers["content-length"]))
-                        // {
-                        //     _bodyComplete = true;
-                        //     break;
-                        // }
                         _contentLength++;
-                        //my_file<<leftdata[i];
                         my_file<<leftdata[i];
                         i++;
                     }
@@ -478,18 +465,6 @@ void request::parse(char *buffer, size_t r)
         if (_contentLength == _originContentLength)
             _bodyComplete = true;
     }
-    //if body excpected of course
-    // if (_headersComplete && _isBodyExcpected && !_bodyComplete)
-    // {
-    //     if (_contentLength == stoul(_rqst.headers["content-length"]) && !_isChunked)
-    //         _bodyComplete = true;
-    //     // else if (_isChunked && endBodyisFound("0\r\n\r\n"))
-    //     // {
-    //     //     ///check the size && put the rest in a file
-    //     //     //if everything is correct =. else throw error !!
-    //     //         _bodyComplete = true;
-    //     // }
-    // }
 }
 
 void request::print_request()
@@ -507,7 +482,6 @@ void request::print_request()
         std::cout<<it->first<<" "<<it->second<<std::endl;
         it++;
     }
-    //! print the body
 }
 
 bool request::isComplete()
@@ -515,8 +489,6 @@ bool request::isComplete()
     if (_headersComplete && (_bodyComplete || !_isBodyExcpected))
     {
         my_file.close();
-       // print_request();
-       //remove tmp
        tmpFile.close();
        std::remove("tmp.txt");
         return true;
@@ -530,18 +502,3 @@ void request::forceStopParsing()
     if (_isBodyExcpected)
         _bodyComplete = true;
 }
-
-// void        request::clearRequest()
-// {
-//     _rqst.method = "";
-//     _rqst.URI = "";
-//     _rqst.versionHTTP = "";
-//     _rqst.headers.clear(); //clear the map => size = 0 | elements are destroyed
-// }
-
-// s_requestInfo request::tokenizeRequest()
-// {
-//     //! istream getline(istream& is, string& str, char delim)
-
-//     return _rqst;
-// }

@@ -16,6 +16,7 @@
 #include <ctype.h>
 typedef struct t_requestInfo
 {
+    int         fd;
     std::string method;
     std::string URI;
     std::string query;
