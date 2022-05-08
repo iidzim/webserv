@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
+/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/08 15:48:18 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/05/08 18:06:31 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ void Server::recv_request(int i, Clients *c){
 		_fds.erase(_fds.begin() + i);
 		return;
 	}
-	// std::cout << ">>> Received " << r << " bytes" << "\n" << "|" << _buffer << "|" << std::endl;
+	std::cout << ">>> Received " << r << " bytes" << "\n" << "|" << _buffer << "|" << std::endl;
 	try{
 		c->connections[_fds[i].fd].first.parse(_buffer, r);
 	}
@@ -90,26 +90,65 @@ void Server::close_fd(void){
 	}
 }
 
-//! test with this function - static reponse
-// void Server::send_response(int i, Clients *c){
+void Server::send_response(int i, Clients *c){
 
-// 	(void)c;
-// 	std::cout << "Sending response" << std::endl;
-// 	std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
-// 	int s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
-// 	if (s <= 0){
-// 		close(_fds[i].fd);
-// 		_fds.erase(_fds.begin() + i);
-// 		std::cout << "here\n";
-// 		return;
-// 	}
-// 	if (s == 0){
-// 		std::cout << "- Connection closed" << std::endl;
-// 		return;
-// 	}
-// 	_fds[i].events = POLLIN;
-// 	return;
-// }
+	std::cout << "Sending response" << std::endl;
+	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
+	std::string headers = rep.first;
+	std::string filename = rep.second;
+
+	char buff[2048*1000];
+	int total_size, o, x;
+	int s = 0, len = c->connections[_fds[i].fd].second.get_cursor();
+
+	if ((size_t)len < headers.size()){
+
+		std::string str = headers.substr(len);
+		s = send(_fds[i].fd, str.c_str(), str.length(), 0);
+		if (s <= 0)
+			std::cout << "HERE\n";
+	}
+	else if (filename.length() != 0){
+
+		std::cout << "sending body ...\n";
+		o = open(filename.c_str(), O_RDONLY);
+		total_size = fileSize(filename) + headers.size() - len;
+		lseek(o, len - headers.size(), SEEK_SET);
+		x = total_size > BUFF_SIZE ? BUFF_SIZE : total_size;
+		struct pollfd file[1];
+		file[0].fd = o;
+		file[0].events = POLLIN;
+		int poll_file = poll(file, 1, -1);
+		if (poll_file > 0 && (file[0].revents & POLLIN)){
+			int r = read(o, buff, x);
+			if (r < 0)
+				std::cout << "read failure" << std::endl;
+			else
+				s = send(_fds[i].fd, buff, BUFF_SIZE, 0);
+			memset(buff, 0, BUFF_SIZE);
+		}
+		close(o);
+	}
+	if (s < 0){
+		close(_fds[i].fd);
+		_fds.erase(_fds.begin() + i);
+		std::cout << "send failure s <= 0\n";
+		return;
+	}
+	if (c->connections[_fds[i].fd].second.is_complete(s, filename)){
+		std::cout << "response is complete\n";
+		int file_descriptor = _fds[i].fd;
+		if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
+			std::cout << "Closing socket - keepAlive = false" << std::endl;
+			close(_fds[i].fd);
+			_fds.erase(_fds.begin() + i);
+		}
+		else
+			_fds[i].events = POLLIN;
+    	//- remove node client from the map
+		c->remove_clients(file_descriptor);
+	}
+}
 
 void Server::socketio(std::vector<serverInfo> server_conf){
 
@@ -146,33 +185,25 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 			else if (_fds[i].revents & POLLOUT){
 
 				if (c.connections[_fds[i].fd].second.get_cursor() == 0){
+
 					serverInfo s;
-					//+ 1 server name - 1 port
-					// if (_socket_fd.size() == server_conf.size()){
-					// 	s = server_conf[i - _fds.size() + _socket_fd.size()];
-					// 	std::cout << "********** " << s.serverName << std::endl;
-					// }
-					// else{
-						//- curl --resolve ok.ma:8081:127.0.0.1 http://ok.ma:8081
-						//- curl --resolve abdelkader:8081:127.0.0.1 http://abdelkader:8081
-						//+ multiple server name - same port
-						// std::cout << "different server name & same port" << std::endl;
-						// std::cout << "serverconf size = " << server_conf.size() << std::endl;
-						std::string serv_name = c.connections[_fds[i].fd].first.getRequest().headers["host"];
-						int port = stoi(c.connections[_fds[i].fd].first.getRequest().headers["port"]);
-						// std::cout << "......... |" << serv_name << "|" << std::endl;
-						for (size_t i = 0; i < server_conf.size(); i++){
-							// std::cout << "server_conf[" << i << "] = " << server_conf[i].serverName << std::endl;
-							if (serv_name == server_conf[i].serverName && port == server_conf[i].port){
-							// if (serv_name == server_conf[i].serverName){
-								s = server_conf[i];
-								// std::cout << "i = " << i << std::endl;
-								break;
-							}
-							else if (port == server_conf[i].port)
-								s = server_conf[i];
+					//- curl --resolve ok.ma:8081:127.0.0.1 http://ok.ma:8081
+					//- curl --resolve abdelkader:8081:127.0.0.1 http://abdelkader:8081
+					//+ multiple server name - same port
+					// std::cout << "different server name & same port" << std::endl;
+					// std::cout << "serverconf size = " << server_conf.size() << std::endl;
+					std::string serv_name = c.connections[_fds[i].fd].first.getRequest().headers["host"];
+					int port = stoi(c.connections[_fds[i].fd].first.getRequest().headers["port"]);
+					// std::cout << "......... |" << serv_name << "|" << std::endl;
+					for (size_t i = 0; i < server_conf.size(); i++){
+						// std::cout << "server_conf[" << i << "] = " << server_conf[i].serverName << std::endl;
+						if (serv_name == server_conf[i].serverName && port == server_conf[i].port){
+							s = server_conf[i];
+							break;
 						}
-					// }
+						else if (port == server_conf[i].port)
+							s = server_conf[i];
+					}
 					c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, s);
 				}
 				send_response(i, &c);
@@ -186,72 +217,4 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 	}
 	//? Terminate the connection
 	close_fd();
-}
-
-void Server::send_response(int i, Clients *c){
-
-	std::cout << "Sending response" << std::endl;
-	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
-	std::string headers = rep.first;
-	std::string filename = rep.second;
-
-	// std::string filename;
-	// std::cout << "filename size = " << filename.length() << std::endl;
-
-	char buff[2048*1000];
-	int total_size, o, x;
-	int s = 0, len = c->connections[_fds[i].fd].second.get_cursor();
-	// o = open(filename.c_str(), O_RDONLY);
-	// total_size = fileSize(filename) + headers.size() - len;
-	// < " - filesize = " << fileSize(filename) << " - total_size >>>>>>>>>> " << total_size << " - cursor = " << len << std::endl;
-
-
-	if ((size_t)len < headers.size()){
-
-		std::string str = headers.substr(len);
-		s = send(_fds[i].fd, str.c_str(), str.length(), 0);
-		if (s <= 0)
-			std::cout << "HERE\n";
-	}
-	else if (filename.length() != 0){
-
-		std::cout << "sending body ...\n";
-		o = open(filename.c_str(), O_RDONLY);
-		total_size = fileSize(filename) + headers.size() - len;
-		lseek(o, len - headers.size(), SEEK_SET);
-		x = total_size > BUFF_SIZE ? BUFF_SIZE : total_size;
-		struct pollfd file[1];
-		file[0].fd = o;
-		file[0].events = POLLIN;
-		int poll_file = poll(file, 1, -1);
-		if (poll_file > 0 && (file[0].revents & POLLIN)){
-			int r = read(o, buff, x);
-			if (r < 0)
-				std::cout << "read failure" << std::endl;
-			else
-				s = send(_fds[i].fd, buff, BUFF_SIZE, 0);
-			memset(buff, 0, BUFF_SIZE);
-		}
-	}
-	if (s < 0){
-		// if (errno == ENOENT)
-			// perror("errno");
-		close(_fds[i].fd);
-		_fds.erase(_fds.begin() + i);
-		std::cout << "send failure s <= 0\n";
-		return;
-	}
-	if (c->connections[_fds[i].fd].second.is_complete(s, filename)){
-		std::cout << "response is complete\n";
-		int file_descriptor = _fds[i].fd;
-		if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
-			close(_fds[i].fd);
-			_fds.erase(_fds.begin() + i);
-		}
-		else
-			_fds[i].events = POLLIN;
-    	//- remove node client from the map
-		c->remove_clients(file_descriptor);
-	}
-	close(o);
 }

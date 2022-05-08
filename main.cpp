@@ -6,12 +6,18 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/08 14:25:55 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/08 18:16:09 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "includes/Server.hpp"
 #include "includes/configurationReader.hpp"
+
+// void signalhandler(int signum){
+// 	std::cout << "Interrupt signal (" << signum << ") received.\n";
+// 	if (signum == SIGFPE)
+// 		return ;
+// }
 
 int main(int argc, char** argv){
 
@@ -31,8 +37,7 @@ int main(int argc, char** argv){
 			std::string path = argv[1];
 			configurationReader cfg_reader(path);
 			cfg_reader.parser();
-			 std::cout<<cfg_reader<<std::endl;
-			// ! pass struct cfg_reader to the socket class
+			//  std::cout<<cfg_reader<<std::endl;
     		std::vector<serverInfo> virtualServer = cfg_reader.getVirtualServer();
 			// // std::cout<<cfg_reader<<std::endl;
     		for (size_t i = 0; i < virtualServer.size(); i++){
@@ -41,6 +46,7 @@ int main(int argc, char** argv){
 					sockets.push_back(Socket(virtualServer[i].port));
 				}
 			}
+			signal(SIGFPE, SIG_IGN);
 			Server s(sockets, virtualServer);
 		}
 	}
