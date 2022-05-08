@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
+/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/08 14:55:45 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/05/08 15:15:40 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,14 +192,17 @@ void Server::send_response(int i, Clients *c){
 
 	std::cout << "Sending response" << std::endl;
 	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
-	std::string filename = rep.second;
 	std::string headers = rep.first;
+	std::string filename = rep.second;
+
+	// std::string filename;
+	// std::cout << "filename size = " << filename.length() << std::endl;
+
 	char buff[2048*1000];
 	int total_size, o, x;
 	int s = 0, len = c->connections[_fds[i].fd].second.get_cursor();
-	o = open(filename.c_str(), O_RDONLY);
-	total_size = fileSize(filename) + headers.size() - len;
-	// std::cout << "fd = " << _fds[i].fd <
+	// o = open(filename.c_str(), O_RDONLY);
+	// total_size = fileSize(filename) + headers.size() - len;
 	// < " - filesize = " << fileSize(filename) << " - total_size >>>>>>>>>> " << total_size << " - cursor = " << len << std::endl;
 
 
@@ -207,12 +210,12 @@ void Server::send_response(int i, Clients *c){
 
 		std::string str = headers.substr(len);
 		s = send(_fds[i].fd, str.c_str(), str.length(), 0);
-		std::cout << "********" << _fds[i].fd << std::endl;
 	}
-	else{// if (filename.length() != 0){
+	else if (filename.length() != 0){
 
-		// o = open(filename.c_str(), O_RDONLY);
-		// total_size = fileSize(filename) + headers.size() - len;
+		std::cout << "sending body ...\n";
+		o = open(filename.c_str(), O_RDONLY);
+		total_size = fileSize(filename) + headers.size() - len;
 		lseek(o, len - headers.size(), SEEK_SET);
 		x = total_size > BUFF_SIZE ? BUFF_SIZE : total_size;
 		struct pollfd file[1];
@@ -229,8 +232,8 @@ void Server::send_response(int i, Clients *c){
 		}
 	}
 	if (s <= 0){
-		if (errno == ENOENT)
-			perror("errno");
+		// if (errno == ENOENT)
+			// perror("errno");
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
 		std::cout << "send failure s <= 0\n";
