@@ -145,10 +145,10 @@ void Response::setResponse(){
                 }
             break ;
         }
-        else{
-            _index = _servInfo.index;
-            _root = _servInfo.root;
-        }
+    }
+    if (isLoc == false){
+        _index = _servInfo.index;
+        _root = _servInfo.root;
     }
     if (_root == _servInfo.root && _servInfo.autoindex == true)
         _autoIndex = true;
@@ -158,18 +158,13 @@ void Response::setResponse(){
     }
     else
         _path = _root + _reqInfo.URI;
-    // std::cout << "|-path ========= " << _path <<std::endl;
     if (_reqInfo.method == "GET" || _reqInfo.method == "POST"){
         folder = opendir(_path.c_str());
         if (!folder){
-            if (errno == EACCES){
+            if (errno == EACCES)
                 errorsResponse(403);
-                return ;
-            }
-            else if (errno == ENOENT){
+            else if (errno == ENOENT)
                 errorsResponse(404);
-                return ;
-            }
             else if (errno == ENOTDIR){
 
                 std::map<std::string, std::string> mimetype(_mime.getTypes());
@@ -190,11 +185,9 @@ void Response::setResponse(){
                     _headers += "\r\nContent-Disposition: attachment;\r\n\r\n";
                 else
                     _headers += "\r\n\r\n";
-                return ;
             }
+            return ;
         }
-        std::cout << std::boolalpha;
-        std::cout << "_autoindex == " << _autoIndex << "     path == " << _path << std::endl;
         if (_autoIndex == false){
             int fd = open((_path+_index).c_str(), O_RDONLY);
             if (!fd){

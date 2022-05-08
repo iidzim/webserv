@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/08 13:49:50 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/08 14:42:38 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,19 +152,19 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 						s = server_conf[i - _fds.size() + _socket_fd.size()];
 					else{
 						//- curl --resolve ok.ma:8081:127.0.0.1 http://ok.ma:8081
-						//- curl --resolve myWebsite.com:8081:127.0.0.1 http://myWebsite.com:8081
+						//- curl --resolve abdelkader:8081:127.0.0.1 http://abdelkader:8081
 						//+ multiple server name - same port
-						// std::cout << "different server name & same port" << std::endl;
-						// std::cout << "serverconf size = " << server_conf.size() << std::endl;
+						std::cout << "different server name & same port" << std::endl;
+						std::cout << "serverconf size = " << server_conf.size() << std::endl;
 						std::string serv_name = c.connections[_fds[i].fd].first.getRequest().headers["host"];
 						// int port = c.connections[_fds[i].fd].first.getRequest().headers["port"];
-						// std::cout << "......... |" << serv_name << "|" << std::endl;
+						std::cout << "......... |" << serv_name << "|" << std::endl;
 						for (size_t i = 0; i < server_conf.size(); i++){
-							// std::cout << "server_conf[" << i << "] = " << server_conf[i].serverName << std::endl;
+							std::cout << "server_conf[" << i << "] = " << server_conf[i].serverName << std::endl;
 							// if (serv_name == server_conf[i].serverName && port = server_conf[i].port){
 							if (serv_name == server_conf[i].serverName){
 								s = server_conf[i];
-								// std::cout << "i = " << i << std::endl;
+								std::cout << "i = " << i << std::endl;
 								break;
 							}
 						}
@@ -193,17 +193,22 @@ void Server::send_response(int i, Clients *c){
 	char buff[2048*1000];
 	int total_size, o, x;
 	int s = 0, len = c->connections[_fds[i].fd].second.get_cursor();
-	// std::cout << "fd = " << _fds[i].fd << " - filesize = " << fileSize(filename) << " - total_size >>>>>>>>>> " << total_size << " - cursor = " << len << std::endl;
+	o = open(filename.c_str(), O_RDONLY);
+	total_size = fileSize(filename) + headers.size() - len;
+	// std::cout << "fd = " << _fds[i].fd <
+	// < " - filesize = " << fileSize(filename) << " - total_size >>>>>>>>>> " << total_size << " - cursor = " << len << std::endl;
+
 
 	if ((size_t)len < headers.size()){
 
 		std::string str = headers.substr(len);
 		s = send(_fds[i].fd, str.c_str(), str.length(), 0);
+		std::cout << "********" << _fds[i].fd << std::endl;
 	}
-	else if (filename.length() != 0){
+	else{// if (filename.length() != 0){
 
-		o = open(filename.c_str(), O_RDONLY);
-		total_size = fileSize(filename) + headers.size() - len;
+		// o = open(filename.c_str(), O_RDONLY);
+		// total_size = fileSize(filename) + headers.size() - len;
 		lseek(o, len - headers.size(), SEEK_SET);
 		x = total_size > BUFF_SIZE ? BUFF_SIZE : total_size;
 		struct pollfd file[1];
@@ -218,9 +223,10 @@ void Server::send_response(int i, Clients *c){
 				s = send(_fds[i].fd, buff, BUFF_SIZE, 0);
 			memset(buff, 0, BUFF_SIZE);
 		}
-		close(o);
 	}
 	if (s <= 0){
+		if (errno == ENOENT)
+			perror("errno");
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
 		std::cout << "send failure s <= 0\n";
@@ -238,4 +244,5 @@ void Server::send_response(int i, Clients *c){
     	//- remove node client from the map
 		c->remove_clients(file_descriptor);
 	}
+	close(o);
 }

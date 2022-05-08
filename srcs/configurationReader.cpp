@@ -351,7 +351,7 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
         o << "-------server " << i << " -------"<<std::endl;
         o << "Port          "<<virtualServer[i].port<<std::endl;
         o <<"Host           "<<virtualServer[i].host<<std::endl;
-        o <<"Host           "<<virtualServer[i].host<<std::endl;
+      //  o <<"Host           "<<virtualServer[i].host<<std::endl;
         o << "index          "<<virtualServer[i].index<<std::endl;
         o <<"size           "<<virtualServer[i].size<<std::endl;
         o <<"redirection    "<<virtualServer[i].redirect.first<<" "<<virtualServer[i].redirect.second<<std::endl;
