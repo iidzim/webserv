@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/08 15:15:40 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/08 15:48:18 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -156,17 +156,17 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 						//- curl --resolve ok.ma:8081:127.0.0.1 http://ok.ma:8081
 						//- curl --resolve abdelkader:8081:127.0.0.1 http://abdelkader:8081
 						//+ multiple server name - same port
-						std::cout << "different server name & same port" << std::endl;
-						std::cout << "serverconf size = " << server_conf.size() << std::endl;
+						// std::cout << "different server name & same port" << std::endl;
+						// std::cout << "serverconf size = " << server_conf.size() << std::endl;
 						std::string serv_name = c.connections[_fds[i].fd].first.getRequest().headers["host"];
 						int port = stoi(c.connections[_fds[i].fd].first.getRequest().headers["port"]);
-						std::cout << "......... |" << serv_name << "|" << std::endl;
+						// std::cout << "......... |" << serv_name << "|" << std::endl;
 						for (size_t i = 0; i < server_conf.size(); i++){
-							std::cout << "server_conf[" << i << "] = " << server_conf[i].serverName << std::endl;
+							// std::cout << "server_conf[" << i << "] = " << server_conf[i].serverName << std::endl;
 							if (serv_name == server_conf[i].serverName && port == server_conf[i].port){
 							// if (serv_name == server_conf[i].serverName){
 								s = server_conf[i];
-								std::cout << "i = " << i << std::endl;
+								// std::cout << "i = " << i << std::endl;
 								break;
 							}
 							else if (port == server_conf[i].port)
@@ -210,6 +210,8 @@ void Server::send_response(int i, Clients *c){
 
 		std::string str = headers.substr(len);
 		s = send(_fds[i].fd, str.c_str(), str.length(), 0);
+		if (s <= 0)
+			std::cout << "HERE\n";
 	}
 	else if (filename.length() != 0){
 
@@ -231,7 +233,7 @@ void Server::send_response(int i, Clients *c){
 			memset(buff, 0, BUFF_SIZE);
 		}
 	}
-	if (s <= 0){
+	if (s < 0){
 		// if (errno == ENOENT)
 			// perror("errno");
 		close(_fds[i].fd);

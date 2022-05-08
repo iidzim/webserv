@@ -5,7 +5,6 @@ Response::Response(): _headers(""), _body(""), _cursor(0) {
 }
 
 Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
-    std::cout << "_servInfo.serverName ===== " << _servInfo.serverName << std::endl;
     _iskeepAlive = true;
     _autoIndex = false;
     _location = "";
@@ -28,10 +27,8 @@ std::string Response::setErrorsHeaders(std::string ErrorMsg, std::string cLentgh
 
 bool Response::isFileExist(std::string pathName){
     int fd = open(pathName.c_str(), O_RDONLY);
-    if (fd < 0){
-        std::cout << "failed to open " << pathName << std::endl;
+    if (fd < 0)
         return false;
-    }
     close(fd);
     return true;
 }
@@ -102,7 +99,6 @@ void Response::DeleteMethod(){
     int fd;
     std::ostringstream headers;
     std::string fileName;
-    std::cout << "path to delete " << _path << std::endl;
     fd = unlink(_path.c_str());
     if (fd < 0){
         if (errno == EACCES){
@@ -122,6 +118,7 @@ void Response::DeleteMethod(){
         headers << "HTTP/1.1 204 No Content\r\nConnection: " << connect << "\r\n\r\n";
         _body = "";
     }
+    _headers = headers.str();
 }
 
 
@@ -159,7 +156,6 @@ void Response::setResponse(){
     }
     else
         _path = _root + _reqInfo.URI;
-    std::cout << "_path ==" << _path << std::endl;
     if (_reqInfo.method == "GET" || _reqInfo.method == "POST"){
         folder = opendir(_path.c_str());
         if (!folder){
@@ -230,7 +226,7 @@ std::pair<std::string, std::string> Response::get_response(){
     std::pair<std::string, std::string> p;
     p.first = _headers;
     p.second = _body;
-   return (p);
+    return (p);
 }
 
 std::string Response::getBody(){
