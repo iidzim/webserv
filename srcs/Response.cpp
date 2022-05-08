@@ -7,6 +7,9 @@ Response::Response(): _headers(""), _body(""), _cursor(0) {
 Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
     _iskeepAlive = true;
     _autoIndex = false;
+    _location = "";
+    _path = "";
+    _root = "";
 }
 
 Response::~Response(){
@@ -49,6 +52,10 @@ void Response::errorsResponse(int statCode){
         _headers = setErrorsHeaders("404 Not Found", toString(ret));
     else if (_reqInfo.statusCode == 405)
         _headers = setErrorsHeaders("405 Not Method Not Allowed", toString(ret));
+    else if (_reqInfo.statusCode == 411)
+        _headers = setErrorsHeaders("411 Length Required", toString(ret));
+    else if (_reqInfo.statusCode == 413)
+        _headers = setErrorsHeaders("413 Payload Too Large", toString(ret));
     else if (_reqInfo.statusCode == 500)
         _headers = setErrorsHeaders("500 Internal Server Error", toString(ret));
     else if (_reqInfo.statusCode == 501)
@@ -92,8 +99,9 @@ void Response::GetandPostMethod(){
 void Response::DeleteMethod(){
     int fd;
     std::ostringstream headers;
-
-    fd = unlink(_fileName.c_str());
+    std::string fileName;
+    std::cout << "path to delete " << _path << std::endl;
+    fd = unlink(_path.c_str());
     if (fd < 0){
         if (errno == EACCES){
             errorsResponse(403);
@@ -110,20 +118,22 @@ void Response::DeleteMethod(){
             _iskeepAlive = false;
         }
         headers << "HTTP/1.1 204 No Content\r\nConnection: " << connect << "\r\n\r\n";
+        _body = "";
     }
 }
 
 
 
-void Response::stringfyHeaders(){
-    std::string root;
+void Response::setResponse(){
+    bool isLoc = false;
     DIR *folder;
-    
-    // std::cout << "location size ======= " <<  _servInfo.location.size() << std::endl;
     for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
-        if (_reqInfo.URI == _servInfo.location[i].uri || (_reqInfo.URI.find(_servInfo.location[i].uri) == 0 && _servInfo.location[i].uri.size() > 1)) {
-            root = _servInfo.location[i].root;
-            // std::cout << "root111 ========" << root << std::endl;
+        if (_reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
+            || (_reqInfo.URI.find(_servInfo.location[i].uri + "/") == 0 && _servInfo.location[i].uri.size() > 1)) {
+            _root = _servInfo.location[i].root;
+            _location = _servInfo.location[i].uri;
+            isLoc = true;
+            _index = _servInfo.location[i].index;
             if (_servInfo.location[i].autoindex == true)
                 _autoIndex = true;
             if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods.end(), 
@@ -135,19 +145,20 @@ void Response::stringfyHeaders(){
             break ;
         }
         else{
-            root = _servInfo.root;
-            // std::cout << "root222 ========" << root << std::endl;
+            _index = _servInfo.index;
+            _root = _servInfo.root;
         }
     }
-    if (_autoIndex == true ||  _servInfo.autoindex == true){
-       autoIndex indx;
-       std::string l;
-       if (_reqInfo.URI == "/"){
-           l = root + _reqInfo.URI;
-       }
-       else
-            l = _reqInfo.URI;
-        folder = opendir(l.c_str());
+    if (_root == _servInfo.root && _servInfo.autoindex == true)
+        _autoIndex = true;
+    if (isLoc == true){
+        std::string uri = _reqInfo.URI.substr(_location.length());
+        _path = _root + uri;;
+    }
+    else
+        _path = _root + _reqInfo.URI;
+    if (_reqInfo.method == "GET" || _reqInfo.method == "POST"){
+        folder = opendir(_path.c_str());
         if (!folder){
             if (errno == EACCES){
                 errorsResponse(403);
@@ -158,52 +169,66 @@ void Response::stringfyHeaders(){
                 return ;
             }
             else if (errno == ENOTDIR){
-                _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: ";
-                _headers += toString(fileSize(_body)) + "\r\nContent-Disposition: attachment;\r\n\r\n";
-                _body = l;
-                return;
+
+                std::map<std::string, std::string> mimetype(_mime.getTypes());
+                std::string mType;
+                size_t pos = _reqInfo.URI.find(".");
+                if (pos != std::string::npos){
+                    std::map<std::string, std::string>::iterator it2 = mimetype.find(_reqInfo.URI.substr(pos));
+                    if (it2 != mimetype.end())
+                        mType = it2->second;
+                    else
+                        mType = "text/html";
+                }
+                else
+                    mType = "text/html";
+                _body = _path;
+                _headers = "HTTP/1.1 200 OK\r\nContent-type: " + mType + "\r\nContent-length: " + toString(fileSize(_body));
+                if (_autoIndex == true)
+                    _headers += "\r\nContent-Disposition: attachment;\r\n\r\n";
+                else
+                    _headers += "\r\n\r\n";
+                return ;
             }
         }
-        closedir(folder);
-        indx.setAutoIndexBody(_servInfo.root, l);
-        if (indx.isError() == true){
-            errorsResponse(indx.getErrorCode());
+        std::cout << std::boolalpha;
+        std::cout << "_autoindex == " << _autoIndex << "     path == " << _path << std::endl;
+        if (_autoIndex == false){
+            int fd = open((_path+_index[0]).c_str(), O_RDONLY);
+            if (!fd){
+                errorsResponse(404);
+            }
+            else{
+                _body = _path + _index[0];
+                _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body)) +  "\r\n\r\n";
+        }
+        close(fd);
+        return ;
+        }
+        else {
+            autoIndex indx;
+            indx.setAutoIndexBody(folder, _path, _root, _location);
+            if (indx.isError() == true){
+                errorsResponse(indx.getErrorCode());
+                return ;
+            }
+            _body = indx.getBodyName();
+            _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body)) +  "\r\n\r\n";
+            closedir(folder);
             return ;
         }
-        _body = indx.getBodyName();
-        _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: ";
-        _headers += toString(fileSize(_body)) +  "\r\n\r\n";
-        return ;
     }
     else {
-        if (_reqInfo.URI == "/"){
-            // std::cout << "2222222" << std::endl;
-            _body = root + "/" + toString("index.html");
-        }
-        else{
-            // std::cout << "555555555" << std::endl;
-            _body = root + "/" + _reqInfo.URI;
-        }
-        // std::cout << "_body ====== "  << _body << std::endl;
-        if (isFileExist(_body) == false){
-            errorsResponse(404);
-            return ;
-        }
-        if (_reqInfo.method == "GET" || _reqInfo.method == "POST"){
-            GetandPostMethod();
-        }
-        else
             DeleteMethod();
     }
 
 }
 
 std::pair<std::string, std::string> Response::get_response(){
-    // std::cout << "status code ================== "<< _reqInfo.statusCode << std::endl;
     if (_reqInfo.statusCode != 200)
         errorsResponse(_reqInfo.statusCode);
     else{
-        stringfyHeaders();
+        setResponse();
     }
     std::pair<std::string, std::string> p;
     p.first = _headers;

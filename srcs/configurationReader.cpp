@@ -69,34 +69,12 @@ void configurationReader::setServerName(std::vector<std::string> words, serverIn
 
 void configurationReader::setIndex(std::vector<std::string> words, serverInfo& server, locationInfos& location)
 {
-    // if (words.size() != 2 || _state != INLOCATION)
-    //     throw configurationReader::invalidSyntax();
-    // location.index = words[1];
-    if (words.size() < 2 || _state == CLOSED)
+    if (words.size() != 2 || _state == CLOSED || words[1].empty())
         throw configurationReader::invalidSyntax();
     if (_state == INLOCATION)
-    {
-        for (size_t i = 1; i < words.size(); i++)
-        {
-            if (words[i].empty())
-                continue;
-            location.index.push_back(words[i]);
-        }
-        if (location.index.empty())
-            throw configurationReader::invalidSyntax();
-    }
+        location.index = words[1];
     else if (_state == INSIDESERVER)
-    {
-        for (size_t i = 1; i < words.size(); i++)
-        {
-            if (words[i].empty())
-                continue;
-            server.index.push_back(words[i]);
-        }
-        if (server.index.empty())
-            throw configurationReader::invalidSyntax();
-    }
-
+        server.index = words[1];
 }
 
 void configurationReader::setAllowedMethods(std::vector<std::string> words, locationInfos& location)
@@ -205,7 +183,7 @@ void resetServer(serverInfo & server)
 {
     server.port = -1;
     server.host = 0;
-    server.root = "";
+    server.root.clear();
     server.size = 0;
     server.autoindex = OFF;
     server.redirect.first.clear();
@@ -373,7 +351,8 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
         o << "-------server " << i << " -------"<<std::endl;
         o << "Port          "<<virtualServer[i].port<<std::endl;
         o <<"Host           "<<virtualServer[i].host<<std::endl;
-        o << "root          |"<<virtualServer[i].root<<"|"<<std::endl;
+        o <<"Host           "<<virtualServer[i].host<<std::endl;
+        o << "index          "<<virtualServer[i].index<<std::endl;
         o <<"size           "<<virtualServer[i].size<<std::endl;
         o <<"redirection    "<<virtualServer[i].redirect.first<<" "<<virtualServer[i].redirect.second<<std::endl;
         o << "Autoindex     ";
@@ -385,10 +364,6 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
         // for (size_t j = 0; j < virtualServer[i].serverName.size(); j++)
         //     o << virtualServer[i].serverName[j] <<" ";
         // std::cout<<std::endl;
-        o << "index    ";
-        for (size_t j = 0; j < virtualServer[i].index.size(); j++)
-            o<<virtualServer[i].index[j]<<" ";
-        o <<std::endl;
         std::map<int, std::string>::iterator itb = virtualServer[i].errorPage.begin();
         std::map<int, std::string>::iterator ite = virtualServer[i].errorPage.end();
         o << "Error pages ";
@@ -417,12 +392,7 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
                 o << virtualServer[i].location[k].allow_methods[l] << " | ";
             }
             o<< std::endl;
-            o <<"index ";
-            for (size_t l = 0; l < virtualServer[i].location[k].index.size(); l++)
-            {
-                o << virtualServer[i].location[k].index[l] << " | ";
-            }
-            o<<std::endl;
+            o <<"index "<<virtualServer[i].location[k].index<<std::endl;
             std::map<int, std::string>::iterator itb = virtualServer[i].location[k].errorPage.begin();
             std::map<int, std::string>::iterator ite = virtualServer[i].location[k].errorPage.end();
             o << "Error pages ";

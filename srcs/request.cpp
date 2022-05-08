@@ -144,8 +144,9 @@ void    request::requestLine(std::istringstream &istr)
         std::string st = "bodyFile";
         _rqst.bodyFile  = st + std::to_string(rand())+".txt";
         //instead of using fstream use fd = open()
-        _rqst.fd = open(_rqst.bodyFile.c_str(), O_CREAT | S_IRWXU);
-        my_file.open(_rqst.bodyFile, std::ios::out | std::ios::app); //! To append values instead of ecrasing it
+        _rqst.fd = open(_rqst.bodyFile.c_str(), O_CREAT | O_RDWR, 0777);
+
+       // my_file.open(_rqst.bodyFile, std::ios::out | std::ios::app); //! To append values instead of ecrasing it
         _isBodyExcpected = true;
 
         //create a tmp file
@@ -224,9 +225,13 @@ void    request::getHeaders(std::istringstream & istr)
                 {
                     size_t pos = fieldValue.find(":");
                     if (pos != std::string::npos)
-                       fieldValue.erase(pos, fieldValue.size()-1);
+                    {
+                        (_rqst.headers).insert(std::pair<std::string, std::string>("port", fieldValue.substr(pos+1, fieldValue.size()-1)));
+                        fieldValue.erase(pos, fieldValue.size()-1);
+                    }
+
                 }
-               (_rqst.headers).insert(std::pair<std::string, std::string>(fieldName, fieldValue)) ;
+               (_rqst.headers).insert(std::pair<std::string, std::string>(fieldName, fieldValue));
             }
             else
             {
@@ -356,7 +361,8 @@ void request::isBodyValid()
         if (line.length() < size)
         {
                 line+='\n';
-                my_file<<line;
+              //  my_file<<line;
+                write(_rqst.fd, line.c_str(), line.length());
                 length=line.length(); //(\n)
                 std::string tmpLine;
                 while(getline(tmpFile, tmpLine))
@@ -365,7 +371,8 @@ void request::isBodyValid()
                     if (length>size)
                         break;
                     tmpLine+='\n';
-                    my_file<<tmpLine;
+                  //  my_file<<tmpLine;
+                    write(_rqst.fd, tmpLine.c_str(), tmpLine.length());
                 }
                 if (tmpLine[tmpLine.size() - 1] != '\r')
                 {
@@ -373,7 +380,8 @@ void request::isBodyValid()
                     throw request::RequestNotValid();
                 }
                 tmpLine.erase(tmpLine.end()-1);
-                my_file<<tmpLine;
+               // my_file<<tmpLine;
+                write(_rqst.fd, tmpLine.c_str(), tmpLine.length());
             }
             else
             {
@@ -383,7 +391,8 @@ void request::isBodyValid()
                     throw request::RequestNotValid();
                 }
                 line.erase(line.end()-1);
-                my_file<<line;
+              //  my_file<<line;
+                write(_rqst.fd, line.c_str(), line.length());
           }
      }
 }
@@ -410,9 +419,9 @@ void request::parse(char *buffer, size_t r)
             while (i < r && _contentLength < _originContentLength)
             {
                 _contentLength++;i++;
-                //my_file<<buffer[i];i++;
+              //  my_file<<buffer[i];i++;
             }
-            write(_rqst.fd, buffer, _contentLength);
+            write(_rqst.fd, buffer, i);
         }
         else
         {
@@ -443,13 +452,14 @@ void request::parse(char *buffer, size_t r)
                 {
                     
                     size_t i = 0;
-                   // std::cout << "["<<_originContentLength <<"]"<<std::endl;
                     while (i < leftdata.size() && _contentLength < _originContentLength) //&& _contentLength < stoul(_rqst.headers["content-length"]))
                     {
                         _contentLength++;
-                        my_file<<leftdata[i];
+                       // my_file<<leftdata[i];
                         i++;
                     }
+                    write(_rqst.fd, leftdata.c_str(), i);
+
                 }
                 else
                 {
@@ -490,9 +500,9 @@ bool request::isComplete()
     if (_headersComplete && (_bodyComplete || !_isBodyExcpected))
     {
         close(_rqst.fd);
-        my_file.close();
-       tmpFile.close();
-       std::remove("tmp.txt");
+       // my_file.close();
+        tmpFile.close();
+        std::remove("tmp.txt");
         return true;
     }
     return false;

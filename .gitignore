@@ -6,6 +6,7 @@ a.out
 web_server
 bodyFile*
 autoindex.html
+default.conf
 
 # Compiled Object files
 *.slo
