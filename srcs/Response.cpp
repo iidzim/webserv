@@ -5,7 +5,7 @@ Response::Response(): _headers(""), _body(""), _cursor(0) {
 }
 
 Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
-    std::cout << "_reqInfo ==== " << _servInfo.serverName << std::endl;
+    // std::cout << "_servInfo ================ " << _servInfo.serverName << std::endl;
     _iskeepAlive = true;
     _autoIndex = false;
     _location = "";
@@ -203,6 +203,7 @@ void Response::setResponse(){
             return ;
         }
         if (_autoIndex == false){
+    std::cout << "-----------------------------------------------------------------" << std::endl;
             int fd = open((_path+_index[0]).c_str(), O_RDONLY);
             if (!fd){
                 errorsResponse(404);
@@ -243,9 +244,9 @@ std::pair<std::string, std::string> Response::get_response(){
         setResponse();
     }
     std::pair<std::string, std::string> p;
-    std::cout << "-----------------------------------------------" << std::endl;
-    std::cout << _headers << std::endl;
-    std::cout << "-----------------------------------------------" << std::endl;
+    // std::cout << "-----------------------------------------------" << std::endl;
+    // std::cout << _headers << std::endl;
+    // std::cout << "-----------------------------------------------" << std::endl;
     p.first = _headers;
     p.second = _body;
     return (p);

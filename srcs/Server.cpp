@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/08 18:46:02 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/08 21:03:02 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,8 +97,8 @@ void Server::send_response(int i, Clients *c){
 	std::string headers = rep.first;
 	std::string filename = rep.second;
 
-	std::cout << "********** " << headers << std::endl;
-	std::cout << "********** " << filename << std::endl;
+	// std::cout << "********** " << headers << std::endl;
+	// std::cout << "********** " << filename << std::endl;
 
 
 	char buff[2048*1000];
@@ -194,25 +194,18 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 					//- curl --resolve ok.ma:8081:127.0.0.1 http://ok.ma:8081
 					//- curl --resolve abdelkader:8081:127.0.0.1 http://abdelkader:8081
 					//+ multiple server name - same port
-					// std::cout << "different server name & same port" << std::endl;
-					// std::cout << "serverconf size = " << server_conf.size() << std::endl;
 					std::string serv_name = c.connections[_fds[i].fd].first.getRequest().headers["host"];
-					// std::cout << "......... |" << serv_name << "|" << std::endl;
-					int port = stoi(c.connections[_fds[i].fd].first.getRequest().headers["port"]);
-					if (_socket_fd.size() == server_conf.size()){
-						for (size_t i = 0; i < server_conf.size(); i++){
-							if (port == server_conf[i].port)
-								s = server_conf[i];
+					// std::cout << "......... |" << serv_name << "|" << std::endl
+					int port = c.connections[_fds[i].fd].first.getPort();
+					for (size_t i = 0; i < server_conf.size(); i++){
+						// std::cout << "server_conf[" << i << "] = " << server_conf[i].serverName << std::endl;
+						if (serv_name == server_conf[i].serverName && port == server_conf[i].port){
+							// std::cout << "i = " << i << " - " << server_conf[i].serverName << std::endl;
+							s = server_conf[i];
+							break;
 						}
-					}
-					else{
-						for (size_t i = 0; i < server_conf.size(); i++){
-							// std::cout << "server_conf[" << i << "] = " << server_conf[i].serverName << std::endl;
-							if (serv_name == server_conf[i].serverName && port == server_conf[i].port){
-								s = server_conf[i];
-								break;
-							}
-						}
+						if (port == server_conf[i].port)
+							s = server_conf[i];
 					}
 					c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, s);
 				}
