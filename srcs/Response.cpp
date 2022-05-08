@@ -11,7 +11,6 @@ Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInf
     _location = "";
     _path = "";
     _root = "";
-    _index = "";
 }
 
 Response::~Response(){
@@ -22,7 +21,8 @@ std::string Response::setErrorsHeaders(std::string ErrorMsg, std::string cLentgh
     std::ostringstream headers;
 
     headers << "HTTP/1.1 "<<  ErrorMsg << "\r\nContent-type: text/html\r\nContent-length: ";
-    headers << cLentgh <<  "\r\n\r\n";
+    headers << cLentgh;
+    headers << Connection();
     return headers.str();
 }
 
@@ -67,33 +67,52 @@ void Response::errorsResponse(int statCode){
 }
 
 
-void Response::GetandPostMethod(){
-    std::ostringstream headers;
-    std::map<std::string, std::string> mimetype(_mime.getTypes());
-    std::string mType;
-    size_t pos = _reqInfo.URI.find(".");
-    if (pos != std::string::npos){
-        std::map<std::string, std::string>::iterator it2 = mimetype.find(_reqInfo.URI.substr(pos));
-        if (it2 != mimetype.end())
-            mType = it2->second;
-        else
-            mType = "text/html";
-    }
-    else
-        mType = "text/html";
-    std::map<std::string, std::string>::iterator it = _reqInfo.headers.find("Connection");
+// void Response::GetandPostMethod(){
+//     std::ostringstream headers;
+//     std::map<std::string, std::string> mimetype(_mime.getTypes());
+//     std::string mType;
+//     size_t pos = _reqInfo.URI.find(".");
+//     if (pos != std::string::npos){
+//         std::map<std::string, std::string>::iterator it2 = mimetype.find(_reqInfo.URI.substr(pos));
+//         if (it2 != mimetype.end())
+//             mType = it2->second;
+//         else
+//             mType = "text/html";
+//     }
+//     else
+//         mType = "text/html";
+//     std::map<std::string, std::string>::iterator it = _reqInfo.headers.find("Connection");
+//     if( it != _reqInfo.headers.end()){
+//         std::string connect = it->second;
+//         if (connect == "keep-alive") {
+//             connect = "Keep-Alive";
+//         }
+//         else {
+//             connect = "Closed";
+//             _iskeepAlive = false;
+//         }
+//     }
+//     headers << "HTTP/1.1 200 OK\r\nContent-type: " << mType << "\r\nContent-length: " << fileSize(_body) <<  "\r\n\r\n";
+//     _headers = headers.str();
+// }
+
+std::string Response::Connection(){
+    std::string ret = "\r\nConnection: ";
+    std::map<std::string, std::string>::iterator it = _reqInfo.headers.find("connection");
     if( it != _reqInfo.headers.end()){
         std::string connect = it->second;
         if (connect == "keep-alive") {
-            connect = "Keep-Alive";
+            connect = "Keep-Alive\r\n\r\n";
         }
         else {
-            connect = "Closed";
+            connect = "Closed\r\n\r\n";
             _iskeepAlive = false;
         }
+        ret += connect;
     }
-    headers << "HTTP/1.1 200 OK\r\nContent-type: " << mType << "\r\nContent-length: " << fileSize(_body) <<  "\r\n\r\n";
-    _headers = headers.str();
+    else
+        ret += "Keep-alive\r\n\r\n";
+    return ret;
 }
 
 void Response::DeleteMethod(){
@@ -108,15 +127,8 @@ void Response::DeleteMethod(){
         }
     }
     else {
-        std::string connect =  _reqInfo.headers.find("Connection")->second;
-        if (connect == "keep-alive") {
-            connect = "Keep-Alive";
-        }
-        else {
-            connect = "Closed";
-            _iskeepAlive = false;
-        }
-        headers << "HTTP/1.1 204 No Content\r\nConnection: " << connect << "\r\n\r\n";
+        headers << "HTTP/1.1 204 No Content";
+        headers << Connection();
         _body = "";
     }
     _headers = headers.str();
@@ -148,12 +160,16 @@ void Response::setResponse(){
     if (isLoc == false){
         _index = _servInfo.index;
         _root = _servInfo.root;
+        if (_reqInfo.method != "GET"){
+            errorsResponse(405);
+            return ;
+        }
     }
     if (_root == _servInfo.root && _servInfo.autoindex == true)
         _autoIndex = true;
     if (isLoc == true){
         std::string uri = _reqInfo.URI.substr(_location.length());
-        _path = _root + uri;;
+        _path = _root + uri;
     }
     else
         _path = _root + _reqInfo.URI;
@@ -181,20 +197,20 @@ void Response::setResponse(){
                 _body = _path;
                 _headers = "HTTP/1.1 200 OK\r\nContent-type: " + mType + "\r\nContent-length: " + toString(fileSize(_body));
                 if (_autoIndex == true)
-                    _headers += "\r\nContent-Disposition: attachment;\r\n\r\n";
-                else
-                    _headers += "\r\n\r\n";
+                    _headers += "\r\nContent-Disposition: attachment";
+                _headers += Connection();
             }
             return ;
         }
         if (_autoIndex == false){
-            int fd = open((_path+_index).c_str(), O_RDONLY);
+            int fd = open((_path+_index[0]).c_str(), O_RDONLY);
             if (!fd){
                 errorsResponse(404);
             }
             else{
-                _body = _path + _index;
-                _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body)) +  "\r\n\r\n";
+                _body = _path + _index[0];
+                _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+                _headers += Connection();
         }
         close(fd);
         return ;
@@ -207,7 +223,8 @@ void Response::setResponse(){
                 return ;
             }
             _body = indx.getBodyName();
-            _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body)) +  "\r\n\r\n";
+            _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+            _headers += Connection();
             closedir(folder);
             return ;
         }
@@ -219,12 +236,16 @@ void Response::setResponse(){
 }
 
 std::pair<std::string, std::string> Response::get_response(){
+
     if (_reqInfo.statusCode != 200)
         errorsResponse(_reqInfo.statusCode);
     else{
         setResponse();
     }
     std::pair<std::string, std::string> p;
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << _headers << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
     p.first = _headers;
     p.second = _body;
     return (p);

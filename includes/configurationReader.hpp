@@ -28,13 +28,14 @@ typedef struct s_location
 {   
     std::string                         uri;
     //std::vector<std::string>            index;
-    std::string                         index;
+    std::vector<std::string>            index;
     std::string                         root;
     std::vector<std::string>            allow_methods;
     std::map<int, std::string>          errorPage;// statuscode | URL
     bool                                autoindex;
     std::pair<std::string, std::string> redirect; //first path | second=> replacement
-    std::pair<std::string, std::string> cgi;//first => extension | second => address
+    //std::pair<std::string, std::string> cgi;//first => extension | second => address
+    std::string                         cgi;
 }               locationInfos;
 
 typedef struct s_server
@@ -47,7 +48,7 @@ typedef struct s_server
     //std::vector<std::string> index;
     unsigned int                        host;
    // std::vector<std::string>            index;
-    std::string                          index;
+    std::vector<std::string>            index;
     std::string                         root;
     unsigned long                       size;
     std::map<int, std::string>          errorPage;
