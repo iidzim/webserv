@@ -66,36 +66,6 @@ void Response::errorsResponse(int statCode){
         _headers = setErrorsHeaders("505 HTTP Version Not Supported", toString(ret));
 }
 
-
-// void Response::GetandPostMethod(){
-//     std::ostringstream headers;
-//     std::map<std::string, std::string> mimetype(_mime.getTypes());
-//     std::string mType;
-//     size_t pos = _reqInfo.URI.find(".");
-//     if (pos != std::string::npos){
-//         std::map<std::string, std::string>::iterator it2 = mimetype.find(_reqInfo.URI.substr(pos));
-//         if (it2 != mimetype.end())
-//             mType = it2->second;
-//         else
-//             mType = "text/html";
-//     }
-//     else
-//         mType = "text/html";
-//     std::map<std::string, std::string>::iterator it = _reqInfo.headers.find("Connection");
-//     if( it != _reqInfo.headers.end()){
-//         std::string connect = it->second;
-//         if (connect == "keep-alive") {
-//             connect = "Keep-Alive";
-//         }
-//         else {
-//             connect = "Closed";
-//             _iskeepAlive = false;
-//         }
-//     }
-//     headers << "HTTP/1.1 200 OK\r\nContent-type: " << mType << "\r\nContent-length: " << fileSize(_body) <<  "\r\n\r\n";
-//     _headers = headers.str();
-// }
-
 std::string Response::Connection(){
     std::string ret = "\r\nConnection: ";
     std::map<std::string, std::string>::iterator it = _reqInfo.headers.find("connection");
@@ -139,6 +109,7 @@ void Response::DeleteMethod(){
 void Response::setResponse(){
     bool isLoc = false;
     DIR *folder;
+    std::string cgi ="";
     for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
         if (_reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
             || (_reqInfo.URI.find(_servInfo.location[i].uri + "/") == 0 && _servInfo.location[i].uri.size() > 1)) {
@@ -146,6 +117,7 @@ void Response::setResponse(){
             _location = _servInfo.location[i].uri;
             isLoc = true;
             _index = _servInfo.location[i].index;
+            cgi = _servInfo.location[i].cgi;
             if (_servInfo.location[i].autoindex == true)
                 _autoIndex = true;
             if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods.end(), 
@@ -157,6 +129,7 @@ void Response::setResponse(){
             break ;
         }
     }
+    // handle case if _index or _root are empty 
     if (isLoc == false){
         _index = _servInfo.index;
         _root = _servInfo.root;
@@ -168,53 +141,72 @@ void Response::setResponse(){
     if (_root == _servInfo.root && _servInfo.autoindex == true)
         _autoIndex = true;
     if (isLoc == true){
+        std::cout << "herrrrrrrrrrrrrrrrrre" << std::endl;
         std::string uri = _reqInfo.URI.substr(_location.length());
         _path = _root + uri;
     }
-    else
+    else{
+        std::cout << "121212121121211121212121212" << std::endl;
         _path = _root + _reqInfo.URI;
+    }
     if (_reqInfo.method == "GET" || _reqInfo.method == "POST"){
         folder = opendir(_path.c_str());
         if (!folder){
+            std::cout << "-----------------****" <<_path <<"------** " <<  _root <<"*/////// " <<  _reqInfo.URI << "****-------------------" << std::endl;
             if (errno == EACCES)
                 errorsResponse(403);
             else if (errno == ENOENT)
                 errorsResponse(404);
             else if (errno == ENOTDIR){
-
-                std::map<std::string, std::string> mimetype(_mime.getTypes());
-                std::string mType;
-                size_t pos = _reqInfo.URI.find(".");
-                if (pos != std::string::npos){
-                    std::map<std::string, std::string>::iterator it2 = mimetype.find(_reqInfo.URI.substr(pos));
-                    if (it2 != mimetype.end())
-                        mType = it2->second;
+                std::string res = _path.substr(_path.length() - cgi.length());
+                if (!cgi.length() || (cgi.length() && cgi != res)){ //
+                    std::map<std::string, std::string> mimetype(_mime.getTypes());
+                    std::string mType;
+                    size_t pos = _reqInfo.URI.find(".");
+                    if (pos != std::string::npos){
+                        std::map<std::string, std::string>::iterator it2 = mimetype.find(_reqInfo.URI.substr(pos));
+                        if (it2 != mimetype.end())
+                            mType = it2->second;
+                        else
+                            mType = "text/html";
+                    }
                     else
                         mType = "text/html";
+                    _body = _path;
+                    _headers = "HTTP/1.1 200 OK\r\nContent-type: " + mType + "\r\nContent-length: " + toString(fileSize(_body));
+                    if (_autoIndex == true)
+                        _headers += "\r\nContent-Disposition: attachment";
+                    _headers += Connection();
                 }
-                else
-                    mType = "text/html";
-                _body = _path;
-                _headers = "HTTP/1.1 200 OK\r\nContent-type: " + mType + "\r\nContent-length: " + toString(fileSize(_body));
-                if (_autoIndex == true)
-                    _headers += "\r\nContent-Disposition: attachment";
-                _headers += Connection();
+                // else if (cgi.length() && (cgi == _path.substr(_path.length() - cgi.length()))){
+                //     // execute cgi file (_path)
+                // }
+
             }
             return ;
         }
         if (_autoIndex == false){
-    std::cout << "-----------------------------------------------------------------" << std::endl;
-            int fd = open((_path+_index[0]).c_str(), O_RDONLY);
-            if (!fd){
-                errorsResponse(404);
-            }
-            else{
-                _body = _path + _index[0];
-                _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
-                _headers += Connection();
-        }
-        close(fd);
-        return ;
+            // bool indx = false;
+            // if (cgi.length() && (cgi == _path.substr(_path.length() - cgi.length())))
+                // if index[1] exist {
+                    // indx = true;
+                    // execute index[1]
+            // else if (cgi.length() || (cgi != _path.substr(_path.length() - cgi.length())) || indx == false){
+                if (_path[_path.length() - 1] != '/')
+                    _path += "/";
+                std::cout << "------------------" <<_path + _index[0] << "-------------------" << std::endl;
+                int fd = open((_path+_index[0]).c_str(), O_RDONLY);
+                if (!fd){
+                    errorsResponse(404);
+                }
+                else{
+                    _body = _path + _index[0];
+                    _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+                    _headers += Connection();
+                }
+            // }
+            close(fd);
+            return ;
         }
         else {
             autoIndex indx;
@@ -246,6 +238,9 @@ std::pair<std::string, std::string> Response::get_response(){
     std::pair<std::string, std::string> p;
     // std::cout << "-----------------------------------------------" << std::endl;
     // std::cout << _headers << std::endl;
+    // std::cout << "-----------------------------------------------" << std::endl;
+    // std::cout << "-----------------------------------------------" << std::endl;
+    // std::cout << _body << std::endl;
     // std::cout << "-----------------------------------------------" << std::endl;
     p.first = _headers;
     p.second = _body;
