@@ -21,6 +21,9 @@
 #include "configurationReader.hpp"
 #include "Response.hpp"
 #include "autoIndex.hpp"
+// #include "Server.hpp"
+// #include "Socket.hpp"
+// #include "Client.hpp"
 
 
 #endif

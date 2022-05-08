@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/08 18:06:31 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/08 18:46:02 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ void Server::recv_request(int i, Clients *c){
 		_fds.erase(_fds.begin() + i);
 		return;
 	}
-	std::cout << ">>> Received " << r << " bytes" << "\n" << "|" << _buffer << "|" << std::endl;
+	// std::cout << ">>> Received " << r << " bytes" << "\n" << "|" << _buffer << "|" << std::endl;
 	try{
 		c->connections[_fds[i].fd].first.parse(_buffer, r);
 	}
@@ -96,6 +96,10 @@ void Server::send_response(int i, Clients *c){
 	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
 	std::string headers = rep.first;
 	std::string filename = rep.second;
+
+	std::cout << "********** " << headers << std::endl;
+	std::cout << "********** " << filename << std::endl;
+
 
 	char buff[2048*1000];
 	int total_size, o, x;
@@ -193,16 +197,22 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 					// std::cout << "different server name & same port" << std::endl;
 					// std::cout << "serverconf size = " << server_conf.size() << std::endl;
 					std::string serv_name = c.connections[_fds[i].fd].first.getRequest().headers["host"];
-					int port = stoi(c.connections[_fds[i].fd].first.getRequest().headers["port"]);
 					// std::cout << "......... |" << serv_name << "|" << std::endl;
-					for (size_t i = 0; i < server_conf.size(); i++){
-						// std::cout << "server_conf[" << i << "] = " << server_conf[i].serverName << std::endl;
-						if (serv_name == server_conf[i].serverName && port == server_conf[i].port){
-							s = server_conf[i];
-							break;
+					int port = stoi(c.connections[_fds[i].fd].first.getRequest().headers["port"]);
+					if (_socket_fd.size() == server_conf.size()){
+						for (size_t i = 0; i < server_conf.size(); i++){
+							if (port == server_conf[i].port)
+								s = server_conf[i];
 						}
-						else if (port == server_conf[i].port)
-							s = server_conf[i];
+					}
+					else{
+						for (size_t i = 0; i < server_conf.size(); i++){
+							// std::cout << "server_conf[" << i << "] = " << server_conf[i].serverName << std::endl;
+							if (serv_name == server_conf[i].serverName && port == server_conf[i].port){
+								s = server_conf[i];
+								break;
+							}
+						}
 					}
 					c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, s);
 				}

@@ -5,6 +5,7 @@ Response::Response(): _headers(""), _body(""), _cursor(0) {
 }
 
 Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
+    std::cout << "_reqInfo ==== " << _servInfo.serverName << std::endl;
     _iskeepAlive = true;
     _autoIndex = false;
     _location = "";
@@ -37,7 +38,7 @@ void Response::errorsResponse(int statCode){
     char cwd[256];
     std::string currPath(getcwd(cwd, sizeof(cwd)));
     int ret;
-    
+
     _reqInfo.statusCode = statCode;
     _body = currPath + "/error_pages/" + toString(statCode) + ".html";
     if (isFileExist(_body) == false)

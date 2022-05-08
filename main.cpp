@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/08 18:16:09 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/08 18:24:32 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ int main(int argc, char** argv){
 		return (-1);
 	}
 	try{
+		// signal(SIGFPE, signalhandler);
 		if (argc == 1)
 			//* add default configuration file
 			Socket a;
