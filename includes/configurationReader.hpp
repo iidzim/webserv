@@ -27,7 +27,8 @@
 typedef struct s_location
 {   
     std::string                         uri;
-    std::vector<std::string>            index;
+    //std::vector<std::string>            index;
+    std::string                         index;
     std::string                         root;
     std::vector<std::string>            allow_methods;
     std::map<int, std::string>          errorPage;// statuscode | URL
@@ -45,7 +46,8 @@ typedef struct s_server
   //  std::string                 host; // IPV4 unsigned int interface
     //std::vector<std::string> index;
     unsigned int                        host;
-    std::vector<std::string>            index;
+   // std::vector<std::string>            index;
+    std::string                          index;
     std::string                         root;
     unsigned long                       size;
     std::map<int, std::string>          errorPage;

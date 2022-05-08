@@ -225,9 +225,13 @@ void    request::getHeaders(std::istringstream & istr)
                 {
                     size_t pos = fieldValue.find(":");
                     if (pos != std::string::npos)
-                       fieldValue.erase(pos, fieldValue.size()-1);
+                    {
+                        (_rqst.headers).insert(std::pair<std::string, std::string>("port", fieldValue.substr(pos+1, fieldValue.size()-1)));
+                        fieldValue.erase(pos, fieldValue.size()-1);
+                    }
+
                 }
-               (_rqst.headers).insert(std::pair<std::string, std::string>(fieldName, fieldValue)) ;
+               (_rqst.headers).insert(std::pair<std::string, std::string>(fieldName, fieldValue));
             }
             else
             {
@@ -495,9 +499,9 @@ bool request::isComplete()
 {
     if (_headersComplete && (_bodyComplete || !_isBodyExcpected))
     {
-      close(_rqst.fd);
+        close(_rqst.fd);
        // my_file.close();
-       tmpFile.close();
+        tmpFile.close();
         std::remove("tmp.txt");
         return true;
     }
