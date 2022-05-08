@@ -98,7 +98,7 @@ void Response::errorsResponse(int statCode){
 
 std::string Response::Connection(){
     std::string ret = "\r\nConnection: ";
-    std::map<std::string, std::string>::iterator it = _reqInfo.headers.find("Connection");
+    std::map<std::string, std::string>::iterator it = _reqInfo.headers.find("connection");
     if( it != _reqInfo.headers.end()){
         std::string connect = it->second;
         if (connect == "keep-alive") {
