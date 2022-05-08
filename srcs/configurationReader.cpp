@@ -69,12 +69,26 @@ void configurationReader::setServerName(std::vector<std::string> words, serverIn
 
 void configurationReader::setIndex(std::vector<std::string> words, serverInfo& server, locationInfos& location)
 {
-    if (words.size() != 2 || _state == CLOSED || words[1].empty())
+    // if (words.size() != 2 || _state == CLOSED || words[1].empty())
+    //     throw configurationReader::invalidSyntax();
+    // if (_state == INLOCATION)
+    //     location.index = words[1];
+    // else if (_state == INSIDESERVER)
+    //     server.index = words[1];
+    if (words.size() != 3 || _state == CLOSED || words[1].empty() || words[2].empty())
         throw configurationReader::invalidSyntax();
-    if (_state == INLOCATION)
-        location.index = words[1];
-    else if (_state == INSIDESERVER)
-        server.index = words[1];
+    if (_state == INLOCATION && location.index.empty())
+    {
+        location.index.push_back(words[1]);
+        location.index.push_back(words[1]);
+    }
+    else if (_state == INSIDESERVER && server.index.empty())
+    {
+        server.index.push_back(words[1]);
+        server.index.push_back(words[1]);
+    }
+    else
+        configurationReader::invalidSyntax();
 }
 
 void configurationReader::setAllowedMethods(std::vector<std::string> words, locationInfos& location)
@@ -157,12 +171,11 @@ void configurationReader::setRedirection(std::vector<std::string> words, serverI
 }
 void   configurationReader::setCGI(std::vector<std::string> words, locationInfos &location)
 {
-    if (words.size() != 3 || _state != INLOCATION || words[1].empty() || words[2].empty())
+    if (words.size() != 2 || _state != INLOCATION || words[1].empty())
         throw configurationReader::invalidSyntax();
-    if (!location.cgi.first.empty())
+    if (!location.cgi.empty())
         throw configurationReader::invalidSyntax();
-    location.cgi.first=words[1];
-    location.cgi.second=words[2];
+    location.cgi=words[1];
 }
 
 void clearLocation(locationInfos & location)
@@ -171,8 +184,8 @@ void clearLocation(locationInfos & location)
     location.root = "";
     location.uri = "";
     location.autoindex = OFF;
-    location.cgi.first.clear();
-    location.cgi.second.clear();
+    location.cgi.clear();
+    //location.cgi.second.clear();
     location.redirect.first.clear();
     location.redirect.second.clear();
     location.allow_methods.clear();
@@ -352,7 +365,8 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
         o << "Port          "<<virtualServer[i].port<<std::endl;
         o <<"Host           "<<virtualServer[i].host<<std::endl;
       //  o <<"Host           "<<virtualServer[i].host<<std::endl;
-        o << "index          "<<virtualServer[i].index<<std::endl;
+        if (virtualServer[i].index.size() == 2)
+            o << "index          "<<virtualServer[i].index.at(0)<< " | "<<virtualServer[i].index.at(1)<<std::endl;
         o <<"size           "<<virtualServer[i].size<<std::endl;
         o <<"redirection    "<<virtualServer[i].redirect.first<<" "<<virtualServer[i].redirect.second<<std::endl;
         o << "Autoindex     ";
@@ -379,7 +393,7 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
         {
             o << "URI "<<virtualServer[i].location[k].uri <<std::endl;
             o <<"redirection    "<<virtualServer[i].location[k].redirect.first<<" "<<virtualServer[i].location[k].redirect.second<<std::endl;
-            o <<"CGI    "<<virtualServer[i].location[k].cgi.first<<" "<<virtualServer[i].location[k].cgi.second<<std::endl;
+            o <<"CGI    "<<virtualServer[i].location[k].cgi<<std::endl;
             o << "root      "<<virtualServer[i].location[k].root<<std::endl;
             o << "Autoindex     ";
             if (virtualServer[i].location[k].autoindex)
@@ -392,7 +406,8 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
                 o << virtualServer[i].location[k].allow_methods[l] << " | ";
             }
             o<< std::endl;
-            o <<"index "<<virtualServer[i].location[k].index<<std::endl;
+            if (virtualServer[i].location[k].index.size() == 2 )
+                o <<"index "<<virtualServer[i].location[k].index.at(0)<<" | "<<virtualServer[i].location[k].index.at(1) <<std::endl;
             std::map<int, std::string>::iterator itb = virtualServer[i].location[k].errorPage.begin();
             std::map<int, std::string>::iterator ite = virtualServer[i].location[k].errorPage.end();
             o << "Error pages ";
