@@ -226,7 +226,16 @@ void    request::getHeaders(std::istringstream & istr)
                     size_t pos = fieldValue.find(":");
                     if (pos != std::string::npos)
                     {
-                        (_rqst.headers).insert(std::pair<std::string, std::string>("port", fieldValue.substr(pos+1, fieldValue.size()-1)));
+                        try
+                        {
+                        _port = stoi(fieldValue.substr(pos+1, fieldValue.size()-1));
+                        }catch (std::exception &e)
+                        {
+                            _rqst.statusCode = 500;
+                            throw request::RequestNotValid();
+                        }
+
+                       // (_rqst.headers).insert(std::pair<std::string, std::string>("port", fieldValue.substr(pos+1, fieldValue.size()-1)));
                         fieldValue.erase(pos, fieldValue.size()-1);
                     }
 
@@ -269,6 +278,10 @@ void    request::getHeaders(std::istringstream & istr)
 }
 
 
+int     request::getPort()
+{
+    return _port;
+}
 
 const char* request::RequestNotValid::what()const throw()
 {

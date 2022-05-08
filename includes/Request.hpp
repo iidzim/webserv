@@ -33,6 +33,7 @@ typedef struct t_requestInfo
 class request
 {
     private:
+        int             _port;
         std::string     _data;
         s_requestInfo   _rqst;
         bool            _headersComplete;
@@ -76,6 +77,7 @@ class request
         s_requestInfo getRequest();
         bool isComplete();
         void forceStopParsing();
+        int getPort();
 
        //! for debugging
        void print_request();
