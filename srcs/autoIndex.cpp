@@ -7,28 +7,26 @@ autoIndex::~autoIndex(){}
 
 
 
-void autoIndex::setAutoIndexBody(std::string uri, std::string pathName){
+void autoIndex::setAutoIndexBody(DIR *folder, std::string path, std::string root, std::string location){
     std::ostringstream result;
     char cwd[256];
     std::string currPath(getcwd(cwd, sizeof(cwd)));
     std::string autoIndexPath = currPath + "/var/www/html/autoindex.html";
 
     std::ofstream out(autoIndexPath);
-    DIR *folder;
     struct dirent *entry;
-
-    folder = opendir(pathName.c_str());
-
     result << "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>YDA</title></head><body><div class='page'><h1> Index of";
-    result << uri <<  "</h1>   <hr style='width:100%;text-align:left;margin-left:0'>";
+    result << path <<  "</h1>   <hr style='width:100%;text-align:left;margin-left:0'>";
     result << "<table><tr><th>Name</th><th>Last modified</th><th>Size</th></tr>";
     while ((entry=readdir(folder))){
+        std::string href;
+        href = location + path.substr(root.length());
         result << "<tr>";
-        result << "<th> <a href='" << pathName;
-        if (pathName[pathName.length()-1] != '/')
+        result << "<th> <a href='" << href;
+        if (path[path.length()-1] != '/')
             result << "/";
         result <<  entry->d_name << "'>" << entry->d_name <<"</th>";
-        result << "<th>" << lastTimeModified(pathName + "/" + entry->d_name) << "</th>";
+        result << "<th>" << lastTimeModified(path + "/" + entry->d_name) << "</th>";
         result << "<th>" << _fileSize << "</th>";
         result << "</tr>";
     }
@@ -36,7 +34,7 @@ void autoIndex::setAutoIndexBody(std::string uri, std::string pathName){
     _body = result.str();
     out << _body;
     out.close();
-    closedir(folder);
+
     _bodyName = autoIndexPath;
 }
 

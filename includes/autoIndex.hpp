@@ -16,7 +16,7 @@ class autoIndex{
         autoIndex();
         ~autoIndex();
         std::string getBodyName();
-        void setAutoIndexBody(std::string uri, std::string PathName);
+        void setAutoIndexBody(DIR *folder, std::string path, std::string root, std::string location);
         std::string lastTimeModified(std::string fileName);
         bool isError();
         int getErrorCode();
