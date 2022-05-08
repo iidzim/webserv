@@ -75,7 +75,7 @@ void configurationReader::setIndex(std::vector<std::string> words, serverInfo& s
     //     location.index = words[1];
     // else if (_state == INSIDESERVER)
     //     server.index = words[1];
-    if (words.size() <= 3 || _state == CLOSED)
+    if ((words.size() != 3 && words.size() != 2) || _state == CLOSED)
         throw configurationReader::invalidSyntax();
     if (_state == INLOCATION && location.index.empty())
     {
