@@ -13,7 +13,7 @@ class Response{
         std::string                         _path;
         std::string                         _location;
         std::string                         _root;
-        std::string                         _index;
+        std::vector<std::string>            _index;
         bool                                _iskeepAlive;
         s_requestInfo                       _reqInfo;
         mimeTypes                            _mime;
@@ -41,6 +41,7 @@ class Response{
         std::string findMimeType(std::string);
         bool is_complete(int len, std::string filename);
         int get_cursor();
+        std::string Connection();
 
 };
 
