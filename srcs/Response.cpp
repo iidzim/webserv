@@ -5,6 +5,7 @@ Response::Response(): _headers(""), _body(""), _cursor(0) {
 }
 
 Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
+    std::cout << "_servInfo.serverName ===== " << _servInfo.serverName << std::endl;
     _iskeepAlive = true;
     _autoIndex = false;
     _location = "";
@@ -158,6 +159,7 @@ void Response::setResponse(){
     }
     else
         _path = _root + _reqInfo.URI;
+    std::cout << "_path ==" << _path << std::endl;
     if (_reqInfo.method == "GET" || _reqInfo.method == "POST"){
         folder = opendir(_path.c_str());
         if (!folder){
