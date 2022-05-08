@@ -10,7 +10,6 @@ Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInf
     _location = "";
     _path = "";
     _root = "";
-    std::map<std::string, std::string>::iterator it = _reqInfo.headers.find("connection");
 }
 
 Response::~Response(){
