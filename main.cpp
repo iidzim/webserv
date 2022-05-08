@@ -31,17 +31,17 @@ int main(int argc, char** argv){
 			std::string path = argv[1];
 			configurationReader cfg_reader(path);
 			cfg_reader.parser();
-			// std::cout<<cfg_reader<<std::endl;
+			 std::cout<<cfg_reader<<std::endl;
 			// ! pass struct cfg_reader to the socket class
-    		std::vector<serverInfo> virtualServer = cfg_reader.getVirtualServer();
-			// std::cout<<cfg_reader<<std::endl;
-    		for (size_t i = 0; i < virtualServer.size(); i++){
-				if (std::find(ports.begin(), ports.end(), virtualServer[i].port) == ports.end()){
-					ports.push_back(virtualServer[i].port);
-					sockets.push_back(Socket(virtualServer[i].port));
-				}
-			}
-			Server s(sockets, virtualServer);
+    		// std::vector<serverInfo> virtualServer = cfg_reader.getVirtualServer();
+			// // std::cout<<cfg_reader<<std::endl;
+    		// for (size_t i = 0; i < virtualServer.size(); i++){
+			// 	if (std::find(ports.begin(), ports.end(), virtualServer[i].port) == ports.end()){
+			// 		ports.push_back(virtualServer[i].port);
+			// 		sockets.push_back(Socket(virtualServer[i].port));
+			// 	}
+			// }
+			// Server s(sockets, virtualServer);
 		}
 	}
 	catch (std::exception &e){
