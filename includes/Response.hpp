@@ -13,7 +13,7 @@ class Response{
         std::string                         _path;
         std::string                         _location;
         std::string                         _root;
-        std::vector<std::string>            _index;
+        std::string                         _index;
         bool                                _iskeepAlive;
         s_requestInfo                       _reqInfo;
         mimeTypes                            _mime;

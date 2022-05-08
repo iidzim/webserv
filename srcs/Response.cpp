@@ -10,6 +10,7 @@ Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInf
     _location = "";
     _path = "";
     _root = "";
+    _index = "";
 }
 
 Response::~Response(){
@@ -157,6 +158,7 @@ void Response::setResponse(){
     }
     else
         _path = _root + _reqInfo.URI;
+    // std::cout << "|-path ========= " << _path <<std::endl;
     if (_reqInfo.method == "GET" || _reqInfo.method == "POST"){
         folder = opendir(_path.c_str());
         if (!folder){
@@ -194,12 +196,12 @@ void Response::setResponse(){
         std::cout << std::boolalpha;
         std::cout << "_autoindex == " << _autoIndex << "     path == " << _path << std::endl;
         if (_autoIndex == false){
-            int fd = open((_path+_index[0]).c_str(), O_RDONLY);
+            int fd = open((_path+_index).c_str(), O_RDONLY);
             if (!fd){
                 errorsResponse(404);
             }
             else{
-                _body = _path + _index[0];
+                _body = _path + _index;
                 _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body)) +  "\r\n\r\n";
         }
         close(fd);
