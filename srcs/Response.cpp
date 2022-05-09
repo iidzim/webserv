@@ -129,11 +129,12 @@ void Response::setResponse(){
             break ;
         }
     }
-    // handle case if _index or _root are empty 
-    if (isLoc == false){
-        _index = _servInfo.index;
-        _root = _servInfo.root;
-        if (_reqInfo.method != "GET"){
+    if (isLoc == false || _root == "" || _index.size() == 0){
+        if (_index.size() == 0)
+            _index = _servInfo.index;
+        if (_root == "")
+            _root = _servInfo.root;
+        if (_reqInfo.method != "GET" && isLoc == false){
             errorsResponse(405);
             return ;
         }
@@ -183,6 +184,7 @@ void Response::setResponse(){
             return ;
         }
         if (_autoIndex == false){
+            // std::cout << "path ==== " << _path << std::endl;
             // bool indx = false;
             // if (cgi.length() && (cgi == _path.substr(_path.length() - cgi.length())))
                 // if index[1] exist {
@@ -204,7 +206,6 @@ void Response::setResponse(){
                     return ;
                 }
                 int fd = open((_path+_index[0]).c_str(), O_RDONLY);
-                std::cout << "fd ==== " << fd << std::endl;
                 if (fd < 0){
                     errorsResponse(404);
                 }
