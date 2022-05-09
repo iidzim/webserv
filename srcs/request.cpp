@@ -1,4 +1,5 @@
 #include "../includes/Request.hpp"
+//! Method is case-sensitive
 
 // ! recipients SHOULD ignore unrecognized header fields.
 // ! rfc 7230 section 3.2.1

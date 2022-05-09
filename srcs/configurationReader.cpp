@@ -63,20 +63,32 @@ void configurationReader::setServerName(std::vector<std::string> words, serverIn
 
 void configurationReader::setIndex(std::vector<std::string> words, serverInfo& server, locationInfos& location)
 {
-    if ((words.size() != 3 && words.size() != 2) || _state == CLOSED || words[1].empty())
+    if ((words.size()< 2 || words.size() > 4 ) || _state == CLOSED)
         throw configurationReader::invalidSyntax();
     if (_state == INLOCATION && location.index.empty())
     {
-        location.index.push_back(words[1]);
-        if (words.size() == 3 && !words[2].empty())
-            location.index.push_back(words[2]);
+        for (size_t i = 1; i < words.size(); i++)
+        {
+            if (words[i].empty())
+                continue;
+            location.index.push_back(words[i]);
+        }
+        if (location.index.size() == 0)
+            throw configurationReader::invalidSyntax();
     }
     else if (_state == INSIDESERVER && server.index.empty())
     {
-        server.index.push_back(words[1]);
-        if (words.size() == 3 && !words[2].empty())
-            server.index.push_back(words[2]);   
+        for (size_t i = 1; i < words.size(); i++)
+        {
+            if (words[i].empty())
+                continue;
+            server.index.push_back(words[i]); 
+        }
+        if (server.index.empty())
+            throw configurationReader::invalidSyntax();
     }
+  else
+    throw configurationReader::invalidSyntax();
 }
 
 void configurationReader::setAllowedMethods(std::vector<std::string> words, locationInfos& location)
@@ -229,7 +241,10 @@ void configurationReader::defaultForMissingValues(serverInfo &server)
         server.root = std::string(buf)+"/var/www/html";
     }
     if (server.index.empty())
+    {
         server.index.push_back("index.html");
+       // server.index.push_back("index.php")
+    }
 }
 
 void configurationReader::defaultForMissingValues(locationInfos &location)
@@ -401,6 +416,12 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
                 o<<"ON"<<std::endl;
              else
                 o<<"OFF"<<std::endl;
+            o << "Index ";
+            for (size_t l = 0; l < virtualServer[i].location[k].index.size(); l++)
+            {
+                o << virtualServer[i].location[k].index[l] << " | ";
+            }
+            o<<std::endl;
             o << "Allowed methods ";
             for (size_t l = 0; l < virtualServer[i].location[k].allow_methods.size(); l++)
             {
