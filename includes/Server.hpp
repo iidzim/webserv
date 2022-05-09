@@ -6,12 +6,13 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/09 21:01:12 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/09 21:35:15 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef SERVER_HPP
-#define SERVER_HPP
+// #ifndef SERVER_HPP
+// #define SERVER_HPP
+#pragma once
 
 #include "Socket.hpp"
 #include "webserv.hpp"
@@ -40,6 +41,6 @@ class Server{
 
 };
 
-bool broken_pipe;
+static bool broken_pipe;
 
-#endif
+// #endif
