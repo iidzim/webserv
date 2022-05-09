@@ -429,7 +429,11 @@ void request::isBodyValid()
 
 void request::parse(char *buffer, size_t r)
 {
-     std::cout<<"parsing called !"<<std::endl;
+     //std::cout<<"parsing called !"<<std::endl;
+    if (r == 0)
+    {
+        _rqst.statusCode = 400;  throw request::RequestNotValid();
+    }
     if (_begin)
     {
         _start = std::time(NULL);
