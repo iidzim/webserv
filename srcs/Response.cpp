@@ -198,7 +198,7 @@ void Response::setResponse(){
                     }
                     _body = _path + _index[0];
                     _headers = "HTTP/1.1 302 Found\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
-                    _headers += "\r\nLocation: " + _reqInfo.URI + "/" +_index[0];
+                    _headers += "\r\nLocation: " + _reqInfo.URI + "/";
                     _headers += Connection();
                     close (fd); 
                     return ;
