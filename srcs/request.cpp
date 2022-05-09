@@ -52,11 +52,14 @@
 
 request::request():  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
 {
-   // _server = server;
-     _rqst.method = "";
-    _rqst.URI = "";
-    _rqst.versionHTTP = "";
-    _rqst.query = "";
+    _port = -1;
+    _host.clear();
+    _data.clear();
+
+    _rqst.method.clear();
+    _rqst.URI.clear();
+    _rqst.versionHTTP.clear();
+    _rqst.query.clear();
     _rqst.statusCode = 200;
     _rqst.fd = -1;
     _contentLength = 0;
@@ -72,13 +75,17 @@ request::request(const request& obj)
 
 request& request::operator=(const request& obj)
 {
+    _port = obj._port;
+    _host = obj._host;
+    _data = obj._data;
     _rqst = obj._rqst;
     _headersComplete = obj._headersComplete;
     _bodyComplete = obj._bodyComplete;
     _isChunked = obj._isChunked;
     _isBodyExcpected = obj._isBodyExcpected;
     _contentLength = obj._contentLength;
-    _data = obj._data;
+    _originContentLength = obj._originContentLength;
+    
     return *this;
 }
 
@@ -217,7 +224,7 @@ void    request::getHeaders(std::istringstream & istr)
             if (isFieldNameValid(fieldName))
             {
                 std::string fieldValue = line.substr(pos+1, line.size()-1);
-               std::cout<<"["<<fieldName<<"-> "<< fieldValue<<"]"<<std::endl;
+             //  std::cout<<"["<<fieldName<<"-> "<< fieldValue<<"]"<<std::endl;
                 deleteOptionalWithespaces(fieldValue);
                 if (fieldName == "transfer-encoding" && fieldValue == "chunked")
                     _isChunked = true;
@@ -234,11 +241,9 @@ void    request::getHeaders(std::istringstream & istr)
                             _rqst.statusCode = 500;
                             throw request::RequestNotValid();
                         }
-
-                       // (_rqst.headers).insert(std::pair<std::string, std::string>("port", fieldValue.substr(pos+1, fieldValue.size()-1)));
                         fieldValue.erase(pos, fieldValue.size()-1);
+                        _host = fieldValue;
                     }
-
                 }
                (_rqst.headers).insert(std::pair<std::string, std::string>(fieldName, fieldValue));
             }
@@ -281,6 +286,11 @@ void    request::getHeaders(std::istringstream & istr)
 int     request::getPort()
 {
     return _port;
+}
+
+std::string request::getHost()
+{
+    return _host;
 }
 
 const char* request::RequestNotValid::what()const throw()
@@ -515,7 +525,7 @@ bool request::isComplete()
         close(_rqst.fd);
        // my_file.close();
         tmpFile.close();
-        std::remove("tmp.txt");
+        // std::remove("tmp.txt");
         return true;
     }
     return false;

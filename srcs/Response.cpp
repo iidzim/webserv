@@ -129,11 +129,12 @@ void Response::setResponse(){
             break ;
         }
     }
-    // handle case if _index or _root are empty 
-    if (isLoc == false){
-        _index = _servInfo.index;
-        _root = _servInfo.root;
-        if (_reqInfo.method != "GET"){
+    if (isLoc == false || _root == "" || _index.size() == 0){
+        if (_index.size() == 0)
+            _index = _servInfo.index;
+        if (_root == "")
+            _root = _servInfo.root;
+        if (_reqInfo.method != "GET" && isLoc == false){
             errorsResponse(405);
             return ;
         }
@@ -141,18 +142,15 @@ void Response::setResponse(){
     if (_root == _servInfo.root && _servInfo.autoindex == true)
         _autoIndex = true;
     if (isLoc == true){
-        std::cout << "herrrrrrrrrrrrrrrrrre" << std::endl;
         std::string uri = _reqInfo.URI.substr(_location.length());
         _path = _root + uri;
     }
     else{
-        // std::cout << "121212121121211121212121212" << std::endl;
         _path = _root + _reqInfo.URI;
     }
     if (_reqInfo.method == "GET" || _reqInfo.method == "POST"){
         folder = opendir(_path.c_str());
         if (!folder){
-            // std::cout << "-----------------****" <<_path <<"------** " <<  _root <<"*/////// " <<  _reqInfo.URI << "****-------------------" << std::endl;
             if (errno == EACCES)
                 errorsResponse(403);
             else if (errno == ENOENT)
@@ -186,17 +184,29 @@ void Response::setResponse(){
             return ;
         }
         if (_autoIndex == false){
+            // std::cout << "path ==== " << _path << std::endl;
             // bool indx = false;
             // if (cgi.length() && (cgi == _path.substr(_path.length() - cgi.length())))
                 // if index[1] exist {
                     // indx = true;
                     // execute index[1]
             // else if (cgi.length() || (cgi != _path.substr(_path.length() - cgi.length())) || indx == false){
-                if (_path[_path.length() - 1] != '/')
+                if (_path[_path.length() - 1] != '/'){
                     _path += "/";
-                std::cout << "------------------" <<_path + _index[0] << "-------------------" << std::endl;
+                    int fd = open((_path+_index[0]).c_str(), O_RDONLY);
+                    if (!fd){
+                        errorsResponse(404);
+                        return ;
+                    }
+                    _body = _path + _index[0];
+                    _headers = "HTTP/1.1 302 Found\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+                    _headers += "\r\nLocation: " + _reqInfo.URI + "/";
+                    _headers += Connection();
+                    close (fd); 
+                    return ;
+                }
                 int fd = open((_path+_index[0]).c_str(), O_RDONLY);
-                if (!fd){
+                if (fd < 0){
                     errorsResponse(404);
                 }
                 else{

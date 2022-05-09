@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/07 16:51:00 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/09 18:33:18 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #define SERVER_HPP
 
 #include "Socket.hpp"
+// #include "webserv.hpp"
 #define BUFF_SIZE 2048*100
 
 class Server{
@@ -30,6 +31,7 @@ class Server{
 		void recv_request(int i, Clients *c);
 		void send_response(int i, Clients *c);
 		void close_fd(void);
+		void brokenPipe(Clients *c, int i);
 
 	public:
 
@@ -38,5 +40,6 @@ class Server{
 
 };
 
+// bool broken_pipe = false;
 
 #endif

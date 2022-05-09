@@ -21,9 +21,11 @@
 #include "configurationReader.hpp"
 #include "Response.hpp"
 #include "autoIndex.hpp"
-// #include "Server.hpp"
 // #include "Socket.hpp"
 // #include "Client.hpp"
+// #include "Server.hpp"
+
+// bool broken_pipe = false;
 
 
 #endif

@@ -18,6 +18,8 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <exception>
+#include <unistd.h>
+
 # define INSIDESERVER   1
 # define INLOCATION     2
 # define CLOSED         0

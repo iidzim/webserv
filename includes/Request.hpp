@@ -34,15 +34,15 @@ class request
 {
     private:
         int             _port;
+        std::string     _host;
         std::string     _data;
         s_requestInfo   _rqst;
         bool            _headersComplete;
         bool            _bodyComplete;
-      //  std::fstream    my_file;
         bool            _isChunked;
         bool            _isBodyExcpected;
         size_t          _contentLength;
-       // serverInfo      _server;
+
 
         std::fstream     tmpFile;
 
@@ -74,10 +74,11 @@ class request
         ~request();
 
         void parse(char *buffer, size_t n);
-        s_requestInfo getRequest();
-        bool isComplete();
-        void forceStopParsing();
-        int getPort();
+        s_requestInfo   getRequest();
+        bool            isComplete();
+        void            forceStopParsing();
+        int             getPort();
+        std::string     getHost();
 
        //! for debugging
        void print_request();
