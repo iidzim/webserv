@@ -51,8 +51,13 @@
 //     std::cout<<"request called default !"<<std::endl;
 // }
 
-request::request():  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
+request::request():  _begin(true),_headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
 {
+//    _start = std::time(NULL);
+//    std::cout<<"_start "<<_start<<std::endl;
+//    std::this_thread::sleep_for(std::chrono::seconds(30));
+//    std::cout<<"_end "<<std::time(NULL);
+//    std::cout<<"durae"<<std::time(NULL) - _start <<std::endl;
     _port = -1;
     _host.clear();
     _data.clear();
@@ -62,7 +67,7 @@ request::request():  _headersComplete(false), _bodyComplete(false), _isChunked(f
     _rqst.versionHTTP.clear();
     _rqst.query.clear();
     _rqst.statusCode = 200;
-    _rqst.fd = -1;
+    _rqst.fd = 0;
     _contentLength = 0;
     _originContentLength = 0;
     
@@ -76,6 +81,7 @@ request::request(const request& obj)
 
 request& request::operator=(const request& obj)
 {
+    _begin = obj._begin;
     _port = obj._port;
     _host = obj._host;
     _data = obj._data;
@@ -423,7 +429,21 @@ void request::isBodyValid()
 
 void request::parse(char *buffer, size_t r)
 {
-   std::cout<<"parsing called !"<<std::endl;
+     std::cout<<"parsing called !"<<std::endl;
+    if (_begin)
+    {
+        _start = std::time(NULL);
+       //  std::this_thread::sleep_for(std::chrono::seconds(60));
+    
+         
+         _begin = false;
+    }
+    if (std::time(NULL) - _start >  60)
+    {
+     //   std::cout<<"Time out !"<<std::endl;
+        _rqst.statusCode = 408;
+        throw request::RequestNotValid();
+    }
     size_t i ;
     if (!_headersComplete)
     {   
