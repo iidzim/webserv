@@ -56,12 +56,6 @@ void configurationReader::setServerName(std::vector<std::string> words, serverIn
 {
     if (words.size() != 2 || words[1].empty() ||  _state != INSIDESERVER)
         throw configurationReader::invalidSyntax();
-    // for (size_t i = 1; i < words.size(); i++)
-    // {
-    //     if (words[i].empty())
-    //         continue;
-    //     server.serverName.push_back(words[i]);
-    // }
      if (!server.serverName.empty())
          throw configurationReader::invalidSyntax();
     server.serverName = words[1];
@@ -69,30 +63,20 @@ void configurationReader::setServerName(std::vector<std::string> words, serverIn
 
 void configurationReader::setIndex(std::vector<std::string> words, serverInfo& server, locationInfos& location)
 {
-    // if (words.size() != 2 || _state == CLOSED || words[1].empty())
-    //     throw configurationReader::invalidSyntax();
-    // if (_state == INLOCATION)
-    //     location.index = words[1];
-    // else if (_state == INSIDESERVER)
-    //     server.index = words[1];
-    if ((words.size() != 3 && words.size() != 2) || _state == CLOSED)
+    if ((words.size() != 3 && words.size() != 2) || _state == CLOSED || words[1].empty())
         throw configurationReader::invalidSyntax();
     if (_state == INLOCATION && location.index.empty())
     {
         location.index.push_back(words[1]);
-        if (words.size() == 3)
+        if (words.size() == 3 && !words[2].empty())
             location.index.push_back(words[2]);
     }
     else if (_state == INSIDESERVER && server.index.empty())
     {
         server.index.push_back(words[1]);
-        if (words.size() == 3)
+        if (words.size() == 3 && !words[2].empty())
             server.index.push_back(words[2]);   
     }
-    // else
-    //     configurationReader::invalidSyntax();
-    if ((_state == INLOCATION && location.index.empty()) ||( _state == INSIDESERVER && server.index.empty()))
-        throw configurationReader::invalidSyntax();
 }
 
 void configurationReader::setAllowedMethods(std::vector<std::string> words, locationInfos& location)
@@ -185,7 +169,7 @@ void   configurationReader::setCGI(std::vector<std::string> words, locationInfos
 void clearLocation(locationInfos & location)
 {
     location.index.clear();
-    location.root = "";
+    location.root.clear();
     location.uri = "";
     location.autoindex = OFF;
     location.cgi.clear();
@@ -238,6 +222,14 @@ void configurationReader::defaultForMissingValues(serverInfo &server)
     }
     if (server.size == 0)
         server.size = 1000000;
+    if (server.root.empty())
+    {
+        char *buf=NULL;
+        buf = getcwd(buf, sizeof(buf));
+        server.root = std::string(buf)+"/var/www/html";
+    }
+    if (server.index.empty())
+        server.index.push_back("index.html");
 }
 
 void configurationReader::defaultForMissingValues(locationInfos &location)
@@ -276,7 +268,7 @@ void configurationReader::parser()
             std::vector<std::string> words = splitbySpace(line);
             if (words[0] == "server")
             {
-                if (words[1] != "{" || words.size() != 2 || _state == INSIDESERVER)
+                if (words.size() != 2 || words[1] != "{" || _state == INSIDESERVER)
                         throw configurationReader::invalidSyntax();
                     _state = INSIDESERVER;
                 }
@@ -331,7 +323,7 @@ void configurationReader::parser()
                 else
                     throw configurationReader::invalidSyntax();
             }
-            if (_state == INSIDESERVER || _state == INLOCATION || communPortSameName()) //! check for duplicate port
+            if (_virtualServer.empty() || _state == INSIDESERVER || _state == INLOCATION || communPortSameName()) //! check for duplicate port
                 throw configurationReader::invalidSyntax();
         _infile.close();
 }
@@ -367,8 +359,12 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
     {
         o << "-------server " << i << " -------"<<std::endl;
         o << "Port          "<<virtualServer[i].port<<std::endl;
+        o << "root         "<<virtualServer[i].root<<std::endl;
         o <<"Host           "<<virtualServer[i].host<<std::endl;
-      //  o <<"Host           "<<virtualServer[i].host<<std::endl;
+        o <<"Index          ";
+        for (size_t j = 0; j < virtualServer[i].index.size(); j++)
+            o << virtualServer[i].index.at(j)<<"|";
+        o<<std::endl;
         // if (virtualServer[i].index.size() == 2)
         //     o << "index          "<<virtualServer[i].index.at(0)<< " | "<<virtualServer[i].index.at(1)<<std::endl;
         o <<"size           "<<virtualServer[i].size<<std::endl;
