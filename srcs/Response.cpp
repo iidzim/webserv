@@ -204,7 +204,8 @@ void Response::setResponse(){
                     return ;
                 }
                 int fd = open((_path+_index[0]).c_str(), O_RDONLY);
-                if (!fd){
+                std::cout << "fd ==== " << fd << std::endl;
+                if (fd < 0){
                     errorsResponse(404);
                 }
                 else{
