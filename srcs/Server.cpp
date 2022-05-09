@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/08 21:03:02 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/09 12:54:33 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,16 +15,19 @@
 Server::Server(std::vector<Socket> s, std::vector<serverInfo> server_conf){
 
 	//& initialize class attribute
-	for (size_t i = 0; i < s.size(); i++){
-		_socket_fd.push_back(s[i].get_fd());
-		_address.push_back(s[i].get_address());
+	size_t size = s.size();
+	_socket_fd.resize(size);
+	_address.resize(size);
+	for (size_t i = 0; i < size; i++){
+		_socket_fd[i] = s[i].get_fd();
+		_address[i] = s[i].get_address();
 	}
+
 	//& fill fds struct
-	struct pollfd new_fd;
-	for (size_t i = 0; i < _socket_fd.size(); i++){
-		new_fd.fd = _socket_fd[i];
-		new_fd.events = POLLIN;
-		_fds.push_back(new_fd);
+	_fds.resize(size);
+	for (size_t i = 0; i < size; i++){
+		_fds[i].fd = _socket_fd[i];
+		_fds[i].events = POLLIN;
 	}
 	socketio(server_conf);
 }
@@ -37,12 +40,14 @@ Server::~Server(){
 
 void Server::accept_connection(int i){
 
-	std::cout << "Accepting connection" << std::endl;
+	// std::cout << "Accepting connection" << std::endl;
 	int addrlen = sizeof(_address[i]);
 	int accept_fd = accept(_fds[i].fd, (struct sockaddr *)&(_address[i]), (socklen_t*)&addrlen);
 	_msg = "Failed to accept connection";
 	//!!!! do not exit on error
-	if (accept_fd < 0){
+	// if (errno == EWOULDBLOCK)
+		// std::cout << "EWOULDBLOCK failure\n";
+	if (accept_fd < 0 && errno != EWOULDBLOCK){
 		throw::Socket::SocketException(_msg);
 		std::cout << _msg << std::endl;
 		return ;
@@ -57,7 +62,7 @@ void Server::accept_connection(int i){
 void Server::recv_request(int i, Clients *c){
 
 	char _buffer[1024];
-	std::cout << "Receiving request" << std::endl;
+	// std::cout << "Receiving request" << std::endl;
 	int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 	if (r <= 0){
 		c->remove_clients(_fds[i].fd);
@@ -71,14 +76,14 @@ void Server::recv_request(int i, Clients *c){
 	}
 	catch(request::RequestNotValid &e){
 		c->connections[_fds[i].fd].first.forceStopParsing();
-		std::cout<<"******** Request exception ****** "<<e.what()<<std::endl;
+		// std::cout<<"******** Request exception ****** "<<e.what()<<std::endl;
 		//! send error response - bad request 400 -
 	}
 	//catch => forceStopParsing => isComplete
 	memset(_buffer, 0, sizeof(_buffer));
 	//& when the request is complete switch the type of event to POLLOUT
 	if (c->connections[_fds[i].fd].first.isComplete()){
-		std::cout << "Request is complete " << std::endl;
+		// std::cout << "Request is complete " << std::endl;
 		_fds[i].events = POLLOUT;
 	}
 }
@@ -86,13 +91,14 @@ void Server::recv_request(int i, Clients *c){
 void Server::close_fd(void){
 
 	for (size_t i = 0; i < _fds.size(); i++){
-		shutdown(_fds[i].fd, 2);
+		// shutdown(_fds[i].fd, 2);
+		close(_fds[i].fd);
 	}
 }
 
 void Server::send_response(int i, Clients *c){
 
-	std::cout << "Sending response" << std::endl;
+	// std::cout << "Sending response" << std::endl;
 	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
 	std::string headers = rep.first;
 	std::string filename = rep.second;
@@ -108,13 +114,13 @@ void Server::send_response(int i, Clients *c){
 	if ((size_t)len < headers.size()){
 
 		std::string str = headers.substr(len);
+		//- global bool = false
 		s = send(_fds[i].fd, str.c_str(), str.length(), 0);
-		if (s <= 0)
-			std::cout << "HERE\n";
+		//- check for sigpipe - if global bool = true -> close accept_fd and remove client from map
 	}
 	else if (filename.length() != 0){
 
-		std::cout << "sending body ...\n";
+		// std::cout << "sending body ...\n";
 		o = open(filename.c_str(), O_RDONLY);
 		total_size = fileSize(filename) + headers.size() - len;
 		lseek(o, len - headers.size(), SEEK_SET);
@@ -140,10 +146,10 @@ void Server::send_response(int i, Clients *c){
 		return;
 	}
 	if (c->connections[_fds[i].fd].second.is_complete(s, filename)){
-		std::cout << "response is complete\n";
+		// std::cout << "response is complete\n";
 		int file_descriptor = _fds[i].fd;
 		if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
-			std::cout << "Closing socket - keepAlive = false" << std::endl;
+			// std::cout << "Closing socket - keepAlive = false" << std::endl;
 			close(_fds[i].fd);
 			_fds.erase(_fds.begin() + i);
 		}
@@ -170,7 +176,7 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 				break;
 			}
 			else if (p == 0){
-				std::cout << "No new connection" << std::endl; //!!!!
+				// std::cout << "No new connection" << std::endl; //!!!!
 				break;
 			}
 			if (!_fds[i].revents){
@@ -191,16 +197,10 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 				if (c.connections[_fds[i].fd].second.get_cursor() == 0){
 
 					serverInfo s;
-					//- curl --resolve ok.ma:8081:127.0.0.1 http://ok.ma:8081
-					//- curl --resolve abdelkader:8081:127.0.0.1 http://abdelkader:8081
-					//+ multiple server name - same port
 					std::string serv_name = c.connections[_fds[i].fd].first.getRequest().headers["host"];
-					// std::cout << "......... |" << serv_name << "|" << std::endl
 					int port = c.connections[_fds[i].fd].first.getPort();
-					for (size_t i = 0; i < server_conf.size(); i++){
-						// std::cout << "server_conf[" << i << "] = " << server_conf[i].serverName << std::endl;
+					for (size_t i = 0; i < server_conf.size(); i++){	//!!!! optimize
 						if (serv_name == server_conf[i].serverName && port == server_conf[i].port){
-							// std::cout << "i = " << i << " - " << server_conf[i].serverName << std::endl;
 							s = server_conf[i];
 							break;
 						}

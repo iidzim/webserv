@@ -146,13 +146,13 @@ void Response::setResponse(){
         _path = _root + uri;
     }
     else{
-        std::cout << "121212121121211121212121212" << std::endl;
+        // std::cout << "121212121121211121212121212" << std::endl;
         _path = _root + _reqInfo.URI;
     }
     if (_reqInfo.method == "GET" || _reqInfo.method == "POST"){
         folder = opendir(_path.c_str());
         if (!folder){
-            std::cout << "-----------------****" <<_path <<"------** " <<  _root <<"*/////// " <<  _reqInfo.URI << "****-------------------" << std::endl;
+            // std::cout << "-----------------****" <<_path <<"------** " <<  _root <<"*/////// " <<  _reqInfo.URI << "****-------------------" << std::endl;
             if (errno == EACCES)
                 errorsResponse(403);
             else if (errno == ENOENT)

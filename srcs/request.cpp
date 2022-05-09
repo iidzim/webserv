@@ -62,7 +62,7 @@ request::request():  _headersComplete(false), _bodyComplete(false), _isChunked(f
     _contentLength = 0;
     _originContentLength = 0;
     
-    std::cout<<"default constructor called !!"<<std::endl;
+    // std::cout<<"default constructor called !!"<<std::endl;
 }
 
 request::request(const request& obj)
@@ -412,7 +412,7 @@ void request::isBodyValid()
 
 void request::parse(char *buffer, size_t r)
 {
-   std::cout<<"parsing called !"<<std::endl;
+//    std::cout<<"parsing called !"<<std::endl;
     size_t i ;
     if (!_headersComplete)
     {   

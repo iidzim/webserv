@@ -7,7 +7,6 @@ web_server
 bodyFile*
 autoindex.html
 default.conf
-default.conf
 
 # Compiled Object files
 *.slo

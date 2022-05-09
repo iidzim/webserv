@@ -6,27 +6,28 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/08 18:24:32 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/09 12:44:05 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "includes/Server.hpp"
 #include "includes/configurationReader.hpp"
 
-// void signalhandler(int signum){
-// 	std::cout << "Interrupt signal (" << signum << ") received.\n";
-// 	if (signum == SIGFPE)
-// 		return ;
-// }
+void signalhandler(int signum){
+
+	//? global variable = true;
+	std::cout << "Interrupt signal (" << signum << ") received.\n";
+}
 
 int main(int argc, char** argv){
 
+	signal(SIGPIPE, signalhandler);
 	if (argc > 2){
 		std::cerr << "usage:\t./webserv [configuration file]" << std::endl;
 		return (-1);
 	}
 	try{
-		// signal(SIGFPE, signalhandler);
+		// signal(SIGPIPE, signalhandler);
 		if (argc == 1)
 			//* add default configuration file
 			Socket a;
@@ -47,7 +48,6 @@ int main(int argc, char** argv){
 					sockets.push_back(Socket(virtualServer[i].port));
 				}
 			}
-			signal(SIGFPE, SIG_IGN);
 			Server s(sockets, virtualServer);
 		}
 	}
@@ -70,3 +70,12 @@ int main(int argc, char** argv){
 	//? close connection
 	//? repeat - handle multiple server & sockets at the same time
 
+
+
+
+//= siege failure
+	//- broken pipe
+	//- Failed to accept connection
+
+//+ curl --resolve ok.ma:8081:127.0.0.1 http://ok.ma:8081
+//+ curl --resolve abdelkader:8081:127.0.0.1 http://abdelkader:8081
