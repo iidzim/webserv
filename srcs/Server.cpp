@@ -60,6 +60,7 @@ void Server::recv_request(int i, Clients *c){
 	std::cout << "Receiving request" << std::endl;
 	int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 	if (r < 0){
+		std::cout << "HERE\n";
 		c->remove_clients(_fds[i].fd);
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);

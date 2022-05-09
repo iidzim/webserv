@@ -39,6 +39,7 @@ class request
 {
     private:
         std::time_t     _start;
+        bool            _begin;
         int             _port;
         std::string     _host;
         std::string     _data;
