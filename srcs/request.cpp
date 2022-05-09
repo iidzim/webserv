@@ -53,6 +53,8 @@
 
 request::request():  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
 {
+    _start = std::time_t(NULL);
+  //  std::this_thread::sleep_for (std::chrono::seconds(60));
     _port = -1;
     _host.clear();
     _data.clear();
@@ -423,7 +425,13 @@ void request::isBodyValid()
 
 void request::parse(char *buffer, size_t r)
 {
-   std::cout<<"parsing called !"<<std::endl;
+    std::cout<<"parsing called !"<<std::endl;
+    if (std::time_t(NULL) - _start >  60)
+    {
+        std::cout<<"Time out !"<<std::endl;
+        _rqst.statusCode = 408;
+        throw request::RequestNotValid();
+    }
     size_t i ;
     if (!_headersComplete)
     {   

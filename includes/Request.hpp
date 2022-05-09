@@ -16,6 +16,11 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <ctime>
+
+      // std::cout, std::endl
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>
 typedef struct t_requestInfo
 {
     int         fd;
@@ -33,6 +38,7 @@ typedef struct t_requestInfo
 class request
 {
     private:
+        std::time_t     _start;
         int             _port;
         std::string     _host;
         std::string     _data;

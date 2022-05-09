@@ -14,6 +14,7 @@
 #define SERVER_HPP
 
 #include "Socket.hpp"
+
 #define BUFF_SIZE 2048*100
 
 class Server{
