@@ -109,7 +109,7 @@ void Response::DeleteMethod(){
 void Response::setResponse(){
     bool isLoc = false;
     DIR *folder;
-    std::string cgi ="";
+    std::string cgiExt ="";
     for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
         if (_reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
             || (_reqInfo.URI.find(_servInfo.location[i].uri + "/") == 0 && _servInfo.location[i].uri.size() > 1)) {
@@ -117,7 +117,7 @@ void Response::setResponse(){
             _location = _servInfo.location[i].uri;
             isLoc = true;
             _index = _servInfo.location[i].index;
-            cgi = _servInfo.location[i].cgi;
+            cgiExt = _servInfo.location[i].cgi;
             if (_servInfo.location[i].autoindex == true)
                 _autoIndex = true;
             if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods.end(), 
@@ -128,6 +128,10 @@ void Response::setResponse(){
                 }
             break ;
         }
+    }
+    if (cgiExt.length() > 0 && cgiExt != ".py" && cgiExt != ".php"){
+        errorsResponse(502);
+        return ;
     }
     if (isLoc == false || _root == "" || _index.size() == 0){
         if (_index.size() == 0)
@@ -150,20 +154,22 @@ void Response::setResponse(){
     }
     if (_reqInfo.method == "GET" || _reqInfo.method == "POST"){
         folder = opendir(_path.c_str());
+        std::cout << "---------------" << _path << "--------------" << std::endl;
         if (!folder){
             if (errno == EACCES)
                 errorsResponse(403);
             else if (errno == ENOENT)
                 errorsResponse(404);
             else if (errno == ENOTDIR){
-                // if (cgi.length()){
-                //     if (cgi == _path.substr(_path.length() - cgi.length())){
-                //         execute_cgi (_path);
-                //     }
-                //     else
-                //         errorResponse(502);
-                // }
-                // else{
+                if (cgiExt.length()){
+                    if (cgiExt == _path.substr(_path.length() - cgiExt.length())){
+                        cgi CGI(_reqInfo, _path, cgiExt);
+                        CGI.executeFile();
+                    }
+                    else
+                        errorsResponse(502);
+                }
+                else{
                     std::map<std::string, std::string> mimetype(_mime.getTypes());
                     std::string mType;
                     size_t pos = _reqInfo.URI.find(".");
@@ -182,8 +188,9 @@ void Response::setResponse(){
                         _headers += "\r\nContent-Disposition: attachment";
                     _headers += Connection();
                 }
-            return ;
+                return ;
             }
+        }
         else {
             // if (cgi.length() == 0){
                 if (_path[_path.length() - 1] != '/'){
