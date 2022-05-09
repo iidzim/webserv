@@ -229,7 +229,7 @@ void configurationReader::defaultForMissingValues(serverInfo &server)
 {
     if (server.port == -1 && server.host == 0)
     {
-        server.port = 8081;
+        server.port = 8000;
         server.host = convertStrIPv4toUnsinedInt("127.0.0.1");
     }
     if (server.size == 0)
