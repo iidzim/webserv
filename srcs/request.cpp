@@ -224,7 +224,7 @@ void    request::getHeaders(std::istringstream & istr)
             if (isFieldNameValid(fieldName))
             {
                 std::string fieldValue = line.substr(pos+1, line.size()-1);
-               std::cout<<"["<<fieldName<<"-> "<< fieldValue<<"]"<<std::endl;
+             //  std::cout<<"["<<fieldName<<"-> "<< fieldValue<<"]"<<std::endl;
                 deleteOptionalWithespaces(fieldValue);
                 if (fieldName == "transfer-encoding" && fieldValue == "chunked")
                     _isChunked = true;
@@ -244,7 +244,6 @@ void    request::getHeaders(std::istringstream & istr)
                         fieldValue.erase(pos, fieldValue.size()-1);
                         _host = fieldValue;
                     }
-
                 }
                (_rqst.headers).insert(std::pair<std::string, std::string>(fieldName, fieldValue));
             }

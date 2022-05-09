@@ -306,6 +306,8 @@ void configurationReader::parser()
                 {
                     if (words.size() != 3 || words[2] != "{" || _state != INSIDESERVER)
                         throw configurationReader::invalidSyntax();
+                    if (words[1][0] != '/')
+                        throw configurationReader::invalidSyntax();
                     location.uri = words[1];
                     _state = INLOCATION;
                 }  
