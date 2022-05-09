@@ -52,11 +52,14 @@
 
 request::request():  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
 {
-   // _server = server;
-     _rqst.method = "";
-    _rqst.URI = "";
-    _rqst.versionHTTP = "";
-    _rqst.query = "";
+    _port = -1;
+    _host.clear();
+    _data.clear();
+
+    _rqst.method.clear();
+    _rqst.URI.clear();
+    _rqst.versionHTTP.clear();
+    _rqst.query.clear();
     _rqst.statusCode = 200;
     _rqst.fd = -1;
     _contentLength = 0;
@@ -72,13 +75,17 @@ request::request(const request& obj)
 
 request& request::operator=(const request& obj)
 {
+    _port = obj._port;
+    _host = obj._host;
+    _data = obj._data;
     _rqst = obj._rqst;
     _headersComplete = obj._headersComplete;
     _bodyComplete = obj._bodyComplete;
     _isChunked = obj._isChunked;
     _isBodyExcpected = obj._isBodyExcpected;
     _contentLength = obj._contentLength;
-    _data = obj._data;
+    _originContentLength = obj._originContentLength;
+    
     return *this;
 }
 
@@ -234,9 +241,8 @@ void    request::getHeaders(std::istringstream & istr)
                             _rqst.statusCode = 500;
                             throw request::RequestNotValid();
                         }
-
-                       // (_rqst.headers).insert(std::pair<std::string, std::string>("port", fieldValue.substr(pos+1, fieldValue.size()-1)));
                         fieldValue.erase(pos, fieldValue.size()-1);
+                        _host = fieldValue;
                     }
 
                 }
@@ -281,6 +287,11 @@ void    request::getHeaders(std::istringstream & istr)
 int     request::getPort()
 {
     return _port;
+}
+
+std::string request::getHost()
+{
+    return _host;
 }
 
 const char* request::RequestNotValid::what()const throw()

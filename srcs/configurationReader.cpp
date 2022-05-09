@@ -217,7 +217,7 @@ void configurationReader::defaultForMissingValues(serverInfo &server)
 {
     if (server.port == -1 && server.host == 0)
     {
-        server.port = 8080;
+        server.port = 8081;
         server.host = convertStrIPv4toUnsinedInt("127.0.0.1");
     }
     if (server.size == 0)
@@ -285,7 +285,6 @@ void configurationReader::parser()
                     else if (_state == INLOCATION)
                     {
                         _state = INSIDESERVER;
-                        //defalut values for allow_methods
                         defaultForMissingValues(location);
                         server.location.push_back(location);
                         clearLocation(location);
@@ -323,7 +322,7 @@ void configurationReader::parser()
                 else
                     throw configurationReader::invalidSyntax();
             }
-            if (_virtualServer.empty() || _state == INSIDESERVER || _state == INLOCATION || communPortSameName()) //! check for duplicate port
+            if (_virtualServer.empty() || _state == INSIDESERVER || _state == INLOCATION || communPortSameName())
                 throw configurationReader::invalidSyntax();
         _infile.close();
 }
