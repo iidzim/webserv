@@ -6,24 +6,23 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/09 18:35:27 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/09 21:15:23 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "includes/Server.hpp"
 #include "includes/configurationReader.hpp"
-// #include "includes/webserv.hpp"
 
 
 void signalhandler(int signum){
 
-	//? global variable = true;
 	// broken_pipe = true;
 	std::cout << "Interrupt signal (" << signum << ") received.\n";
 }
 
 int main(int argc, char** argv){
 
+	// broken_pipe = false;
 	signal(SIGPIPE, signalhandler);
 	if (argc > 2){
 		std::cerr << "usage:\t./webserv [configuration file]" << std::endl;

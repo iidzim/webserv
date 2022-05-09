@@ -13,7 +13,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <algorithm>
-
+#include <stdlib.h>
 
 
 #include "mimeTypes.hpp"
@@ -21,11 +21,12 @@
 #include "configurationReader.hpp"
 #include "Response.hpp"
 #include "autoIndex.hpp"
+#include "cgi.hpp"
+extern char **environ;
 // #include "Socket.hpp"
 // #include "Client.hpp"
 // #include "Server.hpp"
 
-// bool broken_pipe = false;
 
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/09 18:40:32 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/09 21:13:52 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,9 +44,6 @@ void Server::accept_connection(int i){
 	int addrlen = sizeof(_address[i]);
 	int accept_fd = accept(_fds[i].fd, (struct sockaddr *)&(_address[i]), (socklen_t*)&addrlen);
 	_msg = "Failed to accept connection";
-	//!!!! do not exit on error
-	// if (errno == EWOULDBLOCK)
-		// std::cout << "EWOULDBLOCK failure\n";
 	if (accept_fd < 0 && errno != EWOULDBLOCK){
 		throw::Socket::SocketException(_msg);
 		std::cout << _msg << std::endl;
@@ -65,11 +62,11 @@ void Server::recv_request(int i, Clients *c){
 	std::cout << "Receiving request" << std::endl;
 	int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 	if (r < 0){
-		std::cout << " map size = "  << c->connections.size() << std::endl;
+		// std::cout << " map size = "  << c->connections.size() << std::endl;
 		std::cout << "HERE\n";
 		c->remove_clients(_fds[i].fd);
 		close(_fds[i].fd);
-		_fds.erase(_fds.begin() + i); //?
+		_fds.erase(_fds.begin() + i);
 		return;
 	}
 	try{
@@ -91,8 +88,8 @@ void Server::recv_request(int i, Clients *c){
 void Server::close_fd(void){
 
 	for (size_t i = 0; i < _fds.size(); i++){
-		// shutdown(_fds[i].fd, 2);
-		close(_fds[i].fd);
+		shutdown(_fds[i].fd, 2);
+		// close(_fds[i].fd);
 	}
 }
 
@@ -153,8 +150,9 @@ void Server::send_response(int i, Clients *c){
 		close(o);
 	}
 	if (s < 0){
+		c->remove_clients(file_descriptor);
 		close(_fds[i].fd);
-		// _fds.erase(_fds.begin() + i); //? why
+		_fds.erase(_fds.begin() + i);
 		std::cout << "send failure s <= 0\n";
 		return;
 	}
@@ -181,7 +179,7 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 
 		for (size_t i = 0; i < _fds.size(); i++){
 
-			std::cout << "Polling ... "  << c.connections.size() << std::endl;
+			std::cout << "Polling ... " << std::endl;// << c.connections.size() << std::endl;
 			int p = poll(&_fds.front(), _fds.size(), -1);
 			if (p <= 0){
 				// throw SocketException("Poll failed: Unexpected event occured"); // !! do not exit on error
@@ -190,7 +188,6 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 				break;
 			}
 			if (!_fds[i].revents){
-				// std::cout << "No r events - _fds[" << i << "] = " << _fds[i].fd << std::endl; //!!!
 				continue;
 			}
 			else if (_fds[i].revents & POLLIN){
@@ -209,8 +206,7 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 					serverInfo s;
 					std::string serv_name = c.connections[_fds[i].fd].first.getHost();
 					int port = c.connections[_fds[i].fd].first.getPort();
-					// std::cout << "HOST >>> " << serv_name << " - PORT >>> " << port << std::endl;
-					for (size_t i = 0; i < server_conf.size(); i++){	//!!!! optimize
+					for (size_t i = 0; i < server_conf.size(); i++){
 						if (serv_name == server_conf[i].serverName && port == server_conf[i].port){
 							s = server_conf[i];
 							break;

@@ -1,19 +1,22 @@
-// #ifndef CGI_HPP
-// #define CGI_HPP
+#ifndef CGI_HPP
+#define CGI_HPP
 
-// #include "Response.hpp"
-// extern char ** environ;
-// class cgi{
-//     private:
-//         std::string _commandPath;
-//         Request _req;
-//         std::string _fileName;
-//     public:
-//         cgi();
-//         cgi(Request req, std::string fileName);
-//         ~cgi();
-//         void setEnvironment();
-//         void executeFile();
-// };  
+#include "webserv.hpp"
 
-// #endif
+// extern char **environ;
+
+class cgi{
+    private:
+        std::string _commandPath;
+        s_requestInfo _req;
+        std::string _fileName;
+        std::string _cgiExtention;
+    public:
+        cgi();
+        cgi(s_requestInfo req, std::string fileName, std::string cgiExt);
+        ~cgi();
+        void setEnvironment();
+        void executeFile();
+};  
+
+#endif
