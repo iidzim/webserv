@@ -40,8 +40,9 @@ class Response{
         bool isFileExist(std::string );
         std::string findMimeType(std::string);
         bool is_complete(int len, std::string filename);
+        void setOkHeaders(std::string mType, std::string body);
         int get_cursor();
-        std::string Connection();
+        std::string Connection(int flag);
 
 };
 

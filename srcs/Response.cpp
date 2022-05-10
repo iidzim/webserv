@@ -22,7 +22,7 @@ std::string Response::setErrorsHeaders(std::string ErrorMsg, std::string cLentgh
 
     headers << "HTTP/1.1 "<<  ErrorMsg << "\r\nContent-type: text/html\r\nContent-length: ";
     headers << cLentgh;
-    headers << Connection();
+    headers << Connection(0);
     return headers.str();
 }
 
@@ -60,28 +60,30 @@ void Response::errorsResponse(int statCode){
         _headers = setErrorsHeaders("500 Internal Server Error", toString(ret));
     else if (_reqInfo.statusCode == 501)
         _headers = setErrorsHeaders("501 Not Implemented", toString(ret));
-    else if (_reqInfo.statusCode == 504)
-        _headers = setErrorsHeaders("504 gateaway timeout", toString(ret));
+    else if (_reqInfo.statusCode == 502)
+        _headers = setErrorsHeaders("502 Bad Gateaway", toString(ret));
     else if (_reqInfo.statusCode == 505)
         _headers = setErrorsHeaders("505 HTTP Version Not Supported", toString(ret));
 }
 
-std::string Response::Connection(){
+std::string Response::Connection(int flag){
     std::string ret = "\r\nConnection: ";
     std::map<std::string, std::string>::iterator it = _reqInfo.headers.find("connection");
     if( it != _reqInfo.headers.end()){
         std::string connect = it->second;
         if (connect == "keep-alive") {
-            connect = "Keep-Alive\r\n\r\n";
+            connect = "Keep-Alive";
         }
         else {
-            connect = "Closed\r\n\r\n";
+            connect = "Closed";
             _iskeepAlive = false;
         }
         ret += connect;
     }
     else
-        ret += "Keep-alive\r\n\r\n";
+        ret += "Keep-alive";
+    if (flag == 0)
+        ret +="\r\n\r\n";
     return ret;
 }
 
@@ -98,13 +100,16 @@ void Response::DeleteMethod(){
     }
     else {
         headers << "HTTP/1.1 204 No Content";
-        headers << Connection();
+        headers << Connection(0);
         _body = "";
     }
     _headers = headers.str();
 }
 
-
+void Response::setOkHeaders(std::string mType, std::string body){
+    _headers = "HTTP/1.1 200 OK\r\nContent-type: " + mType + "\r\nContent-length: " + toString(fileSize(body));
+    _headers += Connection(0);
+}
 
 void Response::setResponse(){
     bool isLoc = false;
@@ -152,106 +157,133 @@ void Response::setResponse(){
     else{
         _path = _root + _reqInfo.URI;
     }
-    if (_reqInfo.method == "GET" || _reqInfo.method == "POST"){
-        folder = opendir(_path.c_str());
-        // std::cout << "---------------" << _path << "--------------" << std::endl;
-        if (!folder){
-            if (errno == EACCES)
-                errorsResponse(403);
-            else if (errno == ENOENT)
-                errorsResponse(404);
-            else if (errno == ENOTDIR){
-                if (cgiExt.length()){
-                    if (cgiExt == _path.substr(_path.length() - cgiExt.length())){
-                        cgi CGI(_reqInfo, _path, cgiExt);
-                        CGI.executeFile();
-                    }
-                    else
-                        errorsResponse(502);
+
+    if (_reqInfo.method == "DELETE"){
+        DeleteMethod();
+        return;
+    }
+    folder = opendir(_path.c_str());
+    if (!folder){
+        if (errno == EACCES)
+            errorsResponse(403);
+        else if (errno == ENOENT)
+            errorsResponse(404);
+        else if (errno == ENOTDIR){
+            if (cgiExt.length()){
+                if (cgiExt == _path.substr(_path.length() - cgiExt.length())){
+                    std::pair<std::string, std::string> cgiOut;
+                    cgi CGI(_reqInfo, _path, cgiExt);
+                    CGI.executeFile();
+                    cgiOut = CGI.parseCgiOutput();
+                    _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
+                    _body = cgiOut.second;
                 }
-                else{
-                    std::map<std::string, std::string> mimetype(_mime.getTypes());
-                    std::string mType;
-                    size_t pos = _reqInfo.URI.find(".");
-                    if (pos != std::string::npos){
-                        std::map<std::string, std::string>::iterator it2 = mimetype.find(_reqInfo.URI.substr(pos));
-                        if (it2 != mimetype.end())
-                            mType = it2->second;
-                        else
-                            mType = "text/html";
-                    }
-                    else
+                else // cgiExt != _path.substr(_path.length() - cgiExt.length())
+                    errorsResponse(502);
+                return ;
+            }
+            else{ // cgiExt.length  == 0
+                std::map<std::string, std::string> mimetype(_mime.getTypes());
+                std::string mType;
+                size_t pos = _reqInfo.URI.find(".");
+                if (pos != std::string::npos){
+                    std::map<std::string, std::string>::iterator it2 = mimetype.find(_reqInfo.URI.substr(pos));
+                    if (it2 != mimetype.end())
+                        mType = it2->second;
+                    else // mime type not found
                         mType = "text/html";
-                    _body = _path;
-                    _headers = "HTTP/1.1 200 OK\r\nContent-type: " + mType + "\r\nContent-length: " + toString(fileSize(_body));
-                    if (_autoIndex == true)
-                        _headers += "\r\nContent-Disposition: attachment";
-                    _headers += Connection();
                 }
+                else //  mime type not found
+                    mType = "text/html";
+                _body = _path;
+                _headers = "HTTP/1.1 200 OK\r\nContent-type: " + mType + "\r\nContent-length: " + toString(fileSize(_body));
+                if (_autoIndex == true)
+                    _headers += "\r\nContent-Disposition: attachment";
+                _headers += Connection(0);
+            }
+            return ;
+        }
+    }
+    else { // folder opened 
+        if (cgiExt.length() == 0){
+            if (_path[_path.length() - 1] != '/'){
+                _path += "/";
+                _body = _path + _index[0];
+                _headers = "HTTP/1.1 302 Found\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+                _headers += "\r\nLocation: " + _reqInfo.URI + "/";
+                _headers += Connection(0);
+                return ;
+            }
+            int fd =-1;
+            size_t i = 0;
+            for (; i < _index.size(); i++){
+                fd = open((_path+ _index[i]).c_str(), O_RDONLY);
+                if (fd >= 0){
+                     _body = _path + _index[i];
+                     setOkHeaders("text/html", _body);
+                    close(fd);
+                    return ;
+                }
+                close(fd);
+            }
+            if (fd < 0){
+                if (_autoIndex == true){
+                    autoIndex indx;
+                    indx.setAutoIndexBody(folder, _path, _root, _location);
+                    if (indx.isError() == true)
+                        errorsResponse(indx.getErrorCode());
+                    else { // indx.isError == false
+                        _body = indx.getBodyName();
+                        setOkHeaders("text/html", _body);
+
+                        closedir(folder);
+                    }
+                }
+                else //autoindex == false
+                    errorsResponse(404);
                 return ;
             }
         }
-        else {
-            // if (cgi.length() == 0){
-                if (_path[_path.length() - 1] != '/'){
-                    _path += "/";
-                    _body = _path + _index[0];
-                    _headers = "HTTP/1.1 302 Found\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
-                    _headers += "\r\nLocation: " + _reqInfo.URI + "/";
-                    _headers += Connection();
+        else { // cgi.length != 0
+            for (size_t i = 0; i < _index.size(); i++){
+                if (_index[i].substr(_index[i].length() - cgiExt.length()) == cgiExt){
+                    std::pair<std::string, std::string> cgiOut;
+                    cgi CGI(_reqInfo, _path + "/" +_index[i], cgiExt);
+                    CGI.executeFile();
+                    cgiOut = CGI.parseCgiOutput();
+                    _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
+                    _body = cgiOut.second;
                     return ;
                 }
-                int fd =-1;
-                size_t i = 0;
-                for (; i < _index.size(); i++){
-                    fd = open((_path+ _index[i]).c_str(), O_RDONLY);
-                    if (fd >= 0){
-                         _body = _path + _index[i];
-                        _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
-                        _headers += Connection();
-                        close(fd);
-                        return ;
-                    }
-                    close(fd);
+            }
+              // no cgi file with cgiExt is found in path
+            int opn = -1;
+            for (size_t i = 0; i < _index.size(); i++){
+                opn = open((_path + '/' + _index[i]).c_str(), O_RDONLY);
+                if (opn != -1){
+                    _body = _path + "/" + _index[i];
+                     setOkHeaders("text/html", _body);
+                    close(opn);
+                    break;
                 }
-                if (fd < 0){
-                    if (_autoIndex == true){
-                        autoIndex indx;
-                        indx.setAutoIndexBody(folder, _path, _root, _location);
-                        if (indx.isError() == true)
-                            errorsResponse(indx.getErrorCode());
-                        else {
-                            _body = indx.getBodyName();
-                            _headers = "HTTP/1.1 200 OK\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
-                            _headers += Connection();
-                            closedir(folder);
-                        }
+                close(opn);
+            }
+            if (opn == -1) { 
+                if (_autoIndex == true) {
+                    autoIndex indx;
+                    indx.setAutoIndexBody(folder, _path, _root, _location);
+                    if (indx.isError() == true)
+                        errorsResponse(indx.getErrorCode());
+                    else { // no error in autoindex
+                        _body = indx.getBodyName();
+                         setOkHeaders("text/html", _body);
+                        closedir(folder);
                     }
-                    else
-                        errorsResponse(404);
-                    return ;
                 }
-        //  }
-        //  else {
-        //         iterator it = find(index.(cgi) in  _index)
-        //         if (it != _index.end())
-        //             execute_cgi(*it)
-        //         else{
-        //             int opn = -1;
-        //             try to open the first file that will open in _index vector;(opn = open(_index[i])) (break when opn != -1)
-        //             if opn >= 0 : _body = _index[i];
-        //             else {
-        //                 if _autoIndex =true
-        //                     autoindex;
-        //                 else
-        //                     errorResponse(404);
-        //             }
-        //         }
-        //     }
-        }
-    }
-    else {
-            DeleteMethod();
+                else // autoindex is false
+                    errorsResponse(404);
+            }
+        }   
     }
 
 }
