@@ -11,12 +11,17 @@ class cgi{
         s_requestInfo _req;
         std::string _fileName;
         std::string _cgiExtention;
+        std::string _body;
+        std::fstream _myfile;
+        std::fstream _outf;
+        std::string  _out;
     public:
         cgi();
         cgi(s_requestInfo req, std::string fileName, std::string cgiExt);
         ~cgi();
         void setEnvironment();
         void executeFile();
+        std::pair<std::string, std::string> parseCgiOutput();
 };  
 
 #endif
