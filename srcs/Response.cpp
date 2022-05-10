@@ -290,18 +290,17 @@ void Response::setResponse(){
 
 std::pair<std::string, std::string> Response::get_response(){
 
+    std::cout << "-----------------" <<  _reqInfo.statusCode <<"--------------------" << std::endl;
     if (_reqInfo.statusCode != 200)
         errorsResponse(_reqInfo.statusCode);
     else{
         setResponse();
     }
     std::pair<std::string, std::string> p;
-    // std::cout << "-----------------------------------------------" << std::endl;
-    // std::cout << _headers << std::endl;
-    // std::cout << "-----------------------------------------------" << std::endl;
-    // std::cout << "-----------------------------------------------" << std::endl;
-    // std::cout << _body << std::endl;
-    // std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << _headers << std::endl;
+    std::cout << _body << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
     p.first = _headers;
     p.second = _body;
     return (p);
@@ -350,6 +349,7 @@ int fileSize(std::string fileName){
 bool Response::is_complete(int len, std::string filename){
 
     _cursor += len;
+    std::cout << "sending .... " << _cursor << std::endl;
 	if ((size_t)_cursor >= fileSize(filename) + _headers.size())
         return true;
 	return false;

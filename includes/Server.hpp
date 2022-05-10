@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/09 21:35:15 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/10 13:41:17 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ class Server{
 		std::vector<struct sockaddr_in>	_address;
 		std::vector<struct pollfd>		_fds;
 
+		Server(void);
 		void socketio(std::vector<serverInfo> server_conf);
 		void accept_connection(int i);
 		void recv_request(int i, Clients *c);
@@ -37,7 +38,7 @@ class Server{
 	public:
 
 		Server(std::vector<Socket> s, std::vector<serverInfo> server_conf);
-		~Server();
+		~Server(void);
 
 };
 
