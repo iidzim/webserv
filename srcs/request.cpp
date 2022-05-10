@@ -158,13 +158,18 @@ void    request::requestLine(std::istringstream &istr)
         std::string st = "bodyFile";
         _rqst.bodyFile  = st + std::to_string(rand())+".txt";
         //instead of using fstream use fd = open()
+        //create it inside var/www/html 
+        char cwd[256];
+        std::string path(getcwd(cwd, sizeof(cwd)));
+        _rqst.bodyFile = path + "/var/www/html/"+_rqst.bodyFile;// ! remove srcs
+       // std::cout<<"_rqst.bodyFile  | "<<_rqst.bodyFile <<std::endl;
         _rqst.fd = open(_rqst.bodyFile.c_str(), O_CREAT | O_RDWR, 0777);
 
        // my_file.open(_rqst.bodyFile, std::ios::out | std::ios::app); //! To append values instead of ecrasing it
         _isBodyExcpected = true;
 
         //create a tmp file
-        tmpFile.open("tmp.txt", std::ios::out | std::ios::app);
+        tmpFile.open("tmp.txt", std::ios::out | std::ios::app); //replace it by vector
 
     }
     pos = words[1].find("?");
@@ -430,7 +435,7 @@ void request::isBodyValid()
 void request::parse(char *buffer, size_t r)
 {
      //std::cout<<"parsing called !"<<std::endl;
-    if (r == 0)
+    if (r == 0) //! WHEN r = 0 => no return in server
     {
         _rqst.statusCode = 400;  throw request::RequestNotValid();
     }
@@ -438,8 +443,6 @@ void request::parse(char *buffer, size_t r)
     {
         _start = std::time(NULL);
        //  std::this_thread::sleep_for(std::chrono::seconds(60));
-    
-         
          _begin = false;
     }
     if (std::time(NULL) - _start >  60)
@@ -511,7 +514,6 @@ void request::parse(char *buffer, size_t r)
                 }
                 else
                 {
-                   // std::cout<<"---------- Should be here one time----------"<<std::endl;
                     tmpFile<<leftdata;
                     if (leftdata.find("0\r\n\r\n") != std::string::npos)
                         isBodyValid();
@@ -550,7 +552,7 @@ bool request::isComplete()
         close(_rqst.fd);
        // my_file.close();
         tmpFile.close();
-        // std::remove("tmp.txt");
+        std::remove("tmp.txt");
         return true;
     }
     return false;

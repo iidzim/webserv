@@ -23,7 +23,7 @@ clean:
 
 fclean: clean
 	@ rm -f $(NAME)
-	@	rm -f body*
+	@ cd var/www/html && rm -f body*
 re: fclean all
 	@ ./web_server ./configFile/valid_confg/default.conf
 
