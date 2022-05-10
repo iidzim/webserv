@@ -70,6 +70,7 @@ request::request():  _begin(true),_headersComplete(false), _bodyComplete(false),
     _rqst.fd = 0;
     _contentLength = 0;
     _originContentLength = 0;
+    _contentType.clear();
     
     // std::cout<<"default constructor called !!"<<std::endl;
 }
@@ -92,6 +93,7 @@ request& request::operator=(const request& obj)
     _isBodyExcpected = obj._isBodyExcpected;
     _contentLength = obj._contentLength;
     _originContentLength = obj._originContentLength;
+    _contentType = obj._contentType;
     
     return *this;
 }
@@ -115,6 +117,15 @@ bool request::isFieldNameValid(const std::string &str)
     }
     return true;
 }
+
+std::string     request::getMimeType()
+{
+    mimeTypes tmp;
+    std::string extension = tmp.getExtention(_contentType);
+    return extension;
+}
+
+std::string     request::getContentType() { return _contentType; }
 
 void    request::requestLine(std::istringstream &istr)
 {
@@ -153,18 +164,7 @@ void    request::requestLine(std::istringstream &istr)
     _rqst.method = words[0];
     if (_rqst.method == "POST")
     {
-        srand(time(0));
-        std::stringstream str;
-        std::string st = "bodyFile";
-        _rqst.bodyFile  = st + std::to_string(rand())+".txt";
-        //instead of using fstream use fd = open()
-        //create it inside var/www/html 
-        char cwd[256];
-        std::string path(getcwd(cwd, sizeof(cwd)));
-        _rqst.bodyFile = path + "/var/www/html/"+_rqst.bodyFile;// ! remove srcs
-       // std::cout<<"_rqst.bodyFile  | "<<_rqst.bodyFile <<std::endl;
-        _rqst.fd = open(_rqst.bodyFile.c_str(), O_CREAT | O_RDWR, 0777);
-
+        
        // my_file.open(_rqst.bodyFile, std::ios::out | std::ios::app); //! To append values instead of ecrasing it
         _isBodyExcpected = true;
 
@@ -257,6 +257,8 @@ void    request::getHeaders(std::istringstream & istr)
                         _host = fieldValue;
                     }
                 }
+                else if (fieldName == "content-type")
+                    _contentType = fieldValue;
                (_rqst.headers).insert(std::pair<std::string, std::string>(fieldName, fieldValue));
             }
             else
@@ -291,6 +293,20 @@ void    request::getHeaders(std::istringstream & istr)
         //     _rqst.statusCode = 413; //request entity too large
         //     throw request::RequestNotValid();
         // }
+    }
+    if (_isBodyExcpected)
+    {
+        srand(time(0));
+        std::stringstream str;
+        std::string st = "bodyFile";
+        _rqst.bodyFile  = st + std::to_string(rand())+".txt"; // +getMimeType();
+        //instead of using fstream use fd = open()
+        //create it inside var/www/html 
+        char cwd[256];
+        std::string path(getcwd(cwd, sizeof(cwd)));
+        _rqst.bodyFile = path + "/var/www/html/"+_rqst.bodyFile+getMimeType();// ! remove srcs
+       // std::cout<<"_rqst.bodyFile  | "<<_rqst.bodyFile <<std::endl;
+        _rqst.fd = open(_rqst.bodyFile.c_str(), O_CREAT | O_RDWR, 0777);
     }
 }
 
@@ -552,7 +568,7 @@ bool request::isComplete()
         close(_rqst.fd);
        // my_file.close();
         tmpFile.close();
-       // std::remove("tmp.txt");
+        std::remove("tmp.txt");
         return true;
     }
     return false;

@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctime>
-
+#include "mimeTypes.hpp"
       // std::cout, std::endl
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>
@@ -49,6 +49,7 @@ class request
         bool            _isChunked;
         bool            _isBodyExcpected;
         size_t          _contentLength;
+        std::string     _contentType;
 
 
         std::fstream     tmpFile;
@@ -67,6 +68,8 @@ class request
 
         //! Not implemented yet 
         bool isHexadecimalFormat(std::string &number); // use xdigit
+        std::string     getMimeType();
+        std::string     getContentType();
         
     public:
         request();
