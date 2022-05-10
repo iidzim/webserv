@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/09 21:15:23 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/09 21:37:57 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,13 +16,13 @@
 
 void signalhandler(int signum){
 
-	// broken_pipe = true;
+	broken_pipe = true;
 	std::cout << "Interrupt signal (" << signum << ") received.\n";
 }
 
 int main(int argc, char** argv){
 
-	// broken_pipe = false;
+	broken_pipe = false;
 	signal(SIGPIPE, signalhandler);
 	if (argc > 2){
 		std::cerr << "usage:\t./webserv [configuration file]" << std::endl;
@@ -41,7 +41,7 @@ int main(int argc, char** argv){
 			std::string path = argv[1];
 			configurationReader cfg_reader(path);
 			cfg_reader.parser();
-			std::cout<<cfg_reader<<std::endl;
+			// std::cout<<cfg_reader<<std::endl;
     		std::vector<serverInfo> virtualServer = cfg_reader.getVirtualServer();
 			// // std::cout<<cfg_reader<<std::endl;
     		for (size_t i = 0; i < virtualServer.size(); i++){

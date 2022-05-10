@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/09 21:13:52 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/09 21:37:36 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,10 +119,11 @@ void Server::send_response(int i, Clients *c){
 		std::string str = headers.substr(len);
 		s = send(_fds[i].fd, str.c_str(), str.length(), 0);
 		//- check for sigpipe - if global bool = true -> close accept_fd and remove client from map
-		// if (broken_pipe == true){
-		// 	brokenPipe(c, i);
-		// 	return;
-		// }
+		if (broken_pipe == true){
+			std::cout << " ok\n";
+			brokenPipe(c, i);
+			return;
+		}
 	}
 	else if (filename.length() != 0){
 
@@ -139,18 +140,19 @@ void Server::send_response(int i, Clients *c){
 			int r = read(o, buff, x);
 			if (r > 0){
 				s = send(_fds[i].fd, buff, BUFF_SIZE, 0);
-				// if (broken_pipe == true){
-				// 	close(o);
-				// 	brokenPipe(c, i);
-				// 	return;
-				// }
+				if (broken_pipe == true){
+					std::cout << " ok\n";
+					close(o);
+					brokenPipe(c, i);
+					return;
+				}
 			}
 			memset(buff, 0, BUFF_SIZE);
 		}
 		close(o);
 	}
 	if (s < 0){
-		c->remove_clients(file_descriptor);
+		c->remove_clients(_fds[i].fd);
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
 		std::cout << "send failure s <= 0\n";
@@ -177,16 +179,21 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 
     while (1){
 
+		std::cout << "Polling ... " << std::endl;// << c.connections.size() << std::endl;
+		int p = poll(&_fds.front(), _fds.size(), -1);
+		if (p < 0){
+			throw::Socket::SocketException("Poll failed: Unexpected event occured");
+
+			// std::cout << "Poll failed: Unexpected event occured" << std::endl;
+			// if p == 0 -> no new connection
+			// break;
+		}
+		if (p == 0){
+			std::cout << "Poll failed: No new connection" << std::endl;
+			continue;
+		}
 		for (size_t i = 0; i < _fds.size(); i++){
 
-			std::cout << "Polling ... " << std::endl;// << c.connections.size() << std::endl;
-			int p = poll(&_fds.front(), _fds.size(), -1);
-			if (p <= 0){
-				// throw SocketException("Poll failed: Unexpected event occured"); // !! do not exit on error
-				// std::cout << "Poll failed: Unexpected event occured" << std::endl;
-				// if p == 0 -> no new connection
-				break;
-			}
 			if (!_fds[i].revents){
 				continue;
 			}
