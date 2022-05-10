@@ -171,18 +171,28 @@ void configurationReader::setRedirection(std::vector<std::string> words, serverI
 }
 void   configurationReader::setCGI(std::vector<std::string> words, locationInfos &location)
 {
-    if (words.size() != 2 || _state != INLOCATION || words[1].empty())
+    if (words.size() != 2 || _state != INLOCATION || words[1].empty() || !location.upload.empty())
         throw configurationReader::invalidSyntax();
     if (!location.cgi.empty())
         throw configurationReader::invalidSyntax();
     location.cgi=words[1];
 }
 
+void configurationReader::setUpload(std::vector<std::string> words, locationInfos &location)
+{
+    if (words.size() != 2 || _state != INLOCATION || words[1].empty() || !location.cgi.empty())
+        throw configurationReader::invalidSyntax();
+    if (!location.upload.empty())
+        throw configurationReader::invalidSyntax();
+    location.upload=words[1];
+}
+
 void clearLocation(locationInfos & location)
 {
+    location.upload.clear();
     location.index.clear();
     location.root.clear();
-    location.uri = "";
+    location.uri.clear();
     location.autoindex = OFF;
     location.cgi.clear();
     //location.cgi.second.clear();
@@ -236,8 +246,8 @@ void configurationReader::defaultForMissingValues(serverInfo &server)
         server.size = 1000000;
     if (server.root.empty())
     {
-        char *buf=NULL;
-        buf = getcwd(buf, sizeof(buf));
+        char buf[256];
+        getcwd(buf, sizeof(buf));
         server.root = std::string(buf)+"/var/www/html";
     }
     if (server.index.empty())
@@ -336,6 +346,8 @@ void configurationReader::parser()
                     setRedirection(words, server, location);
                 else if (words[0] == "cgi")
                     setCGI(words, location);
+                else if (words[0] == "upload")
+                    setUpload(words, location);
                 else
                     throw configurationReader::invalidSyntax();
             }
@@ -407,6 +419,7 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
          
         for (size_t k = 0; k < virtualServer[i].location.size(); k++)
         {
+            o << "Upload "<<virtualServer[i].location[k].upload<<std::endl;
             o << "URI "<<virtualServer[i].location[k].uri <<std::endl;
             o <<"redirection    "<<virtualServer[i].location[k].redirect.first<<" "<<virtualServer[i].location[k].redirect.second<<std::endl;
             o <<"CGI    "<<virtualServer[i].location[k].cgi<<std::endl;

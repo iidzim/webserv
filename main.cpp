@@ -43,7 +43,7 @@ int main(int argc, char** argv){
 			cfg_reader.parser();
 			// std::cout<<cfg_reader<<std::endl;
     		std::vector<serverInfo> virtualServer = cfg_reader.getVirtualServer();
-			// // std::cout<<cfg_reader<<std::endl;
+			std::cout<<cfg_reader<<std::endl;
     		for (size_t i = 0; i < virtualServer.size(); i++){
 				if (std::find(ports.begin(), ports.end(), virtualServer[i].port) == ports.end()){
 					ports.push_back(virtualServer[i].port);

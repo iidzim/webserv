@@ -435,22 +435,22 @@ void request::isBodyValid()
 void request::parse(char *buffer, size_t r)
 {
      //std::cout<<"parsing called !"<<std::endl;
-    if (r == 0) //! WHEN r = 0 => no return in server
+    if (r == 0 && !isComplete()) //! WHEN r = 0 => no return in server
     {
-        _rqst.statusCode = 400;  throw request::RequestNotValid();
-    }
-    if (_begin)
-    {
+        _begin = false;
+       // _rqst.statusCode = 400;  throw request::RequestNotValid();
         _start = std::time(NULL);
-       //  std::this_thread::sleep_for(std::chrono::seconds(60));
-         _begin = false;
     }
-    if (std::time(NULL) - _start >  60)
+    if (!_begin)
     {
-     //   std::cout<<"Time out !"<<std::endl;
-        _rqst.statusCode = 408;
-        throw request::RequestNotValid();
+        if (std::time(NULL) - _start >  60)
+        {
+        //   std::cout<<"Time out !"<<std::endl;
+            _rqst.statusCode = 408;
+            throw request::RequestNotValid();
+        }
     }
+
     size_t i ;
     if (!_headersComplete)
     {   
@@ -552,7 +552,7 @@ bool request::isComplete()
         close(_rqst.fd);
        // my_file.close();
         tmpFile.close();
-        std::remove("tmp.txt");
+       // std::remove("tmp.txt");
         return true;
     }
     return false;
