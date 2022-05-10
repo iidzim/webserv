@@ -50,6 +50,7 @@ void cgi::executeFile()
     _body = currPath + "/var/www/html/example.html";
     int fd1 = open(_req.bodyFile.c_str(), O_RDONLY);
     int fd = open(_body.c_str(), O_CREAT| O_RDONLY | O_WRONLY , 0644);
+    // std::time_t start = std::time(NULL);
     id = fork();
     if (id == 0){
         dup2(fd1, 0);
@@ -72,7 +73,8 @@ void cgi::executeFile()
             execve(args[0], args, environ);
         }
     }
-    wait(NULL);
+    // while (std::time(NULL) - start < 60)
+        wait(NULL);
     close(fd1);
     close (fd);
 
@@ -82,7 +84,7 @@ std::pair<std::string, std::string> cgi::parseCgiOutput()
 {
     char cwd[256];
     std::string currPath(getcwd(cwd, sizeof(cwd)));
-    _out = currPath+"/var/www/html/tmp.txt";
+    _out = currPath+"/var/www/html/form.html";
     _myfile.open(_body, std::ios::in);
     _outf.open(_out, std::ios::out);
     std::string result;

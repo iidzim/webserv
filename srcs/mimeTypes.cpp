@@ -5,10 +5,24 @@ mimeTypes::mimeTypes(){
 }
 mimeTypes::~mimeTypes(){}
 
-std::map<std::string, std::string> mimeTypes::getTypes(){
-    return _types;
+std::string mimeTypes::getType(std::string &filename){
+    size_t position = filename.find(".");
+    if (position != std::string::npos){
+        std::map<std::string, std::string>::iterator it = _types.find(filename.substr(position));
+        if (it != _types.end())
+            return it->second;
+    }
+    return ("text/html");
 }
 
+std::string mimeTypes::getExtention(std::string &type){
+    for (std::map<std::string, std::string>::iterator it = _types.begin(); it != _types.end(); it++){
+        if (it->second == type)
+            return (it->first);
+    }
+    return (".html");
+
+}
 void mimeTypes::setTypes(){
     _types[".aac"] = "audio/aac";
     _types[".abw"] = "application/x-abiword";
@@ -30,6 +44,7 @@ void mimeTypes::setTypes(){
     _types[".gif"] = "image/gif";
     _types[".htm"] = "text/html";
     _types[".html"] = "text/html";
+    _types[".html"] = "text/html; charset=UTF-8";
     _types[".ico"] = "image/vnd.microsoft.icon";
     _types[".ics"] = "text/calendar";
     _types[".jar"] = "application/java-archive";

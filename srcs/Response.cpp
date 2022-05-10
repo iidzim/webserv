@@ -90,18 +90,19 @@ std::string Response::Connection(int flag){
 void Response::DeleteMethod(){
     int fd;
     std::ostringstream headers;
-    std::string fileName;
+    std::cout << "file to delete ==== " << _path << std::endl;
     fd = unlink(_path.c_str());
     if (fd < 0){
-        if (errno == EACCES){
+        std::cout << "fd <<<<<<<<<<<<<<<<< 0" << std::endl;
+        if (errno == EACCES)
             errorsResponse(403);
-            return ;
-        }
+        return ;
     }
     else {
         headers << "HTTP/1.1 204 No Content";
         headers << Connection(0);
         _body = "";
+        std::cout << "body is supposed to be empty == |" << _body << "|" <<std::endl; 
     }
     _headers = headers.str();
 }
@@ -115,6 +116,7 @@ void Response::setResponse(){
     bool isLoc = false;
     DIR *folder;
     std::string cgiExt ="";
+    std::pair<std::string, std::string> redirect;
     for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
         if (_reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
             || (_reqInfo.URI.find(_servInfo.location[i].uri + "/") == 0 && _servInfo.location[i].uri.size() > 1)) {
@@ -123,6 +125,9 @@ void Response::setResponse(){
             isLoc = true;
             _index = _servInfo.location[i].index;
             cgiExt = _servInfo.location[i].cgi;
+            std::cout << _servInfo.location[i].redirect.first << "|||||||||||||||||" <<_servInfo.location[i].redirect.second << std::endl;
+            redirect = _servInfo.location[i].redirect;
+            // 
             if (_servInfo.location[i].autoindex == true)
                 _autoIndex = true;
             if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods.end(), 
@@ -158,17 +163,31 @@ void Response::setResponse(){
         _path = _root + _reqInfo.URI;
     }
 
-    if (_reqInfo.method == "DELETE"){
-        DeleteMethod();
-        return;
+    if (redirect.second.length() != 0){
+        if (_path == (_root + redirect.first)){
+            _body = _path;
+            _headers = "HTTP/1.1 301 Moved Permanently\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+            _headers += "\r\nLocation: " + redirect.second + "/";
+            _headers += Connection(0);
+            return ;
+        }
     }
+    // if (_reqInfo.method == "DELETE"){
+    //     DeleteMethod();
+    //     return;
+    // }
     folder = opendir(_path.c_str());
     if (!folder){
+        std::cout << "path  ==== " << _path << std::endl;
         if (errno == EACCES)
             errorsResponse(403);
         else if (errno == ENOENT)
             errorsResponse(404);
         else if (errno == ENOTDIR){
+            if (_reqInfo.method == "DELETE"){
+                DeleteMethod();
+                return ;
+            }
             if (cgiExt.length()){
                 if (cgiExt == _path.substr(_path.length() - cgiExt.length())){
                     std::pair<std::string, std::string> cgiOut;
@@ -183,20 +202,21 @@ void Response::setResponse(){
                 return ;
             }
             else{ // cgiExt.length  == 0
-                std::map<std::string, std::string> mimetype(_mime.getTypes());
-                std::string mType;
-                size_t pos = _reqInfo.URI.find(".");
-                if (pos != std::string::npos){
-                    std::map<std::string, std::string>::iterator it2 = mimetype.find(_reqInfo.URI.substr(pos));
-                    if (it2 != mimetype.end())
-                        mType = it2->second;
-                    else // mime type not found
-                        mType = "text/html";
-                }
-                else //  mime type not found
-                    mType = "text/html";
+                // std::map<std::string, std::string> mimetype(_mime.getTypes());
+                // std::string mType;
+                // size_t pos = _reqInfo.URI.find(".");
+                // if (pos != std::string::npos){
+                //     std::map<std::string, std::string>::iterator it2 = mimetype.find(_reqInfo.URI.substr(pos));
+                //     if (it2 != mimetype.end())
+                //         mType = it2->second;
+                //     else // mime type not found
+                //         mType = "text/html";
+                // }
+                // else //  mime type not found
+                //     mType = "text/html";
+                
                 _body = _path;
-                _headers = "HTTP/1.1 200 OK\r\nContent-type: " + mType + "\r\nContent-length: " + toString(fileSize(_body));
+                _headers = "HTTP/1.1 200 OK\r\nContent-type: " + _mime.getType(_reqInfo.URI) + "\r\nContent-length: " + toString(fileSize(_body));
                 if (_autoIndex == true)
                     _headers += "\r\nContent-Disposition: attachment";
                 _headers += Connection(0);
@@ -219,8 +239,14 @@ void Response::setResponse(){
             for (; i < _index.size(); i++){
                 fd = open((_path+ _index[i]).c_str(), O_RDONLY);
                 if (fd >= 0){
-                     _body = _path + _index[i];
-                     setOkHeaders("text/html", _body);
+                    std::cout << "reqInfomethod ==== " << _reqInfo.method << std::endl;
+                    if (_reqInfo.method == "DELETE"){
+                        _path = _path + _index[i];
+                        DeleteMethod();
+                        return ;
+                    }
+                    _body = _path + _index[i];
+                    setOkHeaders("text/html", _body);
                     close(fd);
                     return ;
                 }
