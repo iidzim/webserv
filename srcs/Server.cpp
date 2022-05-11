@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/11 12:29:53 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/11 16:51:24 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,6 +106,7 @@ void Server::brokenPipe(Clients *c, int i){
 	_fds.erase(_fds.begin() + i);
 }
 
+
 void Server::send_response(int i, Clients *c){
 
 	std::cout << "Sending response" << std::endl;
@@ -125,6 +126,8 @@ void Server::send_response(int i, Clients *c){
 		std::cout << "sending headers" << std::endl;
 		std::string str = headers.substr(len);
 		s = send(_fds[i].fd, str.c_str(), str.length(), 0);
+		str.resize(s);
+		// std::cout << "+++++|" << str << "|" << std::endl;
 		//? check for sigpipe - if global bool = true -> close accept_fd and remove client from map
 		if (broken_pipe == true){
 			std::cout << " broken pipe -headers-\n";
@@ -145,8 +148,9 @@ void Server::send_response(int i, Clients *c){
 		int poll_file = poll(file, 1, -1);
 		if (poll_file > 0 && (file[0].revents & POLLIN)){
 			int r = read(o, buff, x);
+			buff[r] = '\0';
 			if (r > 0){
-				s = send(_fds[i].fd, buff, BUFF_SIZE, 0);
+				s = send(_fds[i].fd, buff, x, 0);
 				if (broken_pipe == true){
 					std::cout << " broken pipe -body-\n";
 					close(o);
@@ -158,6 +162,12 @@ void Server::send_response(int i, Clients *c){
 		}
 		close(o);
 	}
+	// {
+	// 	// std::string rep = "<html><body><h2>ok</h2></body></html>";
+	// 	std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
+	// 	s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
+		
+	// }
 	if (s < 0){
 		// c->remove_clients(_fds[i].fd);
 		close(_fds[i].fd);
@@ -167,6 +177,7 @@ void Server::send_response(int i, Clients *c){
 	}
 	if (s == 0)
 		std::cout << "send == 0\n";
+	// s = total_size;//!! static response
 	if (c->connections[_fds[i].fd].second.is_complete(s, filename)){
 		std::cout << _fds[i].fd << " - response is complete\n";
 		int file_descriptor = _fds[i].fd;
