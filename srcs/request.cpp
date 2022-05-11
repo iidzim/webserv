@@ -299,12 +299,12 @@ void    request::getHeaders(std::istringstream & istr)
         srand(time(0));
         std::stringstream str;
         std::string st = "bodyFile";
-        _rqst.bodyFile  = st + std::to_string(rand())+".txt"; // +getMimeType();
+        _rqst.bodyFile  = st + std::to_string(rand()); // +getMimeType();
         //instead of using fstream use fd = open()
         //create it inside var/www/html 
         char cwd[256];
         std::string path(getcwd(cwd, sizeof(cwd)));
-        _rqst.bodyFile = path + "/var/www/html/"+_rqst.bodyFile+getMimeType();// ! remove srcs
+        _rqst.bodyFile = path + "/var/www/html/bodies/"+_rqst.bodyFile+getMimeType();// ! remove srcs
        // std::cout<<"_rqst.bodyFile  | "<<_rqst.bodyFile <<std::endl;
         _rqst.fd = open(_rqst.bodyFile.c_str(), O_CREAT | O_RDWR, 0777);
     }
@@ -451,21 +451,21 @@ void request::isBodyValid()
 void request::parse(char *buffer, size_t r)
 {
      //std::cout<<"parsing called !"<<std::endl;
-    if (r == 0 && !isComplete()) //! WHEN r = 0 => no return in server
-    {
-        _begin = false;
-       // _rqst.statusCode = 400;  throw request::RequestNotValid();
-        _start = std::time(NULL);
-    }
-    if (!_begin)
-    {
-        if (std::time(NULL) - _start >  60)
-        {
-        //   std::cout<<"Time out !"<<std::endl;
-            _rqst.statusCode = 408;
-            throw request::RequestNotValid();
-        }
-    }
+    // if (r == 0 && !isComplete()) //! WHEN r = 0 => no return in server
+    // {
+    //     _begin = false;
+    //    // _rqst.statusCode = 400;  throw request::RequestNotValid();
+    //     _start = std::time(NULL);
+    // }
+    // if (!_begin)
+    // {
+    //     if (std::time(NULL) - _start >  60)
+    //     {
+    //     //   std::cout<<"Time out !"<<std::endl;
+    //         _rqst.statusCode = 408;
+    //         throw request::RequestNotValid();
+    //     }
+    // }
 
     size_t i ;
     if (!_headersComplete)
