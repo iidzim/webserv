@@ -115,7 +115,7 @@ void Server::send_response(int i, Clients *c){
 	std::string filename = rep.second;
 	int headers_size = headers.size();
 
-	// std::cout << "*****************\n" << headers << filename << "\n*****************\n" << std::endl;
+	std::cout << "*****************\n" << filename << "\n*****************\n" << std::endl;
 
 	char buff[2048*1000];
 	int total_size, o, x, s = 0;

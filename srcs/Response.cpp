@@ -255,6 +255,7 @@ void Response::setResponse(){
                     std::string conn = Connection(1);
                     cgi CGI(_reqInfo, _path + "/" +_index[i], cgiExt , conn);
                     CGI.executeFile();
+            
                     cgiOut = CGI.parseCgiOutput();
                     _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
                     _body = cgiOut.second;
@@ -295,7 +296,7 @@ void Response::setResponse(){
 
 std::pair<std::string, std::string> Response::get_response(){
 
-    // std::cout << "-----------------" <<  _reqInfo.statusCode <<"--------------------" << std::endl;
+    std::cout << "-----------------" <<  _reqInfo.statusCode <<"--------------------" << std::endl;
     if (_reqInfo.statusCode != 200)
         errorsResponse(_reqInfo.statusCode);
     else{

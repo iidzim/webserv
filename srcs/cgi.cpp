@@ -110,11 +110,16 @@ std::pair<std::string, std::string> cgi::parseCgiOutput()
     _outf.close();
     std::string r;
     size_t pos = result.find("\r\n");
-    r = result.substr(0,pos);
-    r+= "\r\nContent-length: " ;
-    r+= toString(fileSize(_out));
-    r+= _connection;
-    r+= result.substr(pos);
+    if (pos != std::string::npos){
+        r = result.substr(0,pos);
+        r+= "\r\nContent-length: " ;
+        r+= toString(fileSize(_out));
+        r+= _connection;
+        r+= result.substr(pos);
+
+    }
+    else 
+        r = result;
     std::remove(_body.c_str());
     return std::make_pair(r, _out);
 

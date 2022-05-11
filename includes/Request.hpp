@@ -50,11 +50,14 @@ class request
         bool            _isBodyExcpected;
         size_t          _contentLength;
         std::string     _contentType;
+        std::string     _root;
+        std::string     _uploadpath;
 
 
         std::fstream     tmpFile;
 
         size_t          _originContentLength;
+        std::vector<serverInfo> servers;
 
         void requestLine(std::istringstream & istr); // Method URI VERSION
         void getHeaders(std::istringstream & str); //all the available headers in MJS
@@ -74,6 +77,7 @@ class request
     public:
         request();
         request(std::vector<serverInfo> &servers);
+        void BlockMatching(std::vector<serverInfo> server_conf);
         size_t convertHexToDecimal(std::string value);
         void deleteOptionalWithespaces(std::string &fieldValue); 
         //request(serverInfo server);

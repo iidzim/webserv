@@ -81,7 +81,9 @@ request::request(std::vector<serverInfo> &servers):  _begin(true),_headersComple
 //    std::this_thread::sleep_for(std::chrono::seconds(30));
 //    std::cout<<"_end "<<std::time(NULL);
 //    std::cout<<"durae"<<std::time(NULL) - _start <<std::endl;
-    (void)servers;
+   
+    _uploadpath.clear();
+    _root.clear();
     _port = -1;
     _host.clear();
     _data.clear();
@@ -95,6 +97,7 @@ request::request(std::vector<serverInfo> &servers):  _begin(true),_headersComple
     _contentLength = 0;
     _originContentLength = 0;
     _contentType.clear();
+    this->servers = servers;
     
     // std::cout<<"default constructor called !!"<<std::endl;
 }
@@ -118,6 +121,7 @@ request& request::operator=(const request& obj)
     _contentLength = obj._contentLength;
     _originContentLength = obj._originContentLength;
     _contentType = obj._contentType;
+    this->servers = obj.servers;
     
     return *this;
 }
@@ -204,6 +208,7 @@ void    request::requestLine(std::istringstream &istr)
     }
     else
         _rqst.URI = words[1];
+    std::cout<<"*****"<<_rqst.URI<<std::endl;
 
     //* http version
     //! erase \r at the end of the line
@@ -321,20 +326,99 @@ void    request::getHeaders(std::istringstream & istr)
     if (_isBodyExcpected)
     {
         //if _uploadpath
-        srand(time(0));
-        std::stringstream str;
-        std::string st = "bodyFile";
-        _rqst.bodyFile  = st + std::to_string(rand()); // +getMimeType();
+        BlockMatching(servers);
+        
+            srand(time(0));
+            std::stringstream str;
+            std::string st = "bodyFile";
+            _rqst.bodyFile  = st + std::to_string(rand()); // +getMimeType();
         //instead of using fstream use fd = open()
-        //create it inside var/www/html 
-        char cwd[256];
-        std::string path(getcwd(cwd, sizeof(cwd)));
-        _rqst.bodyFile = path + "/var/www/html/bodies/"+_rqst.bodyFile+getMimeType();// ! remove srcs
+        //create it inside var/www/html
+        if (_uploadpath.empty())
+        {
+            char cwd[256];
+            std::string path(getcwd(cwd, sizeof(cwd)));
+            _rqst.bodyFile = path + "/var/www/html/bodies/"+_rqst.bodyFile+getMimeType();// ! remove srcs
+        }
+        else
+        {
+            std::cout<<"----------" <<_uploadpath<<std::endl;
+            _rqst.statusCode = 201;
+            _rqst.bodyFile = _uploadpath+_rqst.bodyFile+getMimeType();
+           // std::cout<<"ROOT + UPLOAD "<<_uploadpath<<std::endl;
+        }
        // std::cout<<"_rqst.bodyFile  | "<<_rqst.bodyFile <<std::endl;
         _rqst.fd = open(_rqst.bodyFile.c_str(), O_CREAT | O_RDWR, 0777);
+        if (_rqst.fd < 0)
+        {
+            _rqst.statusCode = 500;
+            close(_rqst.fd);
+            throw request::RequestNotValid();
+        }
     }
 }
 
+void request::BlockMatching(std::vector<serverInfo> server_conf)
+{
+   std::string _root;
+
+    for (size_t i = 0; i <server_conf.size(); i++)
+    {
+        if (_host == server_conf[i].serverName && _port == server_conf[i].port)
+        {
+            //block server choosen => I should choose location
+            for (size_t j = 0; j < server_conf[i].location.size(); j++)
+            {
+                //choose the right location block if upload exist
+                if (_rqst.URI == server_conf[i].location[j].uri+'/' || (_rqst.URI == server_conf[i].location[j].uri) ||
+                ((_rqst.URI.find(server_conf[i].location[j].uri + '/') == 0 && server_conf[i].location[j].uri.size() > 1 )))
+                {
+                    //I'll need the root
+                    if (!server_conf[i].location[j].upload.empty())
+                    {
+                        if (server_conf[i].location[j].root.empty())
+                            _root = server_conf[i].root;
+                        else
+                            _root = server_conf[i].location[j].root;
+                        //if (_rqst.URI != server_conf[i].location[j].uri+'/' && (_rqst.URI != server_conf[i].location[j].uri))
+                        _uploadpath = _root+server_conf[i].location[j].upload;
+                        
+                    }
+                }
+            }
+        }
+        if (_port == server_conf[i].port)
+        {std::cout<<" server fiound !"<<std::endl;
+            //server block choosen => I should choose location
+            
+            for (size_t j = 0; j < server_conf[i].location.size(); j++)
+            {
+                std::cout<<" location fiound !"<<std::endl;
+                //choose the right location block and if upload exist
+                if (_rqst.URI == server_conf[i].location[j].uri+'/' || (_rqst.URI == server_conf[i].location[j].uri) ||
+                ((_rqst.URI.find(server_conf[i].location[j].uri + '/') == 0 && server_conf[i].location[j].uri.size() > 1 )))
+                {
+                    if (!server_conf[i].location[j].upload.empty())
+                    {
+                        if (!server_conf[i].location[j].upload.empty())
+                        {
+                            if (server_conf[i].location[j].root.empty())
+                                _root = server_conf[i].root;
+                            else
+                                _root = server_conf[i].location[j].root;
+                           // if (_rqst.URI != server_conf[i].location[j].uri+'/' && (_rqst.URI != server_conf[i].location[j].uri))
+                               // sbstr = server_conf[i].location[j].uri.substr(0,_rqst.URI.length());
+                            _uploadpath = _root+server_conf[i].location[j].upload;
+                            std::cout<<"UPLOAD PATH "<<_uploadpath<<std::endl;
+                        }
+                    }
+                }
+                
+            }
+
+        }
+    }
+}
 
 int     request::getPort()
 {

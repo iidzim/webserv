@@ -195,7 +195,6 @@ void clearLocation(locationInfos & location)
     location.uri.clear();
     location.autoindex = OFF;
     location.cgi.clear();
-    //location.cgi.second.clear();
     location.redirect.first.clear();
     location.redirect.second.clear();
     location.allow_methods.clear();
@@ -415,10 +414,11 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
             itb++;
         }
         o << std::endl;
-        o << "[Location]    "<<std::endl;
+        
          
         for (size_t k = 0; k < virtualServer[i].location.size(); k++)
         {
+            o << " -------  Location"<< k<<"-------"<<std::endl;
             o << "Upload "<<virtualServer[i].location[k].upload<<std::endl;
             o << "URI "<<virtualServer[i].location[k].uri <<std::endl;
             o <<"redirection    "<<virtualServer[i].location[k].redirect.first<<" "<<virtualServer[i].location[k].redirect.second<<std::endl;
