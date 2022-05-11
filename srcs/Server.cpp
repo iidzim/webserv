@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/11 16:51:24 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/11 18:40:52 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,19 +62,19 @@ void Server::recv_request(int i, Clients *c){
 	char _buffer[1024];
 	std::cout << "Receiving request" << std::endl;
 	int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
-	if (r < 0){
+	_buffer[r] = '\0';
+	
+	if (r <= 0){
 		// std::cout << " map size = "  << c->connections.size() << std::endl;
 		std::cout << errno << "  HERE\n";
-		// c->remove_clients(_fds[i].fd);
+		c->remove_clients(_fds[i].fd);
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
 		return;
 	}
-	// if (r == 0)
-		// return ;
 	c->connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
 	try{
-		_buffer[r] = '\0';
+		std::cout << "Request received ---> parsing " << std::endl;
 		c->connections[_fds[i].fd].first.parse(_buffer, r);
 	}
 	catch(request::RequestNotValid &e){
@@ -169,7 +169,7 @@ void Server::send_response(int i, Clients *c){
 		
 	// }
 	if (s < 0){
-		// c->remove_clients(_fds[i].fd);
+		c->remove_clients(_fds[i].fd);
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
 		std::cout << errno << "  send failure s < 0\n";
@@ -202,23 +202,21 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 
 		std::cout << "Polling ........... " << std::endl;// << c.connections.size() << std::endl;
 		int p = poll(&_fds.front(), _fds.size(), -1);
-		if (p < 0){
+		if (p < 0)
 			throw::Socket::SocketException("Poll failed: Unexpected event occured");
-			// std::cout << "Poll failed: Unexpected event occured" << std::endl;
-			// if p == 0 -> no new connection
-			// break;
-		}
 		if (p == 0){
 			std::cout << "Poll failed: No new connection" << std::endl;
 			continue;
 		}
-		// for (size_t i = 0; i < _fds.size(); i++){
-		// 	std::cout << _fds[i].fd << " - " << _fds[i].events << std::endl;
-		// }
+		for (size_t i = 0; i < _fds.size(); i++){
+			std::cout << _fds[i].fd << " - " << _fds[i].events << std::endl;
+			// if (!_fds[i].revents)
+			// 	std::cout << "No event" << std::endl;
+		}
 
 		for (size_t i = 0; i < _fds.size(); i++){
 
-			// std::cout << "fd[" << i << "] === " << _fds[i].fd << std::endl;
+			std::cout << "fd[" << i << "] === " << _fds[i].fd << std::endl;
 			if (!_fds[i].revents){
 				std::cout << _fds[i].fd << " -> no revents" << std::endl;
 				continue;
@@ -263,7 +261,7 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
-				// c.remove_clients(_fds[i].fd);
+				c.remove_clients(_fds[i].fd);
 				// break;
 				continue;
 			}
