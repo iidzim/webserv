@@ -29,6 +29,7 @@
 typedef struct s_location
 {   
     std::string                         uri;
+    std::string                         upload;
     //std::vector<std::string>            index;
     std::vector<std::string>            index;
     std::string                         root;
@@ -83,6 +84,7 @@ class configurationReader
         void                                    setautoIndex(std::vector<std::string> words, serverInfo &server, locationInfos &location);
         void                                    setRedirection(std::vector<std::string> words, serverInfo &server, locationInfos &location);
         void                                    setCGI(std::vector<std::string> words, locationInfos &location);
+        void                                    setUpload(std::vector<std::string> words, locationInfos &location);
         unsigned int                            convertStrIPv4toUnsinedInt(const std::string& IPV4);
         bool                                    communPortSameName();
         void                                    defaultForMissingValues(serverInfo &server);

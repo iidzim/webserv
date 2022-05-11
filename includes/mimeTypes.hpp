@@ -13,8 +13,9 @@ class mimeTypes{
     public:
     mimeTypes();
     ~mimeTypes();
-        std::map<std::string, std::string> getTypes();
-        void setTypes();
+    std::string getType(std::string &filename);
+    void setTypes();
+    std::string getExtention(std::string &type);
 };
 
 
