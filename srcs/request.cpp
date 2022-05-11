@@ -98,6 +98,7 @@ request::request(std::vector<serverInfo> &servers):  _begin(true),_headersComple
     _originContentLength = 0;
     _contentType.clear();
     this->servers = servers;
+    _size = 0;
     
     // std::cout<<"default constructor called !!"<<std::endl;
 }
@@ -317,16 +318,10 @@ void    request::getHeaders(std::istringstream & istr)
             throw request::RequestNotValid();
         }
         _originContentLength = stoul(_rqst.headers.find("content-length")->second);
-        // if (_originContentLength > _server.size)
-        // {
-        //     _rqst.statusCode = 413; //request entity too large
-        //     throw request::RequestNotValid();
-        // }
     }
     if (_isBodyExcpected)
     {
-        //if _uploadpath
-        BlockMatching(servers);
+            BlockMatching(servers);
         
             srand(time(0));
             std::stringstream str;
@@ -366,6 +361,7 @@ void request::BlockMatching(std::vector<serverInfo> server_conf)
     {
         if (_host == server_conf[i].serverName && _port == server_conf[i].port)
         {
+            _size = server_conf[i].size;
             //block server choosen => I should choose location
             for (size_t j = 0; j < server_conf[i].location.size(); j++)
             {
@@ -380,7 +376,6 @@ void request::BlockMatching(std::vector<serverInfo> server_conf)
                             _root = server_conf[i].root;
                         else
                             _root = server_conf[i].location[j].root;
-                        //if (_rqst.URI != server_conf[i].location[j].uri+'/' && (_rqst.URI != server_conf[i].location[j].uri))
                         _uploadpath = _root+server_conf[i].location[j].upload;
                         
                     }
@@ -388,12 +383,12 @@ void request::BlockMatching(std::vector<serverInfo> server_conf)
             }
         }
         if (_port == server_conf[i].port)
-        {std::cout<<" server fiound !"<<std::endl;
+        {//std::cout<<" server fiound !"<<std::endl;
             //server block choosen => I should choose location
-            
+            _size = server_conf[i].size;
             for (size_t j = 0; j < server_conf[i].location.size(); j++)
             {
-                std::cout<<" location fiound !"<<std::endl;
+              //  std::cout<<" location fiound !"<<std::endl;
                 //choose the right location block and if upload exist
                 if (_rqst.URI == server_conf[i].location[j].uri+'/' || (_rqst.URI == server_conf[i].location[j].uri) ||
                 ((_rqst.URI.find(server_conf[i].location[j].uri + '/') == 0 && server_conf[i].location[j].uri.size() > 1 )))
@@ -406,10 +401,8 @@ void request::BlockMatching(std::vector<serverInfo> server_conf)
                                 _root = server_conf[i].root;
                             else
                                 _root = server_conf[i].location[j].root;
-                           // if (_rqst.URI != server_conf[i].location[j].uri+'/' && (_rqst.URI != server_conf[i].location[j].uri))
-                               // sbstr = server_conf[i].location[j].uri.substr(0,_rqst.URI.length());
                             _uploadpath = _root+server_conf[i].location[j].upload;
-                            std::cout<<"UPLOAD PATH "<<_uploadpath<<std::endl;
+                          //  std::cout<<"UPLOAD PATH "<<_uploadpath<<std::endl;
                         }
                     }
                 }
@@ -418,6 +411,12 @@ void request::BlockMatching(std::vector<serverInfo> server_conf)
 
         }
     }
+    if (_size !=0 && _originContentLength > _size)
+        {
+         //   std::cout<<"REQUEST NOT VALID !"<<std::endl;
+            _rqst.statusCode = 413; //request entity too large
+            throw request::RequestNotValid();
+        }
 }
 
 int     request::getPort()
@@ -555,6 +554,11 @@ void request::isBodyValid()
                 write(_rqst.fd, line.c_str(), line.length());
           }
      }
+    if (_size != 0 && totalBytes > _size)
+    {
+            _rqst.statusCode = 413; //request entity too large
+            throw request::RequestNotValid();
+    }
 }
 
 void request::parse(char *buffer, size_t r)
