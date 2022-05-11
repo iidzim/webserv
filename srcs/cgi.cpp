@@ -4,7 +4,7 @@ cgi::cgi(){
 
 }
 
-cgi::cgi(s_requestInfo req, std::string fileName, std::string cgiExt): _req(req), _fileName(fileName), _cgiExtention(cgiExt){
+cgi::cgi(s_requestInfo req, std::string fileName, std::string cgiExt, std::string connection): _req(req), _fileName(fileName), _cgiExtention(cgiExt), _connection(connection){
     _body = "";
 }
 
@@ -29,6 +29,7 @@ void cgi::setEnvironment()
         }
         std::map<std::string, std::string>::iterator it2 = _req.headers.find("content-length");
         if (it2 != _req.headers.end()){
+            std::cout << "content length == " << it2->second << std::endl;
             setenv("CONTENT_LENGTH", (it2->second).c_str(), 1);
         }
     }
@@ -107,8 +108,14 @@ std::pair<std::string, std::string> cgi::parseCgiOutput()
 
     _myfile.close();
     _outf.close();
+    std::string r;
+    size_t pos = result.find("\r\n");
+    r = result.substr(0,pos);
+    r+= "\r\nContent-length: " ;
+    r+= toString(fileSize(_out));
+    r+= _connection;
+    r+= result.substr(pos);
     std::remove(_body.c_str());
-
-    return std::make_pair(result, _out);
+    return std::make_pair(r, _out);
 
 }
