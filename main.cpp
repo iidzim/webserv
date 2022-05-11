@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/11 12:31:49 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/11 22:20:52 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ int main(int argc, char** argv){
 			cfg_reader.parser();
 			// std::cout<<cfg_reader<<std::endl;
     		std::vector<serverInfo> virtualServer = cfg_reader.getVirtualServer();
-			std::cout<<cfg_reader<<std::endl;
+			// std::cout<<cfg_reader<<std::endl;
     		for (size_t i = 0; i < virtualServer.size(); i++){
 				if (std::find(ports.begin(), ports.end(), virtualServer[i].port) == ports.end()){
 					ports.push_back(virtualServer[i].port);

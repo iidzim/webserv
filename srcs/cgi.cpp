@@ -29,7 +29,7 @@ void cgi::setEnvironment()
         }
         std::map<std::string, std::string>::iterator it2 = _req.headers.find("content-length");
         if (it2 != _req.headers.end()){
-            std::cout << "content length == " << it2->second << std::endl;
+            // std::cout << "content length == " << it2->second << std::endl;
             setenv("CONTENT_LENGTH", (it2->second).c_str(), 1);
         }
     }

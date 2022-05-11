@@ -43,6 +43,7 @@ class Response{
         void setOkHeaders(std::string mType, std::string body);
         int get_cursor();
         std::string Connection(int flag);
+        void uploadResponse();
 
 };
 
