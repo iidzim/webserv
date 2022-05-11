@@ -323,10 +323,10 @@ std::pair<std::string, std::string> Response::get_response(){
         setResponse();
     }
     std::pair<std::string, std::string> p;
-    std::cout << "-----------------------------------------------" << std::endl;
-    std::cout << _headers << std::endl;
-    std::cout << _body << std::endl;
-    std::cout << "-----------------------------------------------" << std::endl;
+    // std::cout << "-----------------------------------------------" << std::endl;
+    // std::cout << _headers << std::endl;
+    // std::cout << _body << std::endl;
+    // std::cout << "-----------------------------------------------" << std::endl;
     p.first = _headers;
     p.second = _body;
     return (p);

@@ -67,7 +67,7 @@ request::request():  _begin(true),_headersComplete(false), _bodyComplete(false),
     _rqst.versionHTTP.clear();
     _rqst.query.clear();
     _rqst.statusCode = 200;
-    _rqst.fd = 0;
+    _rqst.fd = -1;
     _contentLength = 0;
     _originContentLength = 0;
     _contentType.clear();
@@ -565,7 +565,8 @@ bool request::isComplete()
 {
     if (_headersComplete && (_bodyComplete || !_isBodyExcpected))
     {
-        close(_rqst.fd);
+        if (_bodyComplete)
+            close(_rqst.fd);
        // my_file.close();
         tmpFile.close();
         std::remove("tmp.txt");

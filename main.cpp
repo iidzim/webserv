@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/09 21:37:57 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/11 12:31:49 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,8 +76,7 @@ int main(int argc, char** argv){
 
 
 //= siege failure
-	//- broken pipe
-	//- Failed to accept connection
+	//! Segmentation fault: 11
 
 //+ curl --resolve ok.ma:8081:127.0.0.1 http://ok.ma:8081
 //+ curl --resolve abdelkader:8081:127.0.0.1 http://abdelkader:8081

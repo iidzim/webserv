@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/11 10:00:07 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/11 12:29:53 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,13 +42,10 @@ void Server::accept_connection(int i){
 
 	std::cout << "Accepting connection" << std::endl;
 	int addrlen = sizeof(_address[i]);
-	// std::cout << "socketfd: " << _fds[i].fd << std::endl;
 	int accept_fd = accept(_fds[i].fd, (struct sockaddr *)&(_address[i]), (socklen_t*)&addrlen);
 	_msg = "Failed to accept connection";
-	// std::cout << "accpet_fd: " << accept_fd << std::endl;
 	if (accept_fd < 0 && errno != EWOULDBLOCK){
 		throw::Socket::SocketException(_msg);
-		// ---------- recode this cond - behaviour ?
 	}
 	// if (accept_fd == 0 && errno == ECONNRESET){
 	// 	std::cout << "Connection reset" << std::endl;
@@ -67,14 +64,14 @@ void Server::recv_request(int i, Clients *c){
 	int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 	if (r < 0){
 		// std::cout << " map size = "  << c->connections.size() << std::endl;
-		std::cout << "HERE\n";
-		c->remove_clients(_fds[i].fd);
+		std::cout << errno << "  HERE\n";
+		// c->remove_clients(_fds[i].fd);
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
 		return;
 	}
-	if (r == 0)
-		return ;
+	// if (r == 0)
+		// return ;
 	c->connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
 	try{
 		_buffer[r] = '\0';
@@ -88,6 +85,7 @@ void Server::recv_request(int i, Clients *c){
 	memset(_buffer, 0, sizeof(_buffer));
 	// when the request is complete switch the type of event to POLLOUT
 	if (c->connections[_fds[i].fd].first.isComplete()){
+
 		std::cout << _fds[i].fd << " - Request is complete " << std::endl;
 		_fds[i].events = POLLOUT;
 	}
@@ -161,10 +159,10 @@ void Server::send_response(int i, Clients *c){
 		close(o);
 	}
 	if (s < 0){
-		c->remove_clients(_fds[i].fd);
+		// c->remove_clients(_fds[i].fd);
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
-		std::cout << "send failure s <= 0\n";
+		std::cout << errno << "  send failure s < 0\n";
 		return;
 	}
 	if (s == 0)
@@ -175,7 +173,7 @@ void Server::send_response(int i, Clients *c){
 		if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
 			std::cout << "Closing socket - keepAlive = false" << std::endl;
 			close(_fds[i].fd);
-			// _fds.erase(_fds.begin() + i);
+			_fds.erase(_fds.begin() + i);
 		}
 		else
 			_fds[i].events = POLLIN;
@@ -207,13 +205,7 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 		// 	std::cout << _fds[i].fd << " - " << _fds[i].events << std::endl;
 		// }
 
-
 		for (size_t i = 0; i < _fds.size(); i++){
-
-			if (!_fds[i].revents){
-				// std::cout << "No r events - _fds[" << i << "] = " << _fds[i].fd << std::endl; //!!!
-				continue;
-			}
 
 			// std::cout << "fd[" << i << "] === " << _fds[i].fd << std::endl;
 			if (!_fds[i].revents){
@@ -256,6 +248,7 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 				// else if (_fds[i].revents & POLLNVAL) {
 				// 	std::cout << "POLLNVAL $$$$$$$$$" << std::endl;
 				// }
+				std::cout << "POLLHUP - POLLERR - POLLNVAL" << std::endl;
 
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
