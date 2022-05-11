@@ -73,6 +73,7 @@ class request
         
     public:
         request();
+        request(std::vector<serverInfo> &servers);
         size_t convertHexToDecimal(std::string value);
         void deleteOptionalWithespaces(std::string &fieldValue); 
         //request(serverInfo server);
