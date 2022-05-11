@@ -180,11 +180,13 @@ void   configurationReader::setCGI(std::vector<std::string> words, locationInfos
 
 void configurationReader::setUpload(std::vector<std::string> words, locationInfos &location)
 {
-    if (words.size() != 2 || _state != INLOCATION || words[1].empty() || !location.cgi.empty())
+    if (words.size() != 2 || _state != INLOCATION || words[1].empty() || words[1].size() == 1 || !location.cgi.empty())
         throw configurationReader::invalidSyntax();
     if (!location.upload.empty())
         throw configurationReader::invalidSyntax();
     location.upload=words[1];
+    if (location.upload[0] != '/' || location.upload[location.upload.length()-1] != '/')
+        throw configurationReader::invalidSyntax();
 }
 
 void clearLocation(locationInfos & location)
