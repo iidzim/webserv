@@ -81,7 +81,7 @@ std::string Response::Connection(int flag){
         ret += connect;
     }
     else
-        ret += "Keep-alive";
+        ret += "Keep-Alive";
     if (flag == 0)
         ret +="\r\n\r\n";
     return ret;
@@ -90,10 +90,8 @@ std::string Response::Connection(int flag){
 void Response::DeleteMethod(){
     int fd;
     std::ostringstream headers;
-    std::cout << "file to delete ==== " << _path << std::endl;
     fd = unlink(_path.c_str());
     if (fd < 0){
-        std::cout << "fd <<<<<<<<<<<<<<<<< 0" << std::endl;
         if (errno == EACCES)
             errorsResponse(403);
         return ;
@@ -102,7 +100,6 @@ void Response::DeleteMethod(){
         headers << "HTTP/1.1 204 No Content";
         headers << Connection(0);
         _body = "";
-        std::cout << "body is supposed to be empty == |" << _body << "|" <<std::endl; 
     }
     _headers = headers.str();
 }
@@ -125,9 +122,7 @@ void Response::setResponse(){
             isLoc = true;
             _index = _servInfo.location[i].index;
             cgiExt = _servInfo.location[i].cgi;
-            std::cout << _servInfo.location[i].redirect.first << "|||||||||||||||||" <<_servInfo.location[i].redirect.second << std::endl;
             redirect = _servInfo.location[i].redirect;
-            // 
             if (_servInfo.location[i].autoindex == true)
                 _autoIndex = true;
             if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods.end(), 
@@ -172,10 +167,6 @@ void Response::setResponse(){
             return ;
         }
     }
-    // if (_reqInfo.method == "DELETE"){
-    //     DeleteMethod();
-    //     return;
-    // }
     folder = opendir(_path.c_str());
     if (!folder){
         std::cout << "path  ==== " << _path << std::endl;
@@ -191,7 +182,8 @@ void Response::setResponse(){
             if (cgiExt.length()){
                 if (cgiExt == _path.substr(_path.length() - cgiExt.length())){
                     std::pair<std::string, std::string> cgiOut;
-                    cgi CGI(_reqInfo, _path, cgiExt);
+                    std::string conn = Connection(1);
+                    cgi CGI(_reqInfo, _path, cgiExt , conn);
                     CGI.executeFile();
                     cgiOut = CGI.parseCgiOutput();
                     _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
@@ -202,19 +194,6 @@ void Response::setResponse(){
                 return ;
             }
             else{ // cgiExt.length  == 0
-                // std::map<std::string, std::string> mimetype(_mime.getTypes());
-                // std::string mType;
-                // size_t pos = _reqInfo.URI.find(".");
-                // if (pos != std::string::npos){
-                //     std::map<std::string, std::string>::iterator it2 = mimetype.find(_reqInfo.URI.substr(pos));
-                //     if (it2 != mimetype.end())
-                //         mType = it2->second;
-                //     else // mime type not found
-                //         mType = "text/html";
-                // }
-                // else //  mime type not found
-                //     mType = "text/html";
-                
                 _body = _path;
                 _headers = "HTTP/1.1 200 OK\r\nContent-type: " + _mime.getType(_reqInfo.URI) + "\r\nContent-length: " + toString(fileSize(_body));
                 if (_autoIndex == true)
@@ -225,6 +204,10 @@ void Response::setResponse(){
         }
     }
     else { // folder opened 
+        if (_reqInfo.method == "DELETE"){
+            errorsResponse(403);
+            return ;
+        }
         if (cgiExt.length() == 0){
             if (_path[_path.length() - 1] != '/'){
                 _path += "/";
@@ -240,11 +223,6 @@ void Response::setResponse(){
                 fd = open((_path+ _index[i]).c_str(), O_RDONLY);
                 if (fd >= 0){
                     std::cout << "reqInfomethod ==== " << _reqInfo.method << std::endl;
-                    if (_reqInfo.method == "DELETE"){
-                        _path = _path + _index[i];
-                        DeleteMethod();
-                        return ;
-                    }
                     _body = _path + _index[i];
                     setOkHeaders("text/html", _body);
                     close(fd);
@@ -274,7 +252,8 @@ void Response::setResponse(){
             for (size_t i = 0; i < _index.size(); i++){
                 if (_index[i].substr(_index[i].length() - cgiExt.length()) == cgiExt){
                     std::pair<std::string, std::string> cgiOut;
-                    cgi CGI(_reqInfo, _path + "/" +_index[i], cgiExt);
+                    std::string conn = Connection(1);
+                    cgi CGI(_reqInfo, _path + "/" +_index[i], cgiExt , conn);
                     CGI.executeFile();
                     cgiOut = CGI.parseCgiOutput();
                     _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
@@ -316,17 +295,17 @@ void Response::setResponse(){
 
 std::pair<std::string, std::string> Response::get_response(){
 
-    std::cout << "-----------------" <<  _reqInfo.statusCode <<"--------------------" << std::endl;
+    // std::cout << "-----------------" <<  _reqInfo.statusCode <<"--------------------" << std::endl;
     if (_reqInfo.statusCode != 200)
         errorsResponse(_reqInfo.statusCode);
     else{
         setResponse();
     }
     std::pair<std::string, std::string> p;
-    // std::cout << "-----------------------------------------------" << std::endl;
-    // std::cout << _headers << std::endl;
-    // std::cout << _body << std::endl;
-    // std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << _headers << std::endl;
+    std::cout << _body << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
     p.first = _headers;
     p.second = _body;
     return (p);

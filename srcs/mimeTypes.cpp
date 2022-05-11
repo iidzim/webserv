@@ -68,6 +68,7 @@ void mimeTypes::setTypes(){
     _types[".opus"] = "audio/opus";
     _types[".otf"] = "font/otf";
     _types[".png"] = "image/png";
+    _types[".PNG"] = "image/png";
     _types[".pdf"] = "application/pdf";
     _types[".php"] = "application/x-httpd-php";
     _types[".ppt"] = "application/vnd.ms-powerpoint";

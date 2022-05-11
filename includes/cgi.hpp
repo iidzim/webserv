@@ -15,9 +15,10 @@ class cgi{
         std::fstream _myfile;
         std::fstream _outf;
         std::string  _out;
+        std::string _connection;
     public:
         cgi();
-        cgi(s_requestInfo req, std::string fileName, std::string cgiExt);
+        cgi(s_requestInfo req, std::string fileName, std::string cgiExt, std::string connection);
         ~cgi();
         void setEnvironment();
         void executeFile();
