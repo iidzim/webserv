@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/10 13:41:17 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/11 18:45:37 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,16 +28,16 @@ class Server{
 		std::vector<struct pollfd>		_fds;
 
 		Server(void);
-		void socketio(std::vector<serverInfo> server_conf);
+		void socketio(std::vector<serverInfo>& server_conf);
 		void accept_connection(int i);
-		void recv_request(int i, Clients *c);
+		void recv_request(int i, Clients *c, std::vector<serverInfo>& server_conf);
 		void send_response(int i, Clients *c);
 		void close_fd(void);
 		void brokenPipe(Clients *c, int i);
 
 	public:
 
-		Server(std::vector<Socket> s, std::vector<serverInfo> server_conf);
+		Server(std::vector<Socket> s, std::vector<serverInfo>& server_conf);
 		~Server(void);
 
 };

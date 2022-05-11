@@ -6,13 +6,13 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/11 18:40:52 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/11 18:44:34 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Server.hpp"
 
-Server::Server(std::vector<Socket> s, std::vector<serverInfo> server_conf){
+Server::Server(std::vector<Socket> s, std::vector<serverInfo>& server_conf){
 
 	//& initialize class attribute
 	size_t size = s.size();
@@ -57,7 +57,7 @@ void Server::accept_connection(int i){
 	_fds.push_back(new_fd);
 }
 
-void Server::recv_request(int i, Clients *c){
+void Server::recv_request(int i, Clients *c, std::vector<serverInfo>& server_conf){
 
 	char _buffer[1024];
 	std::cout << "Receiving request" << std::endl;
@@ -72,7 +72,7 @@ void Server::recv_request(int i, Clients *c){
 		_fds.erase(_fds.begin() + i);
 		return;
 	}
-	c->connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
+	c->connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(server_conf), Response())));
 	try{
 		std::cout << "Request received ---> parsing " << std::endl;
 		c->connections[_fds[i].fd].first.parse(_buffer, r);
@@ -194,7 +194,7 @@ void Server::send_response(int i, Clients *c){
 	}
 }
 
-void Server::socketio(std::vector<serverInfo> server_conf){
+void Server::socketio(std::vector<serverInfo>& server_conf){
 	Clients c;
 
     // while (1){
@@ -227,7 +227,7 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 					accept_connection(i);
 				else{
 					// c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
-					recv_request(i, &c);
+					recv_request(i, &c, server_conf);
 				}
 			}
 			else if (_fds[i].revents & POLLOUT){
