@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/10 14:01:19 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/11 10:00:07 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,12 +42,18 @@ void Server::accept_connection(int i){
 
 	std::cout << "Accepting connection" << std::endl;
 	int addrlen = sizeof(_address[i]);
+	// std::cout << "socketfd: " << _fds[i].fd << std::endl;
 	int accept_fd = accept(_fds[i].fd, (struct sockaddr *)&(_address[i]), (socklen_t*)&addrlen);
 	_msg = "Failed to accept connection";
+	// std::cout << "accpet_fd: " << accept_fd << std::endl;
 	if (accept_fd < 0 && errno != EWOULDBLOCK){
 		throw::Socket::SocketException(_msg);
 		// ---------- recode this cond - behaviour ?
 	}
+	// if (accept_fd == 0 && errno == ECONNRESET){
+	// 	std::cout << "Connection reset" << std::endl;
+	// 	throw::Socket::SocketException(_msg);
+	// }
 	struct pollfd new_fd;
 	new_fd.fd = accept_fd;
 	new_fd.events = POLLIN;
@@ -67,8 +73,11 @@ void Server::recv_request(int i, Clients *c){
 		_fds.erase(_fds.begin() + i);
 		return;
 	}
+	if (r == 0)
+		return ;
 	c->connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
 	try{
+		_buffer[r] = '\0';
 		c->connections[_fds[i].fd].first.parse(_buffer, r);
 	}
 	catch(request::RequestNotValid &e){
@@ -158,13 +167,15 @@ void Server::send_response(int i, Clients *c){
 		std::cout << "send failure s <= 0\n";
 		return;
 	}
+	if (s == 0)
+		std::cout << "send == 0\n";
 	if (c->connections[_fds[i].fd].second.is_complete(s, filename)){
 		std::cout << _fds[i].fd << " - response is complete\n";
 		int file_descriptor = _fds[i].fd;
 		if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
-			// std::cout << "Closing socket - keepAlive = false" << std::endl;
+			std::cout << "Closing socket - keepAlive = false" << std::endl;
 			close(_fds[i].fd);
-			_fds.erase(_fds.begin() + i);
+			// _fds.erase(_fds.begin() + i);
 		}
 		else
 			_fds[i].events = POLLIN;
@@ -175,12 +186,12 @@ void Server::send_response(int i, Clients *c){
 }
 
 void Server::socketio(std::vector<serverInfo> server_conf){
-
 	Clients c;
 
-    while (1){
+    // while (1){
+	for(;;){
 
-		std::cout << "Polling ... " << std::endl;// << c.connections.size() << std::endl;
+		std::cout << "Polling ........... " << std::endl;// << c.connections.size() << std::endl;
 		int p = poll(&_fds.front(), _fds.size(), -1);
 		if (p < 0){
 			throw::Socket::SocketException("Poll failed: Unexpected event occured");
@@ -192,11 +203,21 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 			std::cout << "Poll failed: No new connection" << std::endl;
 			continue;
 		}
+		// for (size_t i = 0; i < _fds.size(); i++){
+		// 	std::cout << _fds[i].fd << " - " << _fds[i].events << std::endl;
+		// }
+
+
 		for (size_t i = 0; i < _fds.size(); i++){
 
-			std::cout << "fd[" << i << "] = " << _fds[i].fd << std::endl;
 			if (!_fds[i].revents){
-				std::cout << " - no revents" << std::endl;
+				// std::cout << "No r events - _fds[" << i << "] = " << _fds[i].fd << std::endl; //!!!
+				continue;
+			}
+
+			// std::cout << "fd[" << i << "] === " << _fds[i].fd << std::endl;
+			if (!_fds[i].revents){
+				std::cout << _fds[i].fd << " -> no revents" << std::endl;
 				continue;
 			}
 			else if (_fds[i].revents & POLLIN){
@@ -228,9 +249,19 @@ void Server::socketio(std::vector<serverInfo> server_conf){
 				send_response(i, &c);
 			}
 			else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
+				// if (_fds[i].revents & POLLHUP)
+				// 	std::cout << "POLLHUP $$$$$$$$$" << std::endl;
+				// else if (_fds[i].revents & POLLERR)
+				// 	std::cout << "POLLERR $$$$$$$$$" << std::endl;
+				// else if (_fds[i].revents & POLLNVAL) {
+				// 	std::cout << "POLLNVAL $$$$$$$$$" << std::endl;
+				// }
+
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
-				break;
+				// c.remove_clients(_fds[i].fd);
+				// break;
+				continue;
 			}
 		}
 	}

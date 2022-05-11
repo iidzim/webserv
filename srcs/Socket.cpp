@@ -19,7 +19,6 @@ Socket::Socket(void){
     check((_socketfd = socket(AF_INET, SOCK_STREAM, 0)), -1);
     _msg = "Address already in use";
     check(setsockopt(_socketfd, SOL_SOCKET, SO_REUSEADDR, (char*)&x, sizeof(x)), _socketfd);
-    // check(setsockopt(_socketfd, SOL_SOCKET, SO_NOSIGPIPE, (char*)&x, sizeof(x)), _socketfd); //- never generates SIGPIPE on write()
     _msg = "Failed to set non-blocking mode";
     check(fcntl(_socketfd, F_SETFL, O_NONBLOCK), _socketfd);
     memset((char *)&_address, 0, sizeof(_address));
@@ -45,6 +44,7 @@ Socket::Socket(int port){
     check((_socketfd = socket(AF_INET, SOCK_STREAM, 0)), -1);
     _msg = "Address already in use";
     check(setsockopt(_socketfd, SOL_SOCKET, SO_REUSEADDR, (char*)&x, sizeof(x)), _socketfd);
+    // check(setsockopt(_socketfd, SOL_SOCKET, SO_NOSIGPIPE, (char*)&x, sizeof(x)), _socketfd); //- never generates SIGPIPE on write()
     _msg = "Failed to set non-blocking mode";
     check(fcntl(_socketfd, F_SETFL, O_NONBLOCK), _socketfd);
     memset((char *)&_address, 0, sizeof(_address));
