@@ -243,10 +243,10 @@ void Response::setResponse(){
             return ;
         }
         if (cgiExt.length() == 0){
-            std::cout << "===" << _path << "===" << std::endl; 
+            // std::cout << "===" << _path << "===" << std::endl;
             if (_reqInfo.URI != "/"){
                 if ( _path[_path.length() - 1] != '/'){
-                    std::cout << "im here " << std::endl;
+                    // std::cout << "im here " << std::endl;
                     _path += "/";
                     _body = _path + _index[0];
                     _headers = "HTTP/1.1 302 Found\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
@@ -404,7 +404,7 @@ int fileSize(std::string fileName){
 bool Response::is_complete(int len, std::string filename){
 
     _cursor += len;
-    std::cout << "sending .... " << _cursor << std::endl;
+    // std::cout << "sending .... " << _cursor << std::endl;
 	if ((size_t)_cursor >= fileSize(filename) + _headers.size())
         return true;
 	return false;

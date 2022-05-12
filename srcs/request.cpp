@@ -211,7 +211,7 @@ void    request::requestLine(std::istringstream &istr)
 	}
 	else
 		_rqst.URI = words[1];
-	std::cout<<"*****"<<_rqst.URI<<std::endl;
+	// std::cout<<"*****"<<_rqst.URI<<std::endl;
 
 	//* http version
 	//! erase \r at the end of the line
@@ -268,7 +268,7 @@ void    request::getHeaders(std::istringstream & istr)
 			if (isFieldNameValid(fieldName))
 			{
 				std::string fieldValue = line.substr(pos+1, line.size()-1);
-				   std::cout<<"["<<fieldName<<"-> "<< fieldValue<<"]"<<std::endl;
+				//    std::cout<<"["<<fieldName<<"-> "<< fieldValue<<"]"<<std::endl;
 				deleteOptionalWithespaces(fieldValue);
 				if (fieldName == "transfer-encoding" && fieldValue == "chunked")
 					_isChunked = true;
@@ -588,8 +588,8 @@ void request::isBodyValid()
 		  }
 	 }
    
-	std::cout<<"Total Byres " << totalBytes<<std::endl;
-	std::cout<<"Size " << _size<<std::endl;
+	// std::cout<<"Total Byres " << totalBytes<<std::endl;
+	// std::cout<<"Size " << _size<<std::endl;
 }
 
 void request::parse(char *buffer, size_t r)
