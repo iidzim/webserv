@@ -180,11 +180,13 @@ void   configurationReader::setCGI(std::vector<std::string> words, locationInfos
 
 void configurationReader::setUpload(std::vector<std::string> words, locationInfos &location)
 {
-    if (words.size() != 2 || _state != INLOCATION || words[1].empty() || !location.cgi.empty())
+    if (words.size() != 2 || _state != INLOCATION || words[1].empty() || words[1].size() == 1 || !location.cgi.empty())
         throw configurationReader::invalidSyntax();
     if (!location.upload.empty())
         throw configurationReader::invalidSyntax();
     location.upload=words[1];
+    if (location.upload[0] != '/' || location.upload[location.upload.length()-1] != '/')
+        throw configurationReader::invalidSyntax();
 }
 
 void clearLocation(locationInfos & location)
@@ -195,7 +197,6 @@ void clearLocation(locationInfos & location)
     location.uri.clear();
     location.autoindex = OFF;
     location.cgi.clear();
-    //location.cgi.second.clear();
     location.redirect.first.clear();
     location.redirect.second.clear();
     location.allow_methods.clear();
@@ -415,10 +416,11 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
             itb++;
         }
         o << std::endl;
-        o << "[Location]    "<<std::endl;
+        
          
         for (size_t k = 0; k < virtualServer[i].location.size(); k++)
         {
+            o << " -------  Location"<< k<<"-------"<<std::endl;
             o << "Upload "<<virtualServer[i].location[k].upload<<std::endl;
             o << "URI "<<virtualServer[i].location[k].uri <<std::endl;
             o <<"redirection    "<<virtualServer[i].location[k].redirect.first<<" "<<virtualServer[i].location[k].redirect.second<<std::endl;

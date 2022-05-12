@@ -15,8 +15,9 @@ void cgi::setEnvironment()
     if (_req.method == "GET"){
         int s = _req.query.length();
         std::string  size = toString(s);
-        if (_req.query.size() != 0)
+        if (_req.query.size() != 0){
             setenv("CONTENT_LENGTH",size.c_str(), 1);
+        }
         setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);
     }
     else if (_req.method == "POST"){
@@ -29,7 +30,7 @@ void cgi::setEnvironment()
         }
         std::map<std::string, std::string>::iterator it2 = _req.headers.find("content-length");
         if (it2 != _req.headers.end()){
-            std::cout << "content length == " << it2->second << std::endl;
+            // std::cout << "content length == " << it2->second << std::endl;
             setenv("CONTENT_LENGTH", (it2->second).c_str(), 1);
         }
     }
@@ -45,16 +46,20 @@ void cgi::setEnvironment()
 void cgi::executeFile()
 {
     setEnvironment();
-    pid_t id;
+    pid_t pid;
     char cwd[256];
     std::string currPath(getcwd(cwd, sizeof(cwd)));
     _body = currPath + "/var/www/html/example.html";
     int fd1 = open(_req.bodyFile.c_str(), O_RDONLY);
     int fd = open(_body.c_str(), O_CREAT| O_RDONLY | O_WRONLY , 0644);
-    // std::time_t start = std::time(NULL);
-    id = fork();
-    if (id == 0){
-        dup2(fd1, 0);
+    std::time_t t = std::time(NULL);
+    pid = fork();
+    int stat = 0;
+    if (pid == 0){
+        if (_req.method == "POST")
+            dup2(fd1, 0);
+        else
+            close(fd1);
         dup2(fd, 1);
         if (_cgiExtention == ".py")
         {
@@ -74,8 +79,8 @@ void cgi::executeFile()
             execve(args[0], args, environ);
         }
     }
-    // while (std::time(NULL) - start < 60)
-        wait(NULL);
+    while ( time(NULL) - t < 3) 
+        waitpid(pid, &stat, WNOHANG);
     close(fd1);
     close (fd);
 
@@ -110,11 +115,15 @@ std::pair<std::string, std::string> cgi::parseCgiOutput()
     _outf.close();
     std::string r;
     size_t pos = result.find("\r\n");
-    r = result.substr(0,pos);
-    r+= "\r\nContent-length: " ;
-    r+= toString(fileSize(_out));
-    r+= _connection;
-    r+= result.substr(pos);
+    if (pos != std::string::npos){
+        r = result.substr(0,pos);
+        r+= "\r\nContent-length: " ;
+        r+= toString(fileSize(_out));
+        r+= _connection;
+        r+= result.substr(pos);
+    }
+    else 
+        r = result;
     std::remove(_body.c_str());
     return std::make_pair(r, _out);
 

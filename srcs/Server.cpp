@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/11 20:21:04 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/12 14:51:26 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ void Server::accept_connection(int i){
 
 void Server::recv_request(int i, Clients *c, std::vector<serverInfo>& server_conf){
 
-	char _buffer[1024];
+	char _buffer[2048*1000];
 	std::cout << "Receiving request" << std::endl;
 	int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 	_buffer[r] = '\0';
@@ -68,6 +68,7 @@ void Server::recv_request(int i, Clients *c, std::vector<serverInfo>& server_con
 	}
 	c->connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(server_conf), Response())));
 	try{
+		std::cout << _buffer << std::endl;
 		c->connections[_fds[i].fd].first.parse(_buffer, r);
 	}
 	catch(request::RequestNotValid &e){
@@ -105,7 +106,7 @@ void Server::send_response(int i, Clients *c){
 	std::string filename = rep.second;
 	int headers_size = headers.size();
 
-	// std::cout << "*****************\n" << headers << filename << "\n*****************\n" << std::endl;
+	std::cout << "*****************\n" << filename << "\n*****************\n" << std::endl;
 
 	char buff[2048*1000];
 	int total_size, o, x, s = 0;
@@ -213,15 +214,38 @@ void Server::socketio(std::vector<serverInfo>& server_conf){
 					serverInfo s;
 					std::string serv_name = c.connections[_fds[i].fd].first.getHost();
 					int port = c.connections[_fds[i].fd].first.getPort();
-					for (size_t i = 0; i < server_conf.size(); i++){
-						if (serv_name == server_conf[i].serverName && port == server_conf[i].port){
-							s = server_conf[i];
-							break;
+
+					// std::cout << "\nCONFIG FILE SERVERS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+					// for (size_t i = 0; i < server_conf.size(); i++){
+					// 	std::cout << server_conf[i].serverName  << " - " << server_conf[i].port << std::endl;
+					// }
+					// std::cout << "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n";
+
+
+
+					// if (port == -1)
+						// c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first); //! bad request 400
+					// else{
+						for (size_t i = 0; i < server_conf.size(); i++){
+							std::cout << ".......... port request = " << port << " - config port = " << server_conf[i].port << std::endl;
+							if (serv_name == server_conf[i].serverName && port == server_conf[i].port){
+								s = server_conf[i];
+								break;
+							}
+							if (port == server_conf[i].port)
+								s = server_conf[i];
 						}
-						if (port == server_conf[i].port)
-							s = server_conf[i];
-					}
-					c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, s);
+						c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, s);
+					// }
+
+
+					// std::cout << "server name[" << i << "] = " << s.serverName << std::endl;
+					// std::cout << "REQUEST >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+					// std::map<std::string, std::string> req = c.connections[_fds[i].fd].first.getRequest().headers;
+					// std::map<std::string, std::string>::iterator it = req.begin();
+					// for (; it != req.end(); it++)
+					// 	std::cout << it->first << ": " << it->second << std::endl;
+					// std::cout << "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
 				}
 				send_response(i, &c);
 			}

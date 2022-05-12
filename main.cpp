@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/11 12:31:49 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/12 11:21:10 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ int main(int argc, char** argv){
 			cfg_reader.parser();
 			// std::cout<<cfg_reader<<std::endl;
     		std::vector<serverInfo> virtualServer = cfg_reader.getVirtualServer();
-			std::cout<<cfg_reader<<std::endl;
+			// std::cout<<cfg_reader<<std::endl;
     		for (size_t i = 0; i < virtualServer.size(); i++){
 				if (std::find(ports.begin(), ports.end(), virtualServer[i].port) == ports.end()){
 					ports.push_back(virtualServer[i].port);
@@ -56,11 +56,11 @@ int main(int argc, char** argv){
 	catch (std::exception &e){
 		std::cerr << e.what() << std::endl;
 	}
-
 	return (0);
 }
 
 //td:
+	// 
 	//? parse config file
 	//? create sockets based on server configuration
 	//? sockets listening
@@ -74,9 +74,8 @@ int main(int argc, char** argv){
 
 
 
-
-//= siege failure
-	//! Segmentation fault: 11
-
 //+ curl --resolve ok.ma:8081:127.0.0.1 http://ok.ma:8081
-//+ curl --resolve abdelkader:8081:127.0.0.1 http://abdelkader:8081
+
+//= add a default config file
+//= leaks
+//= 

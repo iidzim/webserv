@@ -134,10 +134,10 @@ void Response::setResponse(){
             break ;
         }
     }
-    if (cgiExt.length() > 0 && cgiExt != ".py" && cgiExt != ".php"){
-        errorsResponse(502);
-        return ;
-    }
+    // if (cgiExt.length() > 0 && cgiExt != ".py" && cgiExt != ".php"){
+    //     errorsResponse(502);
+    //     return ;
+    // }
     if (isLoc == false || _root == "" || _index.size() == 0){
         if (_index.size() == 0)
             _index = _servInfo.index;
@@ -169,7 +169,6 @@ void Response::setResponse(){
     }
     folder = opendir(_path.c_str());
     if (!folder){
-        std::cout << "path  ==== " << _path << std::endl;
         if (errno == EACCES)
             errorsResponse(403);
         else if (errno == ENOENT)
@@ -180,17 +179,21 @@ void Response::setResponse(){
                 return ;
             }
             if (cgiExt.length()){
-                if (cgiExt == _path.substr(_path.length() - cgiExt.length())){
+                // if (cgiExt == _path.substr(_path.length() - cgiExt.length())){
                     std::pair<std::string, std::string> cgiOut;
                     std::string conn = Connection(1);
                     cgi CGI(_reqInfo, _path, cgiExt , conn);
                     CGI.executeFile();
                     cgiOut = CGI.parseCgiOutput();
-                    _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
+                    if (cgiOut.first.find("Status: 301 Moved Permanently") == 0)
+                        _headers = "HTTP/1.1 301 301 Moved Permanently";
+                    else
+                        _headers = "HTTP/1.1 200 OK";
+                    _headers += Connection(1) + "\r\n" + cgiOut.first;
                     _body = cgiOut.second;
-                }
-                else // cgiExt != _path.substr(_path.length() - cgiExt.length())
-                    errorsResponse(502);
+                // }
+                // else // cgiExt != _path.substr(_path.length() - cgiExt.length())
+                //     errorsResponse(502);
                 return ;
             }
             else{ // cgiExt.length  == 0
@@ -209,21 +212,27 @@ void Response::setResponse(){
             return ;
         }
         if (cgiExt.length() == 0){
-            if (_path[_path.length() - 1] != '/'){
-                _path += "/";
-                _body = _path + _index[0];
-                _headers = "HTTP/1.1 302 Found\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
-                _headers += "\r\nLocation: " + _reqInfo.URI + "/";
-                _headers += Connection(0);
-                return ;
+            std::cout << "===" << _path << "===" << std::endl; 
+            if (_reqInfo.URI != "/"){
+                if ( _path[_path.length() - 1] != '/'){
+                    std::cout << "im here " << std::endl;
+                    _path += "/";
+                    _body = _path + _index[0];
+                    _headers = "HTTP/1.1 302 Found\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+                    if (_reqInfo.URI == "/")
+                        _headers += "\r\nLocation: " + _reqInfo.URI;
+                    else
+                        _headers += "\r\nLocation: " + _reqInfo.URI + "/";
+                    _headers += Connection(0);
+                    return ;
+                }
             }
             int fd =-1;
             size_t i = 0;
             for (; i < _index.size(); i++){
-                fd = open((_path+ _index[i]).c_str(), O_RDONLY);
+                fd = open((_path+"/" +_index[i]).c_str(), O_RDONLY);
                 if (fd >= 0){
-                    std::cout << "reqInfomethod ==== " << _reqInfo.method << std::endl;
-                    _body = _path + _index[i];
+                    _body = _path + "/" + _index[i];
                     setOkHeaders("text/html", _body);
                     close(fd);
                     return ;
@@ -255,6 +264,7 @@ void Response::setResponse(){
                     std::string conn = Connection(1);
                     cgi CGI(_reqInfo, _path + "/" +_index[i], cgiExt , conn);
                     CGI.executeFile();
+            
                     cgiOut = CGI.parseCgiOutput();
                     _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
                     _body = cgiOut.second;
@@ -293,19 +303,28 @@ void Response::setResponse(){
 
 }
 
+void Response::uploadResponse(){
+    char cwd[256];
+    std::string currPath(getcwd(cwd, sizeof(cwd)));
+
+    _body = currPath + "/var/www/html/upload/upload.html";
+    _headers = "HTTP/1.1 201 created\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+    _headers += Connection(0);
+}
 std::pair<std::string, std::string> Response::get_response(){
 
-    // std::cout << "-----------------" <<  _reqInfo.statusCode <<"--------------------" << std::endl;
-    if (_reqInfo.statusCode != 200)
-        errorsResponse(_reqInfo.statusCode);
-    else{
+    std::cout << "-----------------" <<  _reqInfo.URI << _reqInfo.statusCode <<"--------------------" << std::endl;
+    if (_reqInfo.statusCode == 200)
         setResponse();
-    }
+    else if (_reqInfo.statusCode == 201)
+        uploadResponse();
+    else
+        errorsResponse(_reqInfo.statusCode);
     std::pair<std::string, std::string> p;
-    std::cout << "-----------------------------------------------" << std::endl;
-    std::cout << _headers << std::endl;
-    std::cout << _body << std::endl;
-    std::cout << "-----------------------------------------------" << std::endl;
+    // std::cout << "-----------------------------------------------" << std::endl;
+    // std::cout << _headers << std::endl;
+    // std::cout << _body << std::endl;
+    // std::cout << "-----------------------------------------------" << std::endl;
     p.first = _headers;
     p.second = _body;
     return (p);

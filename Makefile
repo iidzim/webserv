@@ -6,7 +6,7 @@
 #    By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/03/28 14:17:05 by iidzim            #+#    #+#              #
-#    Updated: 2022/05/12 09:37:59 by iidzim           ###   ########.fr        #
+#    Updated: 2022/05/12 11:23:18 by iidzim           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,5 +26,6 @@ fclean: clean
 	@ cd var/www/html/bodies && rm -f body*
 re: fclean all
 	@ ./web_server ./configFile/valid_confg/default.conf
+
 
 .PHONY: all clean fclean re
