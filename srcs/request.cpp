@@ -1,4 +1,5 @@
 #include "../includes/Request.hpp"
+#include "../includes/webserv.hpp"
 //! Method is case-sensitive
 
 // ! recipients SHOULD ignore unrecognized header fields.
@@ -340,9 +341,9 @@ void    request::getHeaders(std::istringstream & istr)
 		//create it inside var/www/html
 		if (_uploadpath.empty())
 		{
-			char cwd[256];
-			std::string path(getcwd(cwd, sizeof(cwd)));
-			_rqst.bodyFile = path + "/var/www/html/bodies/"+_rqst.bodyFile+getMimeType();// ! remove srcs
+			// char cwd[256];
+			// std::string path(getcwd(cwd, sizeof(cwd)));
+			_rqst.bodyFile = pwd + "/var/www/bodies/"+_rqst.bodyFile+getMimeType();// ! remove srcs
 		}
 		else
 		{

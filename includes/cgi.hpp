@@ -21,8 +21,8 @@ class cgi{
         cgi(s_requestInfo req, std::string fileName, std::string cgiExt, std::string connection);
         ~cgi();
         void setEnvironment();
-        void executeFile();
-        std::pair<std::string, std::string> parseCgiOutput();
+        void executeFile(std::string currPath);
+        std::pair<std::string, std::string> parseCgiOutput(std::string currPath);
 };  
 
 #endif

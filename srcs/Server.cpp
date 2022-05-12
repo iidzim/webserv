@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/12 23:22:37 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/12 23:48:15 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -143,6 +143,7 @@ void Server::send_response(int i, Clients *c){
 		int poll_file = poll(file, 1, -1);
 		if (poll_file > 0 && (file[0].revents & POLLIN)){
 			int r = read(o, buff, x);
+			// std::cout<<"["<<buff<<"]"<<std::endl;
 			buff[r] = '\0';
 			if (r > 0){
 				s = send(_fds[i].fd, buff, x, 0);

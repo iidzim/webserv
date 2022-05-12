@@ -27,6 +27,6 @@ extern char **environ;
 // #include "Client.hpp"
 // #include "Server.hpp"
 
-
+static std::string pwd;
 
 #endif

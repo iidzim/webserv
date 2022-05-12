@@ -20,6 +20,7 @@ class Response{
         serverInfo                          _servInfo;
         int                                 _cursor;
         bool                                _autoIndex;
+        std::string                         _CurrDirecory;
 
 
     public:
@@ -31,6 +32,7 @@ class Response{
         ~Response();
         std::pair<std::string, std::string> get_response();
         std::string setErrorsHeaders(std::string , std::string);
+       
         void setResponse();
         void errorsResponse(int);
         int getContentlength();

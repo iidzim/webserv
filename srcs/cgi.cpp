@@ -43,13 +43,11 @@ void cgi::setEnvironment()
     setenv("REDIRECT_STATUS", "true", 1);
 }
 
-void cgi::executeFile()
+void cgi::executeFile(std::string CurrPath)
 {
     setEnvironment();
     pid_t pid;
-    char cwd[256];
-    std::string currPath(getcwd(cwd, sizeof(cwd)));
-    _body = currPath + "/var/www/html/example.html";
+    _body = CurrPath + "/var/www/html/example.html";
     int fd1 = open(_req.bodyFile.c_str(), O_RDONLY);
     int fd = open(_body.c_str(), O_CREAT| O_RDONLY | O_WRONLY , 0644);
     std::time_t t = std::time(NULL);
@@ -86,10 +84,8 @@ void cgi::executeFile()
 
 }
 
-std::pair<std::string, std::string> cgi::parseCgiOutput()
+std::pair<std::string, std::string> cgi::parseCgiOutput(std::string currPath)
 {
-    char cwd[256];
-    std::string currPath(getcwd(cwd, sizeof(cwd)));
     _out = currPath+"/var/www/html/form.html";
     _myfile.open(_body, std::ios::in);
     _outf.open(_out, std::ios::out);

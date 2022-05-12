@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/12 18:45:37 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/12 23:45:07 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,11 @@ void signalhandler(int signum){
 	broken_pipe = true;
 	std::cout << "Interrupt signal (" << signum << ") received.\n";
 }
+ std::string getCurrentDirectory(){
+    char cwd[256];
+    std::string currPath(getcwd(cwd, sizeof(cwd)));
+    return currPath;
+}
 
 int main(int argc, char** argv){
 
@@ -28,6 +33,7 @@ int main(int argc, char** argv){
 		std::cerr << "usage:\t./webserv [configuration file]" << std::endl;
 		return (-1);
 	}
+	pwd = getCurrentDirectory();
 	try{
 		// signal(SIGPIPE, signalhandler);
 		if (argc == 1)
