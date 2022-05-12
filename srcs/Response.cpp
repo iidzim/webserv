@@ -134,10 +134,10 @@ void Response::setResponse(){
             break ;
         }
     }
-    if (cgiExt.length() > 0 && cgiExt != ".py" && cgiExt != ".php"){
-        errorsResponse(502);
-        return ;
-    }
+    // if (cgiExt.length() > 0 && cgiExt != ".py" && cgiExt != ".php"){
+    //     errorsResponse(502);
+    //     return ;
+    // }
     if (isLoc == false || _root == "" || _index.size() == 0){
         if (_index.size() == 0)
             _index = _servInfo.index;
@@ -179,17 +179,21 @@ void Response::setResponse(){
                 return ;
             }
             if (cgiExt.length()){
-                if (cgiExt == _path.substr(_path.length() - cgiExt.length())){
+                // if (cgiExt == _path.substr(_path.length() - cgiExt.length())){
                     std::pair<std::string, std::string> cgiOut;
                     std::string conn = Connection(1);
                     cgi CGI(_reqInfo, _path, cgiExt , conn);
                     CGI.executeFile();
                     cgiOut = CGI.parseCgiOutput();
-                    _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
+                    if (cgiOut.first.find("Status: 301 Moved Permanently") == 0)
+                        _headers = "HTTP/1.1 301 301 Moved Permanently";
+                    else
+                        _headers = "HTTP/1.1 200 OK";
+                    _headers += Connection(1) + "\r\n" + cgiOut.first;
                     _body = cgiOut.second;
-                }
-                else // cgiExt != _path.substr(_path.length() - cgiExt.length())
-                    errorsResponse(502);
+                // }
+                // else // cgiExt != _path.substr(_path.length() - cgiExt.length())
+                //     errorsResponse(502);
                 return ;
             }
             else{ // cgiExt.length  == 0
@@ -309,7 +313,7 @@ void Response::uploadResponse(){
 }
 std::pair<std::string, std::string> Response::get_response(){
 
-    std::cout << "-----------------" <<  _reqInfo.URI <<"--------------------" << std::endl;
+    // std::cout << "-----------------" <<  _reqInfo.URI << _reqInfo.statusCode <<"--------------------" << std::endl;
     if (_reqInfo.statusCode == 200)
         setResponse();
     else if (_reqInfo.statusCode == 201)
@@ -317,10 +321,10 @@ std::pair<std::string, std::string> Response::get_response(){
     else
         errorsResponse(_reqInfo.statusCode);
     std::pair<std::string, std::string> p;
-    std::cout << "-----------------------------------------------" << std::endl;
-    std::cout << _headers << std::endl;
-    std::cout << _body << std::endl;
-    std::cout << "-----------------------------------------------" << std::endl;
+    // std::cout << "-----------------------------------------------" << std::endl;
+    // std::cout << _headers << std::endl;
+    // std::cout << _body << std::endl;
+    // std::cout << "-----------------------------------------------" << std::endl;
     p.first = _headers;
     p.second = _body;
     return (p);

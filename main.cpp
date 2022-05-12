@@ -6,7 +6,7 @@
 /*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/11 22:20:52 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/05/12 00:26:42 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,7 @@ int main(int argc, char** argv){
 }
 
 //td:
+	// 
 	//? parse config file
 	//? create sockets based on server configuration
 	//? sockets listening
@@ -77,6 +78,5 @@ int main(int argc, char** argv){
 
 //= siege failure
 	//! Segmentation fault: 11
-
 //+ curl --resolve ok.ma:8081:127.0.0.1 http://ok.ma:8081
 //+ curl --resolve abdelkader:8081:127.0.0.1 http://abdelkader:8081
