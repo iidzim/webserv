@@ -267,7 +267,7 @@ void    request::getHeaders(std::istringstream & istr)
             if (isFieldNameValid(fieldName))
             {
                 std::string fieldValue = line.substr(pos+1, line.size()-1);
-                  std::cout<<"["<<fieldName<<"-> "<< fieldValue<<"]"<<std::endl;
+                   std::cout<<"["<<fieldName<<"-> "<< fieldValue<<"]"<<std::endl;
                 deleteOptionalWithespaces(fieldValue);
                 if (fieldName == "transfer-encoding" && fieldValue == "chunked")
                     _isChunked = true;
@@ -324,6 +324,12 @@ void    request::getHeaders(std::istringstream & istr)
     if (_isBodyExcpected)
     {
             BlockMatching(servers);
+            if (!_isChunked && _size !=0 && _originContentLength > _size)
+            {
+         //   std::cout<<"REQUEST NOT VALID !"<<std::endl;
+                _rqst.statusCode = 413; //request entity too large
+                throw request::RequestNotValid();
+            }
         
             srand(time(0));
             std::stringstream str;
@@ -339,7 +345,7 @@ void    request::getHeaders(std::istringstream & istr)
         }
         else
         {
-            std::cout<<"----------" <<_uploadpath<<std::endl;
+         //   std::cout<<"----------" <<_uploadpath<<std::endl;
             _rqst.statusCode = 201;
             _rqst.bodyFile = _uploadpath+_rqst.bodyFile+getMimeType();
            // std::cout<<"ROOT + UPLOAD "<<_uploadpath<<std::endl;
@@ -413,12 +419,6 @@ void request::BlockMatching(std::vector<serverInfo> server_conf)
 
         }
     }
-    if (_size !=0 && _originContentLength > _size)
-        {
-         //   std::cout<<"REQUEST NOT VALID !"<<std::endl;
-            _rqst.statusCode = 413; //request entity too large
-            throw request::RequestNotValid();
-        }
 }
 
 int     request::getPort()
@@ -509,6 +509,11 @@ void request::isBodyValid()
             //test totalBytes with the size of the file
             _bodyComplete = true;
             tmpFile.close();
+            if (_size != 0 && totalBytes > _size)
+            {
+                _rqst.statusCode = 413; //request entity too large
+                throw request::RequestNotValid();
+            }
             return;
         }
         totalBytes+=size; //! To compare at the end with the size of the file
@@ -556,11 +561,9 @@ void request::isBodyValid()
                 write(_rqst.fd, line.c_str(), line.length());
           }
      }
-    if (_size != 0 && totalBytes > _size)
-    {
-            _rqst.statusCode = 413; //request entity too large
-            throw request::RequestNotValid();
-    }
+   
+    std::cout<<"Total Byres " << totalBytes<<std::endl;
+    std::cout<<"Size " << _size<<std::endl;
 }
 
 void request::parse(char *buffer, size_t r)

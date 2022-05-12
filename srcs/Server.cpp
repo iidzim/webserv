@@ -6,7 +6,7 @@
 /*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/12 15:48:44 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/05/12 16:02:49 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,7 @@ void Server::recv_request(int i, Clients *c, std::vector<serverInfo>& server_con
 	}
 	c->connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(server_conf), Response())));
 	try{
-		std::cout << _buffer << std::endl;
+		// std::cout << _buffer << std::endl;
 		c->connections[_fds[i].fd].first.parse(_buffer, r);
 	}
 	catch(request::RequestNotValid &e){
@@ -227,14 +227,17 @@ void Server::socketio(std::vector<serverInfo>& server_conf){
 						c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first); //! bad request 400
 					else{
 						for (size_t i = 0; i < server_conf.size(); i++){
-							std::cout << ".......... port request = " << port << " - config port = " << server_conf[i].port << std::endl;
 							if (serv_name == server_conf[i].serverName && port == server_conf[i].port){
+								std::cout << "ppppppp\n";
 								s = server_conf[i];
 								break;
 							}
-							if (port == server_conf[i].port)
+							if (port == server_conf[i].port){
+								std::cout << "prrrrrrr\n";
 								s = server_conf[i];
+							}
 						}
+						std::cout << ".......... port request = " << s.port << " - config port = " << s.serverName << std::endl;
 						c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, s);
 					}
 

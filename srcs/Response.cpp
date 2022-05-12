@@ -344,7 +344,7 @@ void Response::uploadResponse(){
 }
 std::pair<std::string, std::string> Response::get_response(){
 
-    std::cout << "-----------------" <<  _reqInfo.URI << _reqInfo.statusCode <<"--------------------" << std::endl;
+    // std::cout << "-----------------" <<  _reqInfo.URI << _reqInfo.statusCode <<"--------------------" << std::endl;
     if (_reqInfo.statusCode == 200)
         setResponse();
     else if (_reqInfo.statusCode == 201)
