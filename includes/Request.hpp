@@ -16,6 +16,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <ctime>
 #include "mimeTypes.hpp"
       // std::cout, std::endl
@@ -59,6 +60,7 @@ class request
         size_t          _originContentLength;
         std::vector<serverInfo> servers;
         size_t          _size;
+        struct pollfd   _fds[1];
 
         void requestLine(std::istringstream & istr); // Method URI VERSION
         void getHeaders(std::istringstream & str); //all the available headers in MJS
