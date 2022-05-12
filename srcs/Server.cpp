@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/11 18:44:34 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/11 20:21:04 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,10 +47,6 @@ void Server::accept_connection(int i){
 	if (accept_fd < 0 && errno != EWOULDBLOCK){
 		throw::Socket::SocketException(_msg);
 	}
-	// if (accept_fd == 0 && errno == ECONNRESET){
-	// 	std::cout << "Connection reset" << std::endl;
-	// 	throw::Socket::SocketException(_msg);
-	// }
 	struct pollfd new_fd;
 	new_fd.fd = accept_fd;
 	new_fd.events = POLLIN;
@@ -63,9 +59,7 @@ void Server::recv_request(int i, Clients *c, std::vector<serverInfo>& server_con
 	std::cout << "Receiving request" << std::endl;
 	int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 	_buffer[r] = '\0';
-	
 	if (r <= 0){
-		// std::cout << " map size = "  << c->connections.size() << std::endl;
 		std::cout << errno << "  HERE\n";
 		c->remove_clients(_fds[i].fd);
 		close(_fds[i].fd);
@@ -74,14 +68,11 @@ void Server::recv_request(int i, Clients *c, std::vector<serverInfo>& server_con
 	}
 	c->connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(server_conf), Response())));
 	try{
-		std::cout << "Request received ---> parsing " << std::endl;
 		c->connections[_fds[i].fd].first.parse(_buffer, r);
 	}
 	catch(request::RequestNotValid &e){
 		c->connections[_fds[i].fd].first.forceStopParsing();
-		// send error response - bad request 400 -
 	}
-	// catch => forceStopParsing => isComplete
 	memset(_buffer, 0, sizeof(_buffer));
 	// when the request is complete switch the type of event to POLLOUT
 	if (c->connections[_fds[i].fd].first.isComplete()){
@@ -106,7 +97,6 @@ void Server::brokenPipe(Clients *c, int i){
 	_fds.erase(_fds.begin() + i);
 }
 
-
 void Server::send_response(int i, Clients *c){
 
 	std::cout << "Sending response" << std::endl;
@@ -126,9 +116,7 @@ void Server::send_response(int i, Clients *c){
 		std::cout << "sending headers" << std::endl;
 		std::string str = headers.substr(len);
 		s = send(_fds[i].fd, str.c_str(), str.length(), 0);
-		str.resize(s);
-		// std::cout << "+++++|" << str << "|" << std::endl;
-		//? check for sigpipe - if global bool = true -> close accept_fd and remove client from map
+		//? check for sigpipe - if global bool = true -> close accept_fd and remove accept_fd from _fds struct , remove client from map
 		if (broken_pipe == true){
 			std::cout << " broken pipe -headers-\n";
 			brokenPipe(c, i);
@@ -162,12 +150,6 @@ void Server::send_response(int i, Clients *c){
 		}
 		close(o);
 	}
-	// {
-	// 	// std::string rep = "<html><body><h2>ok</h2></body></html>";
-	// 	std::string rep = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body><h2>ok</h2></body></html>";
-	// 	s = send(_fds[i].fd, rep.c_str(), rep.length(), 0);
-		
-	// }
 	if (s < 0){
 		c->remove_clients(_fds[i].fd);
 		close(_fds[i].fd);
@@ -177,7 +159,6 @@ void Server::send_response(int i, Clients *c){
 	}
 	if (s == 0)
 		std::cout << "send == 0\n";
-	// s = total_size;//!! static response
 	if (c->connections[_fds[i].fd].second.is_complete(s, filename)){
 		std::cout << _fds[i].fd << " - response is complete\n";
 		int file_descriptor = _fds[i].fd;
@@ -197,10 +178,9 @@ void Server::send_response(int i, Clients *c){
 void Server::socketio(std::vector<serverInfo>& server_conf){
 	Clients c;
 
-    // while (1){
 	for(;;){
 
-		std::cout << "Polling ........... " << std::endl;// << c.connections.size() << std::endl;
+		std::cout << "Polling ........... " << std::endl;
 		int p = poll(&_fds.front(), _fds.size(), -1);
 		if (p < 0)
 			throw::Socket::SocketException("Poll failed: Unexpected event occured");
@@ -208,15 +188,13 @@ void Server::socketio(std::vector<serverInfo>& server_conf){
 			std::cout << "Poll failed: No new connection" << std::endl;
 			continue;
 		}
-		for (size_t i = 0; i < _fds.size(); i++){
-			std::cout << _fds[i].fd << " - " << _fds[i].events << std::endl;
-			// if (!_fds[i].revents)
-			// 	std::cout << "No event" << std::endl;
-		}
+		// for (size_t i = 0; i < _fds.size(); i++){
+		// 	std::cout << _fds[i].fd << " - " << _fds[i].events << std::endl;
+		// }
 
 		for (size_t i = 0; i < _fds.size(); i++){
 
-			std::cout << "fd[" << i << "] === " << _fds[i].fd << std::endl;
+			// std::cout << "fd[" << i << "] === " << _fds[i].fd << std::endl;
 			if (!_fds[i].revents){
 				std::cout << _fds[i].fd << " -> no revents" << std::endl;
 				continue;
@@ -225,10 +203,8 @@ void Server::socketio(std::vector<serverInfo>& server_conf){
 
 				if (find(_socket_fd.begin() ,_socket_fd.end(), _fds[i].fd) != _socket_fd.end())
 					accept_connection(i);
-				else{
-					// c.connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(), Response())));
+				else
 					recv_request(i, &c, server_conf);
-				}
 			}
 			else if (_fds[i].revents & POLLOUT){
 
@@ -250,19 +226,11 @@ void Server::socketio(std::vector<serverInfo>& server_conf){
 				send_response(i, &c);
 			}
 			else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
-				// if (_fds[i].revents & POLLHUP)
-				// 	std::cout << "POLLHUP $$$$$$$$$" << std::endl;
-				// else if (_fds[i].revents & POLLERR)
-				// 	std::cout << "POLLERR $$$$$$$$$" << std::endl;
-				// else if (_fds[i].revents & POLLNVAL) {
-				// 	std::cout << "POLLNVAL $$$$$$$$$" << std::endl;
-				// }
-				std::cout << "POLLHUP - POLLERR - POLLNVAL" << std::endl;
 
+				std::cout << "POLLHUP - POLLERR - POLLNVAL" << std::endl;
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
 				c.remove_clients(_fds[i].fd);
-				// break;
 				continue;
 			}
 		}
