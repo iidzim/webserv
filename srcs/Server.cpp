@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
+/*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/11 23:38:47 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/05/11 23:52:44 by viet             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ void Server::accept_connection(int i){
 
 void Server::recv_request(int i, Clients *c, std::vector<serverInfo>& server_conf){
 
-	char _buffer[1024];
+	char _buffer[2048*1000];
 	std::cout << "Receiving request" << std::endl;
 	int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 	_buffer[r] = '\0';
@@ -208,15 +208,15 @@ void Server::socketio(std::vector<serverInfo>& server_conf){
 			std::cout << "Poll failed: No new connection" << std::endl;
 			continue;
 		}
-		for (size_t i = 0; i < _fds.size(); i++){
-			std::cout << _fds[i].fd << " - " << _fds[i].events << std::endl;
+		// for (size_t i = 0; i < _fds.size(); i++){
+			// std::cout << _fds[i].fd << " - " << _fds[i].events << std::endl;
 			// if (!_fds[i].revents)
 			// 	std::cout << "No event" << std::endl;
-		}
+		// }
 
 		for (size_t i = 0; i < _fds.size(); i++){
 
-			std::cout << "fd[" << i << "] === " << _fds[i].fd << std::endl;
+			// std::cout << "fd[" << i << "] === " << _fds[i].fd << std::endl;
 			if (!_fds[i].revents){
 				std::cout << _fds[i].fd << " -> no revents" << std::endl;
 				continue;

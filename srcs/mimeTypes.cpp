@@ -57,6 +57,7 @@ void mimeTypes::setTypes(){
     _types[".midi"] = "audio/midi audio/x-midi";
     _types[".mjs"] = "text/javascript";
     _types[".mp3"] = "audio/mpeg";
+    _types[".mp4"] = "video/mp4";
     _types[".mpeg"] = "video/mpeg";
     _types[".mpkg"] = "application/vnd.apple.installer+xml";
     _types[".odp"] = "application/vnd.oasis.opendocument.presentation";

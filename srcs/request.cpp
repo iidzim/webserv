@@ -124,7 +124,7 @@ request& request::operator=(const request& obj)
     _contentType = obj._contentType;
     this->servers = obj.servers;
     _size = obj._size;
-
+    
     return *this;
 }
 
