@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/12 15:46:54 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/12 16:02:49 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -223,9 +223,9 @@ void Server::socketio(std::vector<serverInfo>& server_conf){
 
 
 
-					// if (port == -1)
-					// 	c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first); //! bad request 400
-					// else{
+					if (port == -1)
+						c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first); //! bad request 400
+					else{
 						for (size_t i = 0; i < server_conf.size(); i++){
 							if (serv_name == server_conf[i].serverName && port == server_conf[i].port){
 								std::cout << "ppppppp\n";
@@ -239,7 +239,7 @@ void Server::socketio(std::vector<serverInfo>& server_conf){
 						}
 						std::cout << ".......... port request = " << s.port << " - config port = " << s.serverName << std::endl;
 						c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, s);
-					// }
+					}
 
 
 					// std::cout << "server name[" << i << "] = " << s.serverName << std::endl;

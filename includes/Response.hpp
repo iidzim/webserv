@@ -24,7 +24,10 @@ class Response{
 
     public:
         Response();
+        Response(request req);
         Response(request req, serverInfo serv);
+        Response(const Response & src);
+        Response & operator=(const Response & obj);
         ~Response();
         std::pair<std::string, std::string> get_response();
         std::string setErrorsHeaders(std::string , std::string);
