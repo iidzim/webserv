@@ -1,11 +1,7 @@
 
 #include "../includes/Response.hpp"
 
-Response::Response(): _headers(""), _body(""), _cursor(0) {
-}
-
-Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
-    // std::cout << "_servInfo ================ " << _servInfo.serverName << std::endl;
+Response::Response(request req): _headers(""), _body(""), _reqInfo(req.getRequest()), _cursor(0){
     _iskeepAlive = true;
     _autoIndex = false;
     _location = "";
@@ -13,9 +9,44 @@ Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInf
     _root = "";
 }
 
-Response::~Response(){
+Response::Response(): _headers(""), _body(""), _cursor(0) {
+    _iskeepAlive = true;
+    _autoIndex = false;
+    _location = "";
+    _path = "";
+    _root = "";
+}
+
+Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
+    _iskeepAlive = true;
+    _autoIndex = false;
+    _location = "";
+    _path = "";
+    _root = "";
+}
+
+Response::Response(const Response & src){
+    *this = src;
+}
+
+Response & Response::operator=(const Response & obj){
+    _headers = obj._headers;
+    _body = obj._body;
+    _path = obj._path;
+    _location = obj._location;
+    _root = obj._root;
+    _index = obj._index;
+    _iskeepAlive = obj._iskeepAlive;
+    _reqInfo = obj._reqInfo;
+    _mime = obj._mime;
+    _servInfo = obj._servInfo;
+    _cursor = obj._cursor;
+    _autoIndex = obj._autoIndex;
+    return *this;
 
 }
+
+Response::~Response(){}
 
 std::string Response::setErrorsHeaders(std::string ErrorMsg, std::string cLentgh){
     std::ostringstream headers;
