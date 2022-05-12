@@ -3,16 +3,16 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+         #
+#    By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/03/28 14:17:05 by iidzim            #+#    #+#              #
-#    Updated: 2022/05/12 11:23:18 by iidzim           ###   ########.fr        #
+#    Updated: 2022/05/12 22:40:51 by oel-yous         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = web_server
 C = c++
-FLAGS = -Wall -Wextra -Werror -std=c++98 #-g -Ofast
+FLAGS = -Wall -Wextra -Werror -std=c++98 -fsanitize=address #-g -Ofast
 SRC = main.cpp srcs/*.cpp
 
 all: $(NAME)
@@ -23,7 +23,7 @@ clean:
 
 fclean: clean
 	@ rm -f $(NAME)
-	@ cd var/www/html/bodies && rm -f body*
+	@ cd var/www/bodies && rm -f body*
 re: fclean all
 	@ ./web_server ./configFile/valid_confg/default.conf
 

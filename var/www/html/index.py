@@ -20,4 +20,3 @@ print "<body>"
 print "<h2>Hello %s %s %s</h2>" % (first_name, last_name, nick_name)
 print "</body>"
 print "</html>"
-print "j"

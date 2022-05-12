@@ -342,7 +342,7 @@ void    request::getHeaders(std::istringstream & istr)
 		{
 			char cwd[256];
 			std::string path(getcwd(cwd, sizeof(cwd)));
-			_rqst.bodyFile = path + "/var/www/html/bodies/"+_rqst.bodyFile+getMimeType();// ! remove srcs
+			_rqst.bodyFile = path + "/var/www/bodies/"+_rqst.bodyFile+getMimeType();// ! remove srcs
 		}
 		else
 		{

@@ -249,7 +249,7 @@ void configurationReader::defaultForMissingValues(serverInfo &server)
     {
         char buf[256];
         getcwd(buf, sizeof(buf));
-        server.root = std::string(buf)+"/var/www/html";
+        server.root = std::string(buf)+"/var/www";
     }
     if (server.index.empty())
     {

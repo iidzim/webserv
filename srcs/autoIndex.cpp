@@ -7,11 +7,11 @@ autoIndex::~autoIndex(){}
 
 
 
-void autoIndex::setAutoIndexBody(DIR *folder, std::string path, std::string root, std::string location){
+void autoIndex::setAutoIndexBody(DIR *folder, std::string path, std::string root, std::string location, std::string CurrPath){
     std::ostringstream result;
-    char cwd[256];
-    std::string currPath(getcwd(cwd, sizeof(cwd)));
-    std::string autoIndexPath = currPath + "/var/www/html/autoindex.html";
+    // char cwd[256];
+    // std::string currPath(getcwd(cwd, sizeof(cwd)));
+    std::string autoIndexPath = CurrPath + "/var/www/html/autoindex.html";
 
     std::ofstream out(autoIndexPath);
     struct dirent *entry;

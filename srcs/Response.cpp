@@ -2,6 +2,7 @@
 #include "../includes/Response.hpp"
 
 Response::Response(request req): _headers(""), _body(""), _reqInfo(req.getRequest()), _cursor(0){
+    _CurrDirecory = getCurrentDirectory();
     _iskeepAlive = true;
     _autoIndex = false;
     _location = "";
@@ -10,6 +11,7 @@ Response::Response(request req): _headers(""), _body(""), _reqInfo(req.getReques
 }
 
 Response::Response(): _headers(""), _body(""), _cursor(0) {
+    _CurrDirecory = getCurrentDirectory();
     _iskeepAlive = true;
     _autoIndex = false;
     _location = "";
@@ -18,6 +20,7 @@ Response::Response(): _headers(""), _body(""), _cursor(0) {
 }
 
 Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
+    _CurrDirecory = getCurrentDirectory();
     _iskeepAlive = true;
     _autoIndex = false;
     _location = "";
@@ -42,6 +45,7 @@ Response & Response::operator=(const Response & obj){
     _servInfo = obj._servInfo;
     _cursor = obj._cursor;
     _autoIndex = obj._autoIndex;
+    _CurrDirecory = obj._CurrDirecory;
     return *this;
 
 }
@@ -65,13 +69,17 @@ bool Response::isFileExist(std::string pathName){
     return true;
 }
 
-void Response::errorsResponse(int statCode){
+std::string Response::getCurrentDirectory(){
     char cwd[256];
     std::string currPath(getcwd(cwd, sizeof(cwd)));
+    return currPath;
+}
+
+void Response::errorsResponse(int statCode){
     int ret;
 
     _reqInfo.statusCode = statCode;
-    _body = currPath + "/error_pages/" + toString(statCode) + ".html";
+    _body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
     if (isFileExist(_body) == false)
         _body = ""; // 
     ret = fileSize(_body);
@@ -121,6 +129,20 @@ std::string Response::Connection(int flag){
 void Response::DeleteMethod(){
     int fd;
     std::ostringstream headers;
+    std::vector<std::string> forbiddenFiles;
+    forbiddenFiles.push_back(_CurrDirecory +"/srcs/");
+    forbiddenFiles.push_back(_CurrDirecory +"/includes/");
+    forbiddenFiles.push_back(_CurrDirecory +"/error_pages/");
+    forbiddenFiles.push_back(_CurrDirecory +"/configFile/");
+    forbiddenFiles.push_back(_CurrDirecory +"/main.cpp");
+    forbiddenFiles.push_back(_CurrDirecory +"/Makefile");
+    forbiddenFiles.push_back(_CurrDirecory +"/var/www/html/");
+    for (std::vector<std::string>::iterator it = forbiddenFiles.begin(); it != forbiddenFiles.end(); it++){
+        if (_path.find(*it) == 0){
+            errorsResponse(403);
+            return ;
+        }
+    }
     fd = unlink(_path.c_str());
     if (fd < 0){
         if (errno == EACCES)
@@ -165,10 +187,10 @@ void Response::setResponse(){
             break ;
         }
     }
-    // if (cgiExt.length() > 0 && cgiExt != ".py" && cgiExt != ".php"){
-    //     errorsResponse(502);
-    //     return ;
-    // }
+    if (cgiExt.length() > 0 && cgiExt != ".py" && cgiExt != ".php"){
+        errorsResponse(502);
+        return ;
+    }
     if (isLoc == false || _root == "" || _index.size() == 0){
         if (_index.size() == 0)
             _index = _servInfo.index;
@@ -210,12 +232,12 @@ void Response::setResponse(){
                 return ;
             }
             if (cgiExt.length()){
-                // if (cgiExt == _path.substr(_path.length() - cgiExt.length())){
+                // if ( _path.substr(_path.length() - cgiExt.length()) == cgiExt ){
                     std::pair<std::string, std::string> cgiOut;
                     std::string conn = Connection(1);
                     cgi CGI(_reqInfo, _path, cgiExt , conn);
-                    CGI.executeFile();
-                    cgiOut = CGI.parseCgiOutput();
+                    CGI.executeFile(_CurrDirecory);
+                    cgiOut = CGI.parseCgiOutput(_CurrDirecory);
                     if (cgiOut.first.find("Status: 301 Moved Permanently") == 0)
                         _headers = "HTTP/1.1 301 301 Moved Permanently";
                     else
@@ -225,7 +247,7 @@ void Response::setResponse(){
                 // }
                 // else // cgiExt != _path.substr(_path.length() - cgiExt.length())
                 //     errorsResponse(502);
-                return ;
+                // return ;
             }
             else{ // cgiExt.length  == 0
                 _body = _path;
@@ -273,7 +295,7 @@ void Response::setResponse(){
             if (fd < 0){
                 if (_autoIndex == true){
                     autoIndex indx;
-                    indx.setAutoIndexBody(folder, _path, _root, _location);
+                    indx.setAutoIndexBody(folder, _path, _root, _location, _CurrDirecory);
                     if (indx.isError() == true)
                         errorsResponse(indx.getErrorCode());
                     else { // indx.isError == false
@@ -294,9 +316,9 @@ void Response::setResponse(){
                     std::pair<std::string, std::string> cgiOut;
                     std::string conn = Connection(1);
                     cgi CGI(_reqInfo, _path + "/" +_index[i], cgiExt , conn);
-                    CGI.executeFile();
+                    CGI.executeFile(_CurrDirecory);
             
-                    cgiOut = CGI.parseCgiOutput();
+                    cgiOut = CGI.parseCgiOutput(_CurrDirecory);
                     _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
                     _body = cgiOut.second;
                     return ;
@@ -317,7 +339,7 @@ void Response::setResponse(){
             if (opn == -1) { 
                 if (_autoIndex == true) {
                     autoIndex indx;
-                    indx.setAutoIndexBody(folder, _path, _root, _location);
+                    indx.setAutoIndexBody(folder, _path, _root, _location, _CurrDirecory);
                     if (indx.isError() == true)
                         errorsResponse(indx.getErrorCode());
                     else { // no error in autoindex
@@ -335,16 +357,13 @@ void Response::setResponse(){
 }
 
 void Response::uploadResponse(){
-    char cwd[256];
-    std::string currPath(getcwd(cwd, sizeof(cwd)));
-
-    _body = currPath + "/var/www/html/upload/upload.html";
+    _body = _CurrDirecory + "/var/www/html/upload.html";
     _headers = "HTTP/1.1 201 created\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
     _headers += Connection(0);
 }
 std::pair<std::string, std::string> Response::get_response(){
 
-    // std::cout << "-----------------" <<  _reqInfo.URI << _reqInfo.statusCode <<"--------------------" << std::endl;
+    std::cout << "-----------------" <<  _reqInfo.URI << _reqInfo.statusCode <<"--------------------" << std::endl;
     if (_reqInfo.statusCode == 200)
         setResponse();
     else if (_reqInfo.statusCode == 201)
@@ -352,10 +371,10 @@ std::pair<std::string, std::string> Response::get_response(){
     else
         errorsResponse(_reqInfo.statusCode);
     std::pair<std::string, std::string> p;
-    // std::cout << "-----------------------------------------------" << std::endl;
-    // std::cout << _headers << std::endl;
-    // std::cout << _body << std::endl;
-    // std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << _headers << std::endl;
+    std::cout << _body << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
     p.first = _headers;
     p.second = _body;
     return (p);
