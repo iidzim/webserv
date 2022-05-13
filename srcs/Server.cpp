@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/13 09:37:26 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/13 18:22:29 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -135,14 +135,11 @@ void Server::send_response(int i, Clients *c){
 		o = open(filename.c_str(), O_RDONLY);
 		total_size = fileSize(filename) + headers_size - len;
 		lseek(o, len - headers_size, SEEK_SET);
-		// int x = total_size > BUFF_SIZE ? BUFF_SIZE : total_size;
-
 		struct pollfd file[1];
 		file[0].fd = o;
 		file[0].events = POLLIN;
 		int poll_file = poll(file, 1, -1);
 		if (poll_file > 0 && (file[0].revents & POLLIN)){
-			// int r = read(o, buff, x);
 			int r = read(o, buff, sizeof(buff));
 			buff[r] = '\0';
 			if (r > 0){
@@ -161,20 +158,15 @@ void Server::send_response(int i, Clients *c){
 		c->remove_clients(_fds[i].fd);
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
-		// std::cout << errno << "  send failure s < 0\n";
 		return;
 	}
-	// if (s == 0)
-		// std::cout << "send == 0\n";
 	if (c->connections[_fds[i].fd].second.is_complete(s, filename)){
 		// std::cout << _fds[i].fd << " - response is complete\n";
 		int file_descriptor = _fds[i].fd;
-		// std::cout << "TTTTTTTT " << _fds.size() << std::endl;
 		if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
-			// std::cout << _fds[i].fd;
 			close(_fds[i].fd);
 			_fds.erase(_fds.begin() + i);
-			// std::cout << " closing connection " << _fds.size() << std::endl;
+			// std::cout << _fds[i].fd << " closing connection " << _fds.size() << std::endl;
 		}
 		else
 			_fds[i].events = POLLIN;

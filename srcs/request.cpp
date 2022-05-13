@@ -353,7 +353,7 @@ void    request::getHeaders(std::istringstream & istr)
 			_rqst.bodyFile = _uploadpath+_rqst.bodyFile+getMimeType();
 		   // std::cout<<"ROOT + UPLOAD "<<_uploadpath<<std::endl;
 		}
-		std::cout<<"_rqst.bodyFile  | "<<_rqst.bodyFile <<std::endl;
+		// std::cout<<"_rqst.bodyFile  | "<<_rqst.bodyFile <<std::endl;
 		_rqst.fd = open(_rqst.bodyFile.c_str(), O_CREAT | O_RDWR, 0777);
 		if (_rqst.fd < 0)
 		{

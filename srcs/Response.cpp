@@ -362,7 +362,7 @@ void Response::uploadResponse(){
 }
 std::pair<std::string, std::string> Response::get_response(){
 
-    // std::cout << "-----------------" <<  _reqInfo.URI << _reqInfo.statusCode <<"--------------------" << std::endl;
+    std::cout << "-----------------" <<  _reqInfo.URI << _reqInfo.statusCode <<"--------------------" << std::endl;
     if (_reqInfo.statusCode == 200)
         setResponse();
     else if (_reqInfo.statusCode == 201)
@@ -370,10 +370,10 @@ std::pair<std::string, std::string> Response::get_response(){
     else
         errorsResponse(_reqInfo.statusCode);
     std::pair<std::string, std::string> p;
-    // std::cout << "-----------------------------------------------" << std::endl;
-    // std::cout << _headers << std::endl;
-    // std::cout << _body << std::endl;
-    // std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
+    std::cout << _headers << std::endl;
+    std::cout << _body << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
     p.first = _headers;
     p.second = _body;
     return (p);
