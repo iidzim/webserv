@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/13 14:18:23 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/13 19:54:04 by viet             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,8 @@ void signalhandler(int signum){
 }
 
 int main(int argc, char** argv){
-
+	std::string pwd;
+	pwd = getCurrentDirectory();
 	broken_pipe = false;
 	signal(SIGPIPE, signalhandler);
 	if (argc > 2){
@@ -35,7 +36,6 @@ int main(int argc, char** argv){
 		return (-1);
 	}
 	pwd = getCurrentDirectory();
-	std::cout<< "HERE333  " << pwd << std::endl;
 	try{
 		// signal(SIGPIPE, signalhandler);
 		if (argc == 1)
@@ -57,7 +57,7 @@ int main(int argc, char** argv){
 					sockets.push_back(Socket(virtualServer[i].port));
 				}
 			}
-			Server s(sockets, virtualServer);
+			Server s(sockets, virtualServer, pwd);
 			ports.clear();
 			sockets.clear();
 		}

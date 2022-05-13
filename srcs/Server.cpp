@@ -3,18 +3,19 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/13 09:37:26 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/13 16:15:26 by viet             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Server.hpp"
 
-Server::Server(std::vector<Socket>& s, std::vector<serverInfo>& server_conf){
+Server::Server(std::vector<Socket>& s, std::vector<serverInfo>& server_conf, std::string pwd){
 
 	//& initialize class attribute
+	_pwd = pwd;
 	size_t size = s.size();
 	_socket_fd.resize(size);
 	_address.resize(size);
@@ -224,7 +225,7 @@ void Server::socketio(std::vector<Socket>& s, std::vector<serverInfo>& server_co
 					std::string serv_name = c.connections[_fds[i].fd].first.getHost();
 					int port = c.connections[_fds[i].fd].first.getPort();
 					if (port == -1)
-						c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first); //! bad request 400
+						c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, _pwd); //! bad request 400
 					else{
 						for (size_t i = 0; i < server_conf.size(); i++){
 							if (serv_name == server_conf[i].serverName && port == server_conf[i].port){
@@ -235,7 +236,7 @@ void Server::socketio(std::vector<Socket>& s, std::vector<serverInfo>& server_co
 								s = server_conf[i];
 						}
 						// std::cout << ".......... port request = " << s.port << " - config port = " << s.serverName << std::endl;
-						c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, s);
+						c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, s, _pwd);
 					}
 				}
 				send_response(i, &c);

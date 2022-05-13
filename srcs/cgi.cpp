@@ -47,7 +47,7 @@ void cgi::executeFile(std::string CurrPath)
 {
     setEnvironment();
     pid_t pid;
-    _body = CurrPath + "/var/www/html/example.html";
+    _body = CurrPath + "/var/www/html/cgiOutput.html";
     int fd1 = open(_req.bodyFile.c_str(), O_RDONLY);
     int fd = open(_body.c_str(), O_CREAT| O_RDONLY | O_WRONLY , 0644);
     std::time_t t = std::time(NULL);
@@ -56,8 +56,6 @@ void cgi::executeFile(std::string CurrPath)
     if (pid == 0){
         if (_req.method == "POST")
             dup2(fd1, 0);
-        else
-            close(fd1);
         dup2(fd, 1);
         if (_cgiExtention == ".py")
         {
@@ -66,7 +64,8 @@ void cgi::executeFile(std::string CurrPath)
             args[0] = (char *)_commandPath.c_str();
             args[1] = (char*)_fileName.c_str();
             args[2] = NULL;
-            execve(args[0], args, NULL);
+            execve(args[0], args, environ);
+            write(2, "---123\n", 7);
         }
         else if (_cgiExtention == ".php"){
             char *args[3];
@@ -75,9 +74,10 @@ void cgi::executeFile(std::string CurrPath)
             args[1] = (char*)_fileName.c_str();
             args[2] = NULL;
             execve(args[0], args, environ);
+
         }
     }
-    while ( time(NULL) - t < 3) 
+    while ( std::time(NULL) - t < 3) 
         waitpid(pid, &stat, WNOHANG);
     close(fd1);
     close (fd);
@@ -86,41 +86,46 @@ void cgi::executeFile(std::string CurrPath)
 
 std::pair<std::string, std::string> cgi::parseCgiOutput(std::string currPath)
 {
-    _out = currPath+"/var/www/html/form.html";
-    _myfile.open(_body, std::ios::in);
-    _outf.open(_out, std::ios::out);
     std::string result;
 
     
     std::string line;
 
-    while (std::getline(_myfile, line))
-    {
-        if (line == "\r")
-        {
-            result+=line+"\n";
-            while (std::getline(_myfile, line))
-                _outf<<line+"\n";
-            break;
-            
-        }
-        result+=line+'\n';
-    }
-
-    _myfile.close();
-    _outf.close();
     std::string r;
-    size_t pos = result.find("\r\n");
-    if (pos != std::string::npos){
-        r = result.substr(0,pos);
-        r+= "\r\nContent-length: " ;
-        r+= toString(fileSize(_out));
-        r+= _connection;
-        r+= result.substr(pos);
+    if (_cgiExtention == ".php"){
+
+        _out = currPath+"/var/www/html/form.html";
+        _myfile.open(_body, std::ios::in);
+        _outf.open(_out, std::ios::out);
+        while (std::getline(_myfile, line))
+        {
+            if (line == "\r")
+            {
+                result+=line+"\n";
+                while (std::getline(_myfile, line))
+                    _outf<<line+"\n";
+                break;
+                
+            }
+            result+=line+'\n';
+        }
+
+        _myfile.close();
+        _outf.close();
+        size_t pos = result.find("\r\n");
+        if (pos != std::string::npos){
+            r = result.substr(0,pos);
+            r+= "\r\nContent-length: " ;
+            r+= toString(fileSize(_out));
+            r+= _connection;
+            r+= result.substr(pos);
+        }
+        else 
+            r = result;
+        std::remove(_body.c_str());
+        return std::make_pair(r, _out);
     }
-    else 
-        r = result;
-    std::remove(_body.c_str());
-    return std::make_pair(r, _out);
+    r = "Content-type: text/html\r\nContent-length: " + toString(fileSize(_body)) + "\r\n\r\n";
+    return std::make_pair(r, _body);
 
 }
