@@ -258,14 +258,13 @@ void Response::setResponse(){
     }
     else { // folder opened 
         if (_reqInfo.method == "DELETE"){
+            closedir(folder);
             errorsResponse(403);
             return ;
         }
         if (cgiExt.length() == 0){
-            // std::cout << "===" << _path << "===" << std::endl;
             if (_reqInfo.URI != "/"){
                 if ( _path[_path.length() - 1] != '/'){
-                    // std::cout << "im here " << std::endl;
                     _path += "/";
                     _body = _path + _index[0];
                     _headers = "HTTP/1.1 302 Found\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
@@ -274,7 +273,7 @@ void Response::setResponse(){
                     else
                         _headers += "\r\nLocation: " + _reqInfo.URI + "/";
                     _headers += Connection(0);
-                    closedir(folder); //!!!!!!!!!!!
+                    closedir(folder);
                     return ;
                 }
             }
@@ -286,7 +285,7 @@ void Response::setResponse(){
                     _body = _path + "/" + _index[i];
                     setOkHeaders("text/html", _body);
                     close(fd);
-                    closedir(folder); //!!!!!!!!!!!
+                    closedir(folder);
                     return ;
                 }
                 close(fd);
@@ -301,12 +300,11 @@ void Response::setResponse(){
                         _body = indx.getBodyName();
                         setOkHeaders("text/html", _body);
 
-                        // closedir(folder);
                     }
                 }
                 else //autoindex == false
                     errorsResponse(404);
-                closedir(folder); //!!!!!!!!!!!
+                closedir(folder);
                 return ;
             }
         }
@@ -317,11 +315,11 @@ void Response::setResponse(){
                     std::string conn = Connection(1);
                     cgi CGI(_reqInfo, _path + "/" +_index[i], cgiExt , conn);
                     CGI.executeFile(_CurrDirecory);
-            
+
                     cgiOut = CGI.parseCgiOutput(_CurrDirecory);
                     _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
                     _body = cgiOut.second;
-                    closedir(folder); //!!!!!!!!!!!
+                    closedir(folder);
                     return ;
                 }
             }
@@ -346,13 +344,12 @@ void Response::setResponse(){
                     else { // no error in autoindex
                         _body = indx.getBodyName();
                          setOkHeaders("text/html", _body);
-                        // closedir(folder);
                     }
                 }
                 else // autoindex is false
                     errorsResponse(404);
             }
-            closedir(folder); //!!!!!!!!!!!
+            closedir(folder);
         }   
     }
 
