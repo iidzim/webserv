@@ -19,7 +19,6 @@ Response::Response(): _headers(""), _body(""), _cursor(0) {
 }
 
 Response::Response(request req, serverInfo s, std::string pwd):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
-    // std::cout <<"pwd ====== " <<  pwd << std::endl;
     _CurrDirecory = pwd;
     _iskeepAlive = true;
     _autoIndex = false;
@@ -165,7 +164,7 @@ void Response::setResponse(){
     std::pair<std::string, std::string> redirect;
     for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
 
-        if (_reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
+        if (_servInfo.location[i].uri == "/" || _reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
             || (_reqInfo.URI.find(_servInfo.location[i].uri + "/") == 0 && _servInfo.location[i].uri.size() > 1)) {
             _root = _servInfo.location[i].root;
             _location = _servInfo.location[i].uri;
@@ -201,7 +200,11 @@ void Response::setResponse(){
     if (_root == _servInfo.root && _servInfo.autoindex == true)
         _autoIndex = true;
     if (isLoc == true){
+        
         std::string uri = _reqInfo.URI.substr(_location.length());
+        
+        if (uri[0] != '/')
+            _root += "/";
         _path = _root + uri;
     }
     else{
@@ -257,6 +260,7 @@ void Response::setResponse(){
         }
     }
     else { // folder opened 
+
         if (_reqInfo.method == "DELETE"){
             closedir(folder);
             errorsResponse(403);
@@ -264,6 +268,7 @@ void Response::setResponse(){
         }
         if (cgiExt.length() == 0){
             if (_reqInfo.URI != "/"){
+
                 if ( _path[_path.length() - 1] != '/'){
                     _path += "/";
                     _body = _path + _index[0];
@@ -282,6 +287,7 @@ void Response::setResponse(){
             for (; i < _index.size(); i++){
                 fd = open((_path+"/" +_index[i]).c_str(), O_RDONLY);
                 if (fd >= 0){
+                    
                     _body = _path + "/" + _index[i];
                     setOkHeaders("text/html", _body);
                     close(fd);
@@ -299,7 +305,6 @@ void Response::setResponse(){
                     else { // indx.isError == false
                         _body = indx.getBodyName();
                         setOkHeaders("text/html", _body);
-
                     }
                 }
                 else //autoindex == false
@@ -309,6 +314,8 @@ void Response::setResponse(){
             }
         }
         else { // cgi.length != 0
+
+            
             for (size_t i = 0; i < _index.size(); i++){
                 if (_index[i].substr(_index[i].length() - cgiExt.length()) == cgiExt){
                     std::pair<std::string, std::string> cgiOut;
@@ -335,9 +342,11 @@ void Response::setResponse(){
                 }
                 close(opn);
             }
-            if (opn == -1) { 
+            if (opn == -1) {
+                
                 if (_autoIndex == true) {
                     autoIndex indx;
+                    std::cout << "_path = " <<_path << " |_root == " <<  _root << std::endl;
                     indx.setAutoIndexBody(folder, _path, _root, _location, _CurrDirecory);
                     if (indx.isError() == true)
                         errorsResponse(indx.getErrorCode());
@@ -361,7 +370,7 @@ void Response::uploadResponse(){
     _headers += Connection(0);
 }
 std::pair<std::string, std::string> Response::get_response(){
-
+    
     // std::cout << "-----------------" <<  _reqInfo.URI << _reqInfo.statusCode <<"--------------------" << std::endl;
     if (_reqInfo.statusCode == 200)
         setResponse();

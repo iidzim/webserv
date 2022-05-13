@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/13 16:15:26 by viet             ###   ########.fr       */
+/*   Updated: 2022/05/13 20:22:55 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ Server::~Server(void){
 
 void Server::accept_connection(int i, std::vector<Socket>& s){
 
-	// std::cout << "Accepting connection" << std::endl;
+	std::cout << "Accepting connection" << std::endl;
 	size_t j = 0;
 	for (; j < s.size(); j++){
 		if (s[j].get_fd() == _fds[i].fd)
@@ -62,7 +62,7 @@ void Server::accept_connection(int i, std::vector<Socket>& s){
 void Server::recv_request(int i, Clients *c, std::vector<serverInfo>& server_conf){
 
 	char _buffer[2048*1000];
-	// std::cout << "Receiving request" << std::endl;
+	std::cout << "Receiving request" << std::endl;
 	int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 	if (r <= 0){
 		// std::cout << errno << "  HERE\n";
@@ -107,7 +107,7 @@ void Server::brokenPipe(Clients *c, int i){
 
 void Server::send_response(int i, Clients *c){
 
-	// std::cout << "Sending response" << std::endl;
+	std::cout << "Sending response" << std::endl;
 	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
 	std::string headers = rep.first;
 	std::string filename = rep.second;
@@ -121,7 +121,7 @@ void Server::send_response(int i, Clients *c){
 
 	if (len < headers_size){
 
-		// std::cout << "sending headers" << std::endl;
+		std::cout << "sending headers" << std::endl;
 		std::string str = headers.substr(len);
 		s = send(_fds[i].fd, str.c_str(), str.length(), 0);
 		//? check for sigpipe - if global bool = true -> close accept_fd and remove accept_fd from _fds struct , remove client from map
@@ -132,7 +132,7 @@ void Server::send_response(int i, Clients *c){
 	}
 	else if (filename.length() != 0){
 
-		// std::cout << "sending body ...\n";
+		std::cout << "sending body ...\n";
 		o = open(filename.c_str(), O_RDONLY);
 		total_size = fileSize(filename) + headers_size - len;
 		lseek(o, len - headers_size, SEEK_SET);
@@ -181,7 +181,7 @@ void Server::send_response(int i, Clients *c){
 			_fds[i].events = POLLIN;
     	//- remove node client from the map
 		c->remove_clients(file_descriptor);
-		// std::cout << file_descriptor << " - removed client\n";
+		std::cout << file_descriptor << " - removed client\n";
 	}
 }
 
@@ -191,12 +191,12 @@ void Server::socketio(std::vector<Socket>& s, std::vector<serverInfo>& server_co
 	std::cout << "Server is running ...\n";
 	for(;;){
 
-		// std::cout << "Polling ................................. \n";// << _fds.size() << " - " << _fds.capacity() << std::endl;
+		std::cout << "Polling ................................. \n";// << _fds.size() << " - " << _fds.capacity() << std::endl;
 		int p = poll(&_fds.front(), _fds.size(), -1);
 		if (p < 0)
 			throw::Socket::SocketException("Poll failed: Unexpected event occured");
 		if (p == 0){
-			// std::cout << "Poll failed: No new connection" << std::endl;
+			std::cout << "Poll failed: No new connection" << std::endl;
 			continue;
 		}
 		// for (size_t i = 0; i < _fds.size(); i++){

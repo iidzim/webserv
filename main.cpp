@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/13 19:54:04 by viet             ###   ########.fr       */
+/*   Updated: 2022/05/13 20:30:12 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,6 @@ void signalhandler(int signum){
 
 int main(int argc, char** argv){
 	std::string pwd;
-	pwd = getCurrentDirectory();
 	broken_pipe = false;
 	signal(SIGPIPE, signalhandler);
 	if (argc > 2){

@@ -357,7 +357,6 @@ void    request::getHeaders(std::istringstream & istr)
 		_rqst.fd = open(_rqst.bodyFile.c_str(), O_CREAT | O_RDWR, 0777);
 		if (_rqst.fd < 0)
 		{
-			std::cout << "HERE1\n";
 			_rqst.statusCode = 500;
 			close(_rqst.fd);
 			throw request::RequestNotValid();
