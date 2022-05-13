@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/13 09:43:27 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/13 14:18:23 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ int main(int argc, char** argv){
 		return (-1);
 	}
 	pwd = getCurrentDirectory();
+	std::cout<< "HERE333  " << pwd << std::endl;
 	try{
 		// signal(SIGPIPE, signalhandler);
 		if (argc == 1)

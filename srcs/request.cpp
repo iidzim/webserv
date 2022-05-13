@@ -341,9 +341,10 @@ void    request::getHeaders(std::istringstream & istr)
 		//create it inside var/www/html
 		if (_uploadpath.empty())
 		{
-			// char cwd[256];
-			// std::string path(getcwd(cwd, sizeof(cwd)));
-			_rqst.bodyFile = pwd + "/var/www/bodies/"+_rqst.bodyFile+getMimeType();// ! remove srcs
+			char cwd[256];
+			std::string path(getcwd(cwd, sizeof(cwd)));
+			// std::cout << ">>>>>>>> " << path << std::endl;
+			_rqst.bodyFile = path + "/var/www/bodies/"+_rqst.bodyFile+getMimeType();// ! remove srcs
 		}
 		else
 		{
@@ -352,10 +353,11 @@ void    request::getHeaders(std::istringstream & istr)
 			_rqst.bodyFile = _uploadpath+_rqst.bodyFile+getMimeType();
 		   // std::cout<<"ROOT + UPLOAD "<<_uploadpath<<std::endl;
 		}
-	   // std::cout<<"_rqst.bodyFile  | "<<_rqst.bodyFile <<std::endl;
+		std::cout<<"_rqst.bodyFile  | "<<_rqst.bodyFile <<std::endl;
 		_rqst.fd = open(_rqst.bodyFile.c_str(), O_CREAT | O_RDWR, 0777);
 		if (_rqst.fd < 0)
 		{
+			std::cout << "HERE1\n";
 			_rqst.statusCode = 500;
 			close(_rqst.fd);
 			throw request::RequestNotValid();
@@ -710,7 +712,7 @@ bool request::isComplete()
 			close(_rqst.fd);
 		// my_file.close();
 		tmpFile.close();
-		std::remove("tmp.txt");
+		//std::remove("tmp.txt");
 		}
 		return true;
 	}
