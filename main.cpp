@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/12 23:45:07 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/13 09:43:27 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,8 @@
 void signalhandler(int signum){
 
 	broken_pipe = true;
-	std::cout << "Interrupt signal (" << signum << ") received.\n";
+	(void)signum;
+	// std::cout << "Interrupt signal (" << signum << ") received.\n";
 }
  std::string getCurrentDirectory(){
     char cwd[256];

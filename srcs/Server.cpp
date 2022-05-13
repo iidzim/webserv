@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/12 23:48:15 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/13 09:37:26 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,7 +115,7 @@ void Server::send_response(int i, Clients *c){
 	// std::cout << "*****************\n" << filename << "\n*****************\n" << std::endl;
 
 	char buff[2048*100];
-	int total_size, o, x, s = 0;
+	int total_size, o, s = 0;
 	int len = c->connections[_fds[i].fd].second.get_cursor();
 
 	if (len < headers_size){
@@ -135,18 +135,18 @@ void Server::send_response(int i, Clients *c){
 		o = open(filename.c_str(), O_RDONLY);
 		total_size = fileSize(filename) + headers_size - len;
 		lseek(o, len - headers_size, SEEK_SET);
-		x = total_size > BUFF_SIZE ? BUFF_SIZE : total_size;
-		
+		// int x = total_size > BUFF_SIZE ? BUFF_SIZE : total_size;
+
 		struct pollfd file[1];
 		file[0].fd = o;
 		file[0].events = POLLIN;
 		int poll_file = poll(file, 1, -1);
 		if (poll_file > 0 && (file[0].revents & POLLIN)){
-			int r = read(o, buff, x);
-			// std::cout<<"["<<buff<<"]"<<std::endl;
+			// int r = read(o, buff, x);
+			int r = read(o, buff, sizeof(buff));
 			buff[r] = '\0';
 			if (r > 0){
-				s = send(_fds[i].fd, buff, x, 0);
+				s = send(_fds[i].fd, buff, r, 0);
 				if (broken_pipe == true){
 					close(o);
 					brokenPipe(c, i);

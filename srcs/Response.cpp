@@ -164,6 +164,7 @@ void Response::setResponse(){
     std::string cgiExt ="";
     std::pair<std::string, std::string> redirect;
     for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
+
         if (_reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
             || (_reqInfo.URI.find(_servInfo.location[i].uri + "/") == 0 && _servInfo.location[i].uri.size() > 1)) {
             _root = _servInfo.location[i].root;
@@ -273,6 +274,7 @@ void Response::setResponse(){
                     else
                         _headers += "\r\nLocation: " + _reqInfo.URI + "/";
                     _headers += Connection(0);
+                    closedir(folder); //!!!!!!!!!!!
                     return ;
                 }
             }
@@ -284,6 +286,7 @@ void Response::setResponse(){
                     _body = _path + "/" + _index[i];
                     setOkHeaders("text/html", _body);
                     close(fd);
+                    closedir(folder); //!!!!!!!!!!!
                     return ;
                 }
                 close(fd);
@@ -298,11 +301,12 @@ void Response::setResponse(){
                         _body = indx.getBodyName();
                         setOkHeaders("text/html", _body);
 
-                        closedir(folder);
+                        // closedir(folder);
                     }
                 }
                 else //autoindex == false
                     errorsResponse(404);
+                closedir(folder); //!!!!!!!!!!!
                 return ;
             }
         }
@@ -317,6 +321,7 @@ void Response::setResponse(){
                     cgiOut = CGI.parseCgiOutput(_CurrDirecory);
                     _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
                     _body = cgiOut.second;
+                    closedir(folder); //!!!!!!!!!!!
                     return ;
                 }
             }
@@ -341,12 +346,13 @@ void Response::setResponse(){
                     else { // no error in autoindex
                         _body = indx.getBodyName();
                          setOkHeaders("text/html", _body);
-                        closedir(folder);
+                        // closedir(folder);
                     }
                 }
                 else // autoindex is false
                     errorsResponse(404);
             }
+            closedir(folder); //!!!!!!!!!!!
         }   
     }
 
