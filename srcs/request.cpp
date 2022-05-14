@@ -168,6 +168,7 @@ void    request::requestLine(std::istringstream &istr)
 	getline(istr, line);
    
 	//! split first line by spaces
+	// std::cout << line << std::endl;
    
 	std::vector<std::string> words;
 	size_t pos = 0;
@@ -186,11 +187,6 @@ void    request::requestLine(std::istringstream &istr)
 	if (words.size() != 3)//! should only be one space between them
 	{
 		_rqst.statusCode = 400;
-		throw request::RequestNotValid();
-	}
-	if (words[0] != "GET" && words[0] != "POST" && words[0] != "DELETE")
-	{
-		_rqst.statusCode = 501; //! 501 method not implemented || 405 method not allowed
 		throw request::RequestNotValid();
 	}
 	_rqst.method = words[0];

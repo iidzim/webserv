@@ -3,12 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   configurationReader.hpp                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: framdani <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/14 17:42:45 by framdani          #+#    #+#             */
-/*   Updated: 2022/04/14 17:42:48 by framdani         ###   ########.fr       */
+/*   Updated: 2022/05/14 16:19:02 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #ifndef CONFIGURATIONREADER_HPP
 # define CONFIGURATIONREADER_HPP
 #include <iostream>
@@ -34,7 +35,7 @@ typedef struct s_location
     std::vector<std::string>            index;
     std::string                         root;
     std::vector<std::string>            allow_methods;
-    std::map<int, std::string>          errorPage;// statuscode | URL
+   // std::map<int, std::string>          errorPage;// statuscode | URL
     bool                                autoindex;
     std::pair<std::string, std::string> redirect; //first path | second=> replacement
     //std::pair<std::string, std::string> cgi;//first => extension | second => address
@@ -80,7 +81,7 @@ class configurationReader
         void                                    setRoot(std::vector<std::string> words, serverInfo &server, locationInfos &location);
         void                                    setIndex(std::vector<std::string> words,serverInfo &server, locationInfos &location);
         void                                    setSize(std::vector<std::string> words, serverInfo &server);
-        void                                    setErrorPage(std::vector<std::string> words, serverInfo &server, locationInfos &location);
+        void                                    setErrorPage(std::vector<std::string> words, serverInfo &server);
         void                                    setautoIndex(std::vector<std::string> words, serverInfo &server, locationInfos &location);
         void                                    setRedirection(std::vector<std::string> words, serverInfo &server, locationInfos &location);
         void                                    setCGI(std::vector<std::string> words, locationInfos &location);
