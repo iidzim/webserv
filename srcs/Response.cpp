@@ -74,7 +74,20 @@ void Response::errorsResponse(int statCode){
     int ret;
 
     _reqInfo.statusCode = statCode;
-    _body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
+    if (_servInfo.errorPage.size() == 0)
+        _body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
+    else{
+        if (_servInfo.errorPage.find(statCode) != _servInfo.errorPage.end()){
+            int fd = open(_servInfo.errorPage.find(statCode)->second.c_str(), O_RDONLY);
+            if (fd < 0)
+                _body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
+            else
+                _body = _servInfo.errorPage.find(statCode)->second;
+            close(fd);
+        }
+        else
+            _body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
+    }
     if (isFileExist(_body) == false)
         _body = ""; // 
     ret = fileSize(_body);
