@@ -1,5 +1,0 @@
-# siege -t1 -c100 -f test_siege.txt
-# URLS file for siege
-
-https://127.0.0.1:8082
-https://127.0.0.1:8082/var/www/html/index.html
