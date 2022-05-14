@@ -328,7 +328,6 @@ void    request::getHeaders(std::istringstream & istr)
 			BlockMatching(servers);
 			if (!_isChunked && _size !=0 && _originContentLength > _size)
 			{
-		 //   std::cout<<"REQUEST NOT VALID !"<<std::endl;
 				_rqst.statusCode = 413; //request entity too large
 				throw request::RequestNotValid();
 			}
@@ -351,6 +350,7 @@ void    request::getHeaders(std::istringstream & istr)
 		 //   std::cout<<"----------" <<_uploadpath<<std::endl;
 			_rqst.statusCode = 201;
 			_rqst.bodyFile = _uploadpath+_rqst.bodyFile+getMimeType();
+		//	std::coout<<
 		   // std::cout<<"ROOT + UPLOAD "<<_uploadpath<<std::endl;
 		}
 		std::cout<<"_rqst.bodyFile  | "<<_rqst.bodyFile <<std::endl;

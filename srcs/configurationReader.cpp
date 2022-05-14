@@ -243,8 +243,8 @@ void configurationReader::defaultForMissingValues(serverInfo &server)
         server.port = 8000;
         server.host = convertStrIPv4toUnsinedInt("127.0.0.1");
     }
-    if (server.size == 0)
-        server.size = 1000000;
+    // if (server.size == 0)
+    //     server.size = 1000000;
     if (server.root.empty())
     {
         char buf[256];
