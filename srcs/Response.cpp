@@ -2,57 +2,57 @@
 #include "../includes/Response.hpp"
 
 Response::Response(request req, std::string pwd): _headers(""), _body(""), _reqInfo(req.getRequest()), _cursor(0){
-    _CurrDirecory = pwd;
-    _iskeepAlive = true;
-    _autoIndex = false;
-    _location = "";
-    _path = "";
-    _root = "";
+	_CurrDirecory = pwd;
+	_iskeepAlive = true;
+	_autoIndex = false;
+	_location = "";
+	_path = "";
+	_root = "";
 }
 
 Response::Response(): _headers(""), _body(""), _cursor(0) {
-    _iskeepAlive = true;
-    _autoIndex = false;
-    _location = "";
-    _path = "";
-    _root = "";
+	_iskeepAlive = true;
+	_autoIndex = false;
+	_location = "";
+	_path = "";
+	_root = "";
 }
 
 Response::Response(request req, serverInfo s, std::string pwd):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
-    _CurrDirecory = pwd;
-    _iskeepAlive = true;
-    _autoIndex = false;
-    _location = "";
-    _path = "";
-    _root = "";
+	_CurrDirecory = pwd;
+	_iskeepAlive = true;
+	_autoIndex = false;
+	_location = "";
+	_path = "";
+	_root = "";
 }
 
 Response::Response(const Response & src){
-    *this = src;
+	*this = src;
 }
 
 Response & Response::operator=(const Response & obj){
-    _headers = obj._headers;
-    _body = obj._body;
-    _path = obj._path;
-    _location = obj._location;
-    _root = obj._root;
-    _index = obj._index;
-    _iskeepAlive = obj._iskeepAlive;
-    _reqInfo = obj._reqInfo;
-    _mime = obj._mime;
-    _servInfo = obj._servInfo;
-    _cursor = obj._cursor;
-    _autoIndex = obj._autoIndex;
-    _CurrDirecory = obj._CurrDirecory;
-    return *this;
+	_headers = obj._headers;
+	_body = obj._body;
+	_path = obj._path;
+	_location = obj._location;
+	_root = obj._root;
+	_index = obj._index;
+	_iskeepAlive = obj._iskeepAlive;
+	_reqInfo = obj._reqInfo;
+	_mime = obj._mime;
+	_servInfo = obj._servInfo;
+	_cursor = obj._cursor;
+	_autoIndex = obj._autoIndex;
+	_CurrDirecory = obj._CurrDirecory;
+	return *this;
 
 }
 
 Response::~Response(){}
 
 std::string Response::setErrorsHeaders(std::string ErrorMsg, std::string cLentgh){
-    std::ostringstream headers;
+	std::ostringstream headers;
 
     headers << "HTTP/1.1 "<<  ErrorMsg << "\r\n";
     if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
@@ -75,79 +75,79 @@ std::string Response::gen_random(const int len) {
 }
 
 bool Response::isFileExist(std::string pathName){
-    int fd = open(pathName.c_str(), O_RDONLY);
-    if (fd < 0)
-        return false;
-    close(fd);
-    return true;
+	int fd = open(pathName.c_str(), O_RDONLY);
+	if (fd < 0)
+		return false;
+	close(fd);
+	return true;
 }
 
 
 
 void Response::errorsResponse(int statCode){
-    int ret;
+	int ret;
 
-    _reqInfo.statusCode = statCode;
-    // std::cout <<"errorpage == "std::cout <<"errorpage == ";
-    if (_servInfo.errorPage.size() == 0)
-        _body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
-    else{
-        // std::cout <<"errorpage == " << "_servInfo.errorPage.find(statCode)->second" << std::endl;
-        if (_servInfo.errorPage.find(statCode) != _servInfo.errorPage.end()){
-            int fd = open(_servInfo.errorPage.find(statCode)->second.c_str(), O_RDONLY);
-            if (fd < 0)
-                _body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
-            else
-                _body = _servInfo.errorPage.find(statCode)->second;
-            close(fd);
-        }
-        else
-            _body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
-    }
-    if (isFileExist(_body) == false)
-        _body = ""; // 
-    ret = fileSize(_body);
-    if (_reqInfo.statusCode == 400)
-        _headers = setErrorsHeaders("400 Bad Request", toString(ret));
-    else if (_reqInfo.statusCode == 403)
-        _headers = setErrorsHeaders("403 Forbidden", toString(ret));
-    else if (_reqInfo.statusCode == 404)
-        _headers = setErrorsHeaders("404 Not Found", toString(ret));
-    else if (_reqInfo.statusCode == 405)
-        _headers = setErrorsHeaders("405 Not Method Not Allowed", toString(ret));
-    else if (_reqInfo.statusCode == 411)
-        _headers = setErrorsHeaders("411 Length Required", toString(ret));
-    else if (_reqInfo.statusCode == 413)
-        _headers = setErrorsHeaders("413 Payload Too Large", toString(ret));
-    else if (_reqInfo.statusCode == 500)
-        _headers = setErrorsHeaders("500 Internal Server Error", toString(ret));
-    else if (_reqInfo.statusCode == 501)
-        _headers = setErrorsHeaders("501 Not Implemented", toString(ret));
-    else if (_reqInfo.statusCode == 502)
-        _headers = setErrorsHeaders("502 Bad Gateaway", toString(ret));
-    else if (_reqInfo.statusCode == 505)
-        _headers = setErrorsHeaders("505 HTTP Version Not Supported", toString(ret));
+	_reqInfo.statusCode = statCode;
+	// std::cout <<"errorpage == "std::cout <<"errorpage == ";
+	if (_servInfo.errorPage.size() == 0)
+		_body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
+	else{
+		// std::cout <<"errorpage == " << "_servInfo.errorPage.find(statCode)->second" << std::endl;
+		if (_servInfo.errorPage.find(statCode) != _servInfo.errorPage.end()){
+			int fd = open(_servInfo.errorPage.find(statCode)->second.c_str(), O_RDONLY);
+			if (fd < 0)
+				_body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
+			else
+				_body = _servInfo.errorPage.find(statCode)->second;
+			close(fd);
+		}
+		else
+			_body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
+	}
+	if (isFileExist(_body) == false)
+		_body = ""; // 
+	ret = fileSize(_body);
+	if (_reqInfo.statusCode == 400)
+		_headers = setErrorsHeaders("400 Bad Request", toString(ret));
+	else if (_reqInfo.statusCode == 403)
+		_headers = setErrorsHeaders("403 Forbidden", toString(ret));
+	else if (_reqInfo.statusCode == 404)
+		_headers = setErrorsHeaders("404 Not Found", toString(ret));
+	else if (_reqInfo.statusCode == 405)
+		_headers = setErrorsHeaders("405 Not Method Not Allowed", toString(ret));
+	else if (_reqInfo.statusCode == 411)
+		_headers = setErrorsHeaders("411 Length Required", toString(ret));
+	else if (_reqInfo.statusCode == 413)
+		_headers = setErrorsHeaders("413 Payload Too Large", toString(ret));
+	else if (_reqInfo.statusCode == 500)
+		_headers = setErrorsHeaders("500 Internal Server Error", toString(ret));
+	else if (_reqInfo.statusCode == 501)
+		_headers = setErrorsHeaders("501 Not Implemented", toString(ret));
+	else if (_reqInfo.statusCode == 502)
+		_headers = setErrorsHeaders("502 Bad Gateaway", toString(ret));
+	else if (_reqInfo.statusCode == 505)
+		_headers = setErrorsHeaders("505 HTTP Version Not Supported", toString(ret));
 }
 
 std::string Response::Connection(int flag){
-    std::string ret = "\r\nConnection: ";
-    std::map<std::string, std::string>::iterator it = _reqInfo.headers.find("connection");
-    if( it != _reqInfo.headers.end()){
-        std::string connect = it->second;
-        if (connect == "keep-alive") {
-            connect = "Keep-Alive";
-        }
-        else {
-            connect = "Closed";
-            _iskeepAlive = false;
-        }
-        ret += connect;
-    }
-    else
-        ret += "Keep-Alive";
-    if (flag == 0)
-        ret +="\r\n\r\n";
-    return ret;
+	std::string ret = "\r\nConnection: ";
+	std::map<std::string, std::string>::iterator it = _reqInfo.headers.find("connection");
+	if( it != _reqInfo.headers.end()){
+		std::string connect = it->second;
+		if (connect == "keep-alive") {
+			connect = "Keep-Alive";
+		}
+		else {
+			connect = "Closed";
+			_iskeepAlive = false;
+		}
+		ret += connect;
+	}
+	else
+		ret += "Keep-Alive";
+	if (flag == 0)
+		ret +="\r\n\r\n";
+	return ret;
 }
 
 void Response::DeleteMethod(){
@@ -427,76 +427,76 @@ void Response::uploadResponse(){
     _headers += Connection(0);
 }
 std::pair<std::string, std::string> Response::get_response(){
-    
+
 	if (_reqInfo.method != "GET" && _reqInfo.method != "POST" && _reqInfo.method != "DELETE")
-        errorsResponse(501);
-    else{
-        if (_reqInfo.statusCode == 200)
-            setResponse();
-        else if (_reqInfo.statusCode == 201)
-            uploadResponse();
-        else
-            errorsResponse(_reqInfo.statusCode);
-    }
-    std::pair<std::string, std::string> p;
-    // std::cout << "-----------------------------------------------" << std::endl;
-    // std::cout << _headers << std::endl;
-    // std::cout << _body << std::endl;
-    // std::cout << "-----------------------------------------------" << std::endl;
-    p.first = _headers;
-    p.second = _body;
-    return (p);
+		errorsResponse(501);
+	else{
+		if (_reqInfo.statusCode == 200)
+			setResponse();
+		else if (_reqInfo.statusCode == 201)
+			uploadResponse();
+		else
+			errorsResponse(_reqInfo.statusCode);
+	}
+	std::pair<std::string, std::string> p;
+	// std::cout << "-----------------------------------------------" << std::endl;
+	// std::cout << _headers << std::endl;
+	// std::cout << _body << std::endl;
+	// std::cout << "-----------------------------------------------" << std::endl;
+	p.first = _headers;
+	p.second = _body;
+	return (p);
 }
 
 std::string Response::getBody(){
-    return (_body);
+	return (_body);
 }
 
 std::string Response::getHeaders(){
-    return _headers;
+	return _headers;
 }
 
 bool Response::IsKeepAlive(){
-    return _iskeepAlive;
+	return _iskeepAlive;
 } 
 
 
 int Response::response_size(){
-    return (fileSize(_body) + _headers.size());
+	return (fileSize(_body) + _headers.size());
 }
 
 
 
 template<class T>
 std::string toString(T i){
-    std::ostringstream ret;
-    ret  << i;
-    return ret.str();
+	std::ostringstream ret;
+	ret  << i;
+	return ret.str();
 }
 
 
 
 
 int fileSize(std::string fileName){
-    int fd = open(fileName.c_str(), O_RDONLY);
-    int ret = 0;
-    if (fd >= 0){
-        ret = lseek(fd, 0, SEEK_END);
-        lseek(fd, 0, SEEK_SET);
-        close (fd);
-    }
-    return (ret);
+	int fd = open(fileName.c_str(), O_RDONLY);
+	int ret = 0;
+	if (fd >= 0){
+		ret = lseek(fd, 0, SEEK_END);
+		lseek(fd, 0, SEEK_SET);
+		close (fd);
+	}
+	return (ret);
 }
 
 bool Response::is_complete(int len, std::string filename){
 
-    _cursor += len;
-    // std::cout << "sending .... " << _cursor << std::endl;
+	_cursor += len;
+	// std::cout << "sending .... " << _cursor << std::endl;
 	if ((size_t)_cursor >= fileSize(filename) + _headers.size())
-        return true;
+		return true;
 	return false;
 }
 
 int Response::get_cursor(){
-    return _cursor;
+	return _cursor;
 }

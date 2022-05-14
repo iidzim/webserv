@@ -6,7 +6,7 @@
 /*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/14 23:14:32 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/05/14 23:26:33 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -123,7 +123,6 @@ void Server::send_response(int i, Clients *c){
 	}
 	else if (filename.length() != 0){
 
-		std::cout << filename << std::endl;
 		// std::cout << "sending body ...\n";
 		o = open(filename.c_str(), O_RDONLY);
 		// int total_size = fileSize(filename) + headers_size - len;
@@ -224,7 +223,6 @@ void Server::socketio(std::vector<Socket>& s, std::vector<serverInfo>& server_co
 			}
 			else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
 
-				// std::cout << "POLLHUP - POLLERR - POLLNVAL  " << _fds[i].fd << std::endl;
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
 				c.remove_clients(_fds[i].fd);
