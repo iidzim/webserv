@@ -25,8 +25,8 @@ class Response{
 
     public:
         Response();
-        Response(request req);
-        Response(request req, serverInfo serv);
+        Response(request req, std::string pwd);
+        Response(request req, serverInfo serv, std::string pwd);
         Response(const Response & src);
         Response & operator=(const Response & obj);
         ~Response();

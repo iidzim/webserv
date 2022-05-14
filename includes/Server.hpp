@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: viet <viet@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/12 21:12:15 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/13 16:13:02 by viet             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ class Server{
 		std::string						_msg;
 		std::vector<struct sockaddr_in>	_address;
 		std::vector<struct pollfd>		_fds;
+		std::string 					_pwd;
 
 		Server(void);
 		void socketio(std::vector<Socket>& s, std::vector<serverInfo>& server_conf);
@@ -37,7 +38,7 @@ class Server{
 
 	public:
 
-		Server(std::vector<Socket>& s, std::vector<serverInfo>& server_conf);
+		Server(std::vector<Socket>& s, std::vector<serverInfo>& server_conf, std::string pwd);
 		~Server(void);
 
 };

@@ -1,7 +1,7 @@
 
 #include "../includes/Response.hpp"
 
-Response::Response(request req): _headers(""), _body(""), _reqInfo(req.getRequest()), _cursor(0){
+Response::Response(request req, std::string pwd): _headers(""), _body(""), _reqInfo(req.getRequest()), _cursor(0){
     _CurrDirecory = pwd;
     _iskeepAlive = true;
     _autoIndex = false;
@@ -11,7 +11,6 @@ Response::Response(request req): _headers(""), _body(""), _reqInfo(req.getReques
 }
 
 Response::Response(): _headers(""), _body(""), _cursor(0) {
-    _CurrDirecory = pwd;
     _iskeepAlive = true;
     _autoIndex = false;
     _location = "";
@@ -19,7 +18,8 @@ Response::Response(): _headers(""), _body(""), _cursor(0) {
     _root = "";
 }
 
-Response::Response(request req, serverInfo s):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
+Response::Response(request req, serverInfo s, std::string pwd):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
+    // std::cout <<"pwd ====== " <<  pwd << std::endl;
     _CurrDirecory = pwd;
     _iskeepAlive = true;
     _autoIndex = false;
@@ -356,7 +356,7 @@ void Response::setResponse(){
 }
 
 void Response::uploadResponse(){
-    _body = _CurrDirecory + "/var/www/html/upload.html";
+    _body = _CurrDirecory + "/var/www/upload.html";
     _headers = "HTTP/1.1 201 created\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
     _headers += Connection(0);
 }

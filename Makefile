@@ -3,16 +3,16 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+         #
+#    By: viet <viet@student.42.fr>                  +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/03/28 14:17:05 by iidzim            #+#    #+#              #
-#    Updated: 2022/05/13 14:06:36 by oel-yous         ###   ########.fr        #
+#    Updated: 2022/05/13 19:53:56 by viet             ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = web_server
 C = c++
-FLAGS = -Wall -Wextra -Werror -std=c++98 -fsanitize=address#-g -Ofast
+FLAGS = -Wall -Wextra -Werror -std=c++98 #-g -Ofast
 SRC = main.cpp srcs/*.cpp
 
 all: $(NAME)
