@@ -173,209 +173,217 @@ void Response::setOkHeaders(std::string mType, std::string body){
 }
 
 void Response::setResponse(){
-	bool isLoc = false;
-	DIR *folder;
-	std::string cgiExt ="";
-	std::pair<std::string, std::string> redirect;
-	for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
+    bool isLoc = false;
+    DIR *folder;
+    std::string cgiExt ="";
+    std::pair<std::string, std::string> redirect;
+    for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
 
-		if (_servInfo.location[i].uri == "/" || _reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
-			|| (_reqInfo.URI.find(_servInfo.location[i].uri + "/") == 0 && _servInfo.location[i].uri.size() > 1)) {
-			_root = _servInfo.location[i].root;
-			_location = _servInfo.location[i].uri;
-			isLoc = true;
-			_index = _servInfo.location[i].index;
-			cgiExt = _servInfo.location[i].cgi;
-			redirect = _servInfo.location[i].redirect;
-			if (_servInfo.location[i].autoindex == true)
-				_autoIndex = true;
-			if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods.end(), 
-				_reqInfo.method) == _servInfo.location[i].allow_methods.end()){
-					_reqInfo.statusCode = 405;
-					errorsResponse(405);
-					return ;
-				}
-			break ;
-		}
-	}
-	if (cgiExt.length() > 0 && cgiExt != ".py" && cgiExt != ".php"){
-		errorsResponse(502);
-		return ;
-	}
-	if (isLoc == false || _root == "" || _index.size() == 0){
-		if (_index.size() == 0)
-			_index = _servInfo.index;
-		if (_root == "")
-			_root = _servInfo.root;
-		if (_reqInfo.method != "GET" && isLoc == false){
-			errorsResponse(405);
-			return ;
-		}
-	}
-	if (_root == _servInfo.root && _servInfo.autoindex == true)
-		_autoIndex = true;
-	if (isLoc == true){
-		
-		std::string uri = _reqInfo.URI.substr(_location.length());
-		
-		if (uri[0] != '/' && _root[_root.length() -1 ] != '/')
-			_root += "/";
-		_path = _root + uri;
-	}
-	else{
-		_path = _root + _reqInfo.URI;
-	}
+        if (_servInfo.location[i].uri == "/" || _reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
+            || (_reqInfo.URI.find(_servInfo.location[i].uri + "/") == 0 && _servInfo.location[i].uri.size() > 1)) {
+            _root = _servInfo.location[i].root;
+            _location = _servInfo.location[i].uri;
+            isLoc = true;
+            _index = _servInfo.location[i].index;
+            cgiExt = _servInfo.location[i].cgi;
+            redirect = _servInfo.location[i].redirect;
+            if (_servInfo.location[i].autoindex == true)
+                _autoIndex = true;
+            if (std::find(_servInfo.location[i].allow_methods.begin(), _servInfo.location[i].allow_methods.end(), 
+                _reqInfo.method) == _servInfo.location[i].allow_methods.end()){
+                    _reqInfo.statusCode = 405;
+                    errorsResponse(405);
+                    return ;
+                }
+            break ;
+        }
+    }
+    if (cgiExt.length() > 0 && cgiExt != ".py" && cgiExt != ".php"){
+        errorsResponse(502);
+        return ;
+    }
+    if (isLoc == false || _root == "" || _index.size() == 0){
+        if (_index.size() == 0)
+            _index = _servInfo.index;
+        if (_root == "")
+            _root = _servInfo.root;
+        if (_reqInfo.method != "GET" && isLoc == false){
+            errorsResponse(405);
+            return ;
+        }
+    }
+    if (_root == _servInfo.root && _servInfo.autoindex == true)
+        _autoIndex = true;
+    if (isLoc == true){
+        
+        std::string uri = _reqInfo.URI.substr(_location.length());
+        
+        if (uri[0] != '/' && _root[_root.length() -1 ] != '/')
+            _root += "/";
+        _path = _root + uri;
+    }
+    else{
+        _path = _root + _reqInfo.URI;
+    }
 
-	if (redirect.second.length() != 0){
-		if (_path == (_root + redirect.first) || (redirect.first == "/" && _path == _root)){
-			_body = _path;
-			_headers = "HTTP/1.1 301 Moved Permanently\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
-			_headers += "\r\nLocation: " + redirect.second + "/";
-			_headers += Connection(0);
-			return ;
-		}
-	}
-	folder = opendir(_path.c_str());
-	if (!folder){
-		if (errno == EACCES)
-			errorsResponse(403);
-		else if (errno == ENOENT)
-			errorsResponse(404);
-		else if (errno == ENOTDIR){
-			if (_reqInfo.method == "DELETE"){
-				DeleteMethod();
-				return ;
-			}
-			if (cgiExt.length()){
-				// if ( _path.substr(_path.length() - cgiExt.length()) == cgiExt ){
-					std::pair<std::string, std::string> cgiOut;
-					std::string conn = Connection(1);
-					cgi CGI(_reqInfo, _path, cgiExt , conn);
-					CGI.executeFile(_CurrDirecory);
-					cgiOut = CGI.parseCgiOutput(_CurrDirecory);
-					if (cgiOut.first.find("Status: 301 Moved Permanently") == 0)
-						_headers = "HTTP/1.1 301 301 Moved Permanently";
-					else
-						_headers = "HTTP/1.1 200 OK";
-					_headers += Connection(1) + "\r\n" + cgiOut.first;
-					_body = cgiOut.second;
-				// }
-				// else // cgiExt != _path.substr(_path.length() - cgiExt.length())
-				//     errorsResponse(502);
-				// return ;
-			}
-			else{ // cgiExt.length  == 0
-				_body = _path;
-				_headers = "HTTP/1.1 200 OK\r\nContent-type: " + _mime.getType(_reqInfo.URI) + "\r\nContent-length: " + toString(fileSize(_body));
-				if (_autoIndex == true)
-					_headers += "\r\nContent-Disposition: attachment";
-				_headers += Connection(0);
-			}
-			return ;
-		}
-	}
-	else { // folder opened 
+    if (redirect.second.length() != 0){
+        if (_path == (_root + redirect.first) || (redirect.first == "/" && _path == _root)){
+            // std::cout << "ok" << std::endl;
+            _body = redirect.second;
+            _headers = "HTTP/1.1 301 Moved Permanently\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+            _headers += "\r\nLocation: " + redirect.second + "/";
+            _headers += Connection(0);
+            return ;
+        }
+    }
+    folder = opendir(_path.c_str());
+    if (!folder){
+        if (errno == EACCES)
+            errorsResponse(403);
+        else if (errno == ENOENT)
+            errorsResponse(404);
+        else if (errno == ENOTDIR){
+            if (_reqInfo.method == "DELETE"){
+                DeleteMethod();
+                return ;
+            }
+            if (cgiExt.length()){
+                // if ( _path.substr(_path.length() - cgiExt.length()) == cgiExt ){
+                    std::pair<std::string, std::string> cgiOut;
+                    std::string conn = Connection(1);
+                    cgi CGI(_reqInfo, _path, cgiExt , conn);
+                    CGI.executeFile(_CurrDirecory);
+                    if (CGI._statusCode == 500){
+                        errorsResponse(500);
+                        return;
+                    }
+                    cgiOut = CGI.parseCgiOutput(_CurrDirecory);
+                    if (cgiOut.first.find("Status: 301 Moved Permanently") == 0)
+                        _headers = "HTTP/1.1 301 301 Moved Permanently";
+                    else
+                        _headers = "HTTP/1.1 200 OK";
+                    _headers += Connection(1) + "\r\n" + cgiOut.first;
+                    _body = cgiOut.second;
+                // }
+                // else // cgiExt != _path.substr(_path.length() - cgiExt.length())
+                //     errorsResponse(502);
+                // return ;
+            }
+            else{ // cgiExt.length  == 0
+                _body = _path;
+                _headers = "HTTP/1.1 200 OK\r\nContent-type: " + _mime.getType(_reqInfo.URI) + "\r\nContent-length: " + toString(fileSize(_body));
+                if (_autoIndex == true)
+                    _headers += "\r\nContent-Disposition: attachment";
+                _headers += Connection(0);
+            }
+            return ;
+        }
+    }
+    else { // folder opened 
 
-		if (_reqInfo.method == "DELETE"){
-			closedir(folder);
-			errorsResponse(403);
-			return ;
-		}
-		if (cgiExt.length() == 0){
-			if (_reqInfo.URI != "/"){
+        if (_reqInfo.method == "DELETE"){
+            closedir(folder);
+            errorsResponse(403);
+            return ;
+        }
+        if (cgiExt.length() == 0){
+            if (_reqInfo.URI != "/"){
 
-				if ( _path[_path.length() - 1] != '/'){
-					_path += "/";
-					_body = _path + _index[0];
-					_headers = "HTTP/1.1 302 Found\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
-					if (_reqInfo.URI == "/")
-						_headers += "\r\nLocation: " + _reqInfo.URI;
-					else
-						_headers += "\r\nLocation: " + _reqInfo.URI + "/";
-					_headers += Connection(0);
-					closedir(folder);
-					return ;
-				}
-			}
-			int fd =-1;
-			size_t i = 0;
-			for (; i < _index.size(); i++){
-				fd = open((_path+"/" +_index[i]).c_str(), O_RDONLY);
-				if (fd >= 0){
-					
-					_body = _path + "/" + _index[i];
-					setOkHeaders("text/html", _body);
-					close(fd);
-					closedir(folder);
-					return ;
-				}
-				close(fd);
-			}
-			if (fd < 0){
-				if (_autoIndex == true){
-					autoIndex indx;
-					indx.setAutoIndexBody(folder, _path, _root, _location, _CurrDirecory);
-					if (indx.isError() == true)
-						errorsResponse(indx.getErrorCode());
-					else { // indx.isError == false
-						_body = indx.getBodyName();
-						setOkHeaders("text/html", _body);
-					}
-				}
-				else //autoindex == false
-					errorsResponse(404);
-				closedir(folder);
-				return ;
-			}
-		}
-		else { // cgi.length != 0
+                if ( _path[_path.length() - 1] != '/'){
+                    _path += "/";
+                    _body = _path + _index[0];
+                    _headers = "HTTP/1.1 302 Found\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+                    if (_reqInfo.URI == "/")
+                        _headers += "\r\nLocation: " + _reqInfo.URI;
+                    else
+                        _headers += "\r\nLocation: " + _reqInfo.URI + "/";
+                    _headers += Connection(0);
+                    closedir(folder);
+                    return ;
+                }
+            }
+            int fd =-1;
+            size_t i = 0;
+            for (; i < _index.size(); i++){
+                fd = open((_path+"/" +_index[i]).c_str(), O_RDONLY);
+                if (fd >= 0){
+                    
+                    _body = _path + "/" + _index[i];
+                    setOkHeaders("text/html", _body);
+                    close(fd);
+                    closedir(folder);
+                    return ;
+                }
+                close(fd);
+            }
+            if (fd < 0){
+                if (_autoIndex == true){
+                    autoIndex indx;
+                    indx.setAutoIndexBody(folder, _path, _root, _location, _CurrDirecory);
+                    if (indx.isError() == true)
+                        errorsResponse(indx.getErrorCode());
+                    else { // indx.isError == false
+                        _body = indx.getBodyName();
+                        setOkHeaders("text/html", _body);
+                    }
+                }
+                else //autoindex == false
+                    errorsResponse(404);
+                closedir(folder);
+                return ;
+            }
+        }
+        else { // cgi.length != 0
 
-			
-			for (size_t i = 0; i < _index.size(); i++){
-				if (_index[i].substr(_index[i].length() - cgiExt.length()) == cgiExt){
-					std::pair<std::string, std::string> cgiOut;
-					std::string conn = Connection(1);
-					cgi CGI(_reqInfo, _path + "/" +_index[i], cgiExt , conn);
-					CGI.executeFile(_CurrDirecory);
-
-					cgiOut = CGI.parseCgiOutput(_CurrDirecory);
-					_headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
-					_body = cgiOut.second;
-					closedir(folder);
-					return ;
-				}
-			}
-			  // no cgi file with cgiExt is found in path
-			int opn = -1;
-			for (size_t i = 0; i < _index.size(); i++){
-				opn = open((_path + '/' + _index[i]).c_str(), O_RDONLY);
-				if (opn != -1){
-					_body = _path + "/" + _index[i];
-					 setOkHeaders("text/html", _body);
-					close(opn);
-					break;
-				}
-				close(opn);
-			}
-			if (opn == -1) {
-				
-				if (_autoIndex == true) {
-					autoIndex indx;
-					// std::cout << "_path = " <<_path << " |_root == " <<  _root << std::endl;
-					indx.setAutoIndexBody(folder, _path, _root, _location, _CurrDirecory);
-					if (indx.isError() == true)
-						errorsResponse(indx.getErrorCode());
-					else { // no error in autoindex
-						_body = indx.getBodyName();
-						 setOkHeaders("text/html", _body);
-					}
-				}
-				else // autoindex is false
-					errorsResponse(404);
-			}
-			closedir(folder);
-		}   
-	}
+            
+            for (size_t i = 0; i < _index.size(); i++){
+                if (_index[i].substr(_index[i].length() - cgiExt.length()) == cgiExt){
+                    std::pair<std::string, std::string> cgiOut;
+                    std::string conn = Connection(1);
+                    cgi CGI(_reqInfo, _path + "/" +_index[i], cgiExt , conn);
+                    CGI.executeFile(_CurrDirecory);
+                    if (CGI._statusCode == 500){
+                        errorsResponse(500);
+                        return;
+                    }
+                    cgiOut = CGI.parseCgiOutput(_CurrDirecory);
+                    _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
+                    _body = cgiOut.second;
+                    closedir(folder);
+                    return ;
+                }
+            }
+              // no cgi file with cgiExt is found in path
+            int opn = -1;
+            for (size_t i = 0; i < _index.size(); i++){
+                opn = open((_path + '/' + _index[i]).c_str(), O_RDONLY);
+                if (opn != -1){
+                    _body = _path + "/" + _index[i];
+                     setOkHeaders("text/html", _body);
+                    close(opn);
+                    break;
+                }
+                close(opn);
+            }
+            if (opn == -1) {
+                
+                if (_autoIndex == true) {
+                    autoIndex indx;
+                    std::cout << "_path = " <<_path << " |_root == " <<  _root << std::endl;
+                    indx.setAutoIndexBody(folder, _path, _root, _location, _CurrDirecory);
+                    if (indx.isError() == true)
+                        errorsResponse(indx.getErrorCode());
+                    else { // no error in autoindex
+                        _body = indx.getBodyName();
+                         setOkHeaders("text/html", _body);
+                    }
+                }
+                else // autoindex is false
+                    errorsResponse(404);
+            }
+            closedir(folder);
+        }   
+    }
 
 }
 

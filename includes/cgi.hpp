@@ -17,6 +17,7 @@ class cgi{
         std::string  _out;
         std::string _connection;
     public:
+        int         _statusCode;
         cgi();
         cgi(s_requestInfo req, std::string fileName, std::string cgiExt, std::string connection);
         ~cgi();
