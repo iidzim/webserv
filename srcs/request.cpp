@@ -168,6 +168,7 @@ void    request::requestLine(std::istringstream &istr)
 	getline(istr, line);
    
 	//! split first line by spaces
+	// std::cout << line << std::endl;
    
 	std::vector<std::string> words;
 	size_t pos = 0;
@@ -186,11 +187,6 @@ void    request::requestLine(std::istringstream &istr)
 	if (words.size() != 3)//! should only be one space between them
 	{
 		_rqst.statusCode = 400;
-		throw request::RequestNotValid();
-	}
-	if (words[0] != "GET" && words[0] != "POST" && words[0] != "DELETE")
-	{
-		_rqst.statusCode = 501; //! 501 method not implemented || 405 method not allowed
 		throw request::RequestNotValid();
 	}
 	_rqst.method = words[0];
@@ -353,7 +349,7 @@ void    request::getHeaders(std::istringstream & istr)
 		//	std::coout<<
 		   // std::cout<<"ROOT + UPLOAD "<<_uploadpath<<std::endl;
 		}
-		std::cout<<"_rqst.bodyFile  | "<<_rqst.bodyFile <<std::endl;
+		// std::cout<<"_rqst.bodyFile  | "<<_rqst.bodyFile <<std::endl;
 		_rqst.fd = open(_rqst.bodyFile.c_str(), O_CREAT | O_RDWR, 0777);
 		if (_rqst.fd < 0)
 		{
@@ -570,7 +566,7 @@ void request::isBodyValid()
 					throw request::RequestNotValid();
 				}
 				if (p > 0 && _fds[0].revents & POLLOUT)
-				write(_rqst.fd, tmpLine.c_str(), tmpLine.length());
+					write(_rqst.fd, tmpLine.c_str(), tmpLine.length());
 			}
 			else
 			{

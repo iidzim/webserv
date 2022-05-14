@@ -74,9 +74,11 @@ void Response::errorsResponse(int statCode){
     int ret;
 
     _reqInfo.statusCode = statCode;
+    // std::cout <<"errorpage == "std::cout <<"errorpage == ";
     if (_servInfo.errorPage.size() == 0)
         _body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
     else{
+        // std::cout <<"errorpage == " << "_servInfo.errorPage.find(statCode)->second" << std::endl;
         if (_servInfo.errorPage.find(statCode) != _servInfo.errorPage.end()){
             int fd = open(_servInfo.errorPage.find(statCode)->second.c_str(), O_RDONLY);
             if (fd < 0)
@@ -216,7 +218,7 @@ void Response::setResponse(){
         
         std::string uri = _reqInfo.URI.substr(_location.length());
         
-        if (uri[0] != '/')
+        if (uri[0] != '/' && _root[_root.length() -1 ] != '/')
             _root += "/";
         _path = _root + uri;
     }
@@ -392,13 +394,16 @@ void Response::uploadResponse(){
 }
 std::pair<std::string, std::string> Response::get_response(){
     
-    // std::cout << "-----------------" <<  _reqInfo.URI << _reqInfo.statusCode <<"--------------------" << std::endl;
-    if (_reqInfo.statusCode == 200)
-        setResponse();
-    else if (_reqInfo.statusCode == 201)
-        uploadResponse();
-    else
-        errorsResponse(_reqInfo.statusCode);
+	if (_reqInfo.method != "GET" && _reqInfo.method != "POST" && _reqInfo.method != "DELETE")
+        errorsResponse(501);
+    else{
+        if (_reqInfo.statusCode == 200)
+            setResponse();
+        else if (_reqInfo.statusCode == 201)
+            uploadResponse();
+        else
+            errorsResponse(_reqInfo.statusCode);
+    }
     std::pair<std::string, std::string> p;
     // std::cout << "-----------------------------------------------" << std::endl;
     // std::cout << _headers << std::endl;

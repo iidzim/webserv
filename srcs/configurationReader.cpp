@@ -129,16 +129,16 @@ void configurationReader::setSize(std::vector<std::string> words,serverInfo &ser
     server.size = stoi(words[1]);
 }
 
-void configurationReader::setErrorPage(std::vector<std::string> words, serverInfo &server, locationInfos &location)
+void configurationReader::setErrorPage(std::vector<std::string> words, serverInfo &server)
 {
-    if (words.size() != 3 || _state == CLOSED || words[2].empty())
+    if (words.size() != 3 || _state != INSIDESERVER || words[2].empty())
         throw configurationReader::invalidSyntax();
     int statusCode;
     try{statusCode = stoi(words[1]);}catch(std::exception &e){throw invalidSyntax();}
-    if (_state == INSIDESERVER)
+    //if (_state == INSIDESERVER)
         server.errorPage.insert(std::make_pair(statusCode, words[2]));
-    else if (_state == INLOCATION)
-        location.errorPage.insert(std::make_pair(statusCode, words[2]));
+    // else if (_state == INLOCATION)
+    //     location.errorPage.insert(std::make_pair(statusCode, words[2]));
 }
 
 void configurationReader::setautoIndex(std::vector<std::string> words, serverInfo &server, locationInfos &location)
@@ -200,7 +200,7 @@ void clearLocation(locationInfos & location)
     location.redirect.first.clear();
     location.redirect.second.clear();
     location.allow_methods.clear();
-    location.errorPage.clear();
+//    location.errorPage.clear();
 }
 
 void resetServer(serverInfo & server)
@@ -338,7 +338,7 @@ void configurationReader::parser()
                     _state = INLOCATION;
                 }  
                 else if (words[0] == "error_page")
-                    setErrorPage(words, server, location);
+                    setErrorPage(words, server);
                 else if (words[0] == "autoindex")
                     setautoIndex(words, server, location);
                 else if (words[0] == "allow_methods")
@@ -407,6 +407,7 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
         // for (size_t j = 0; j < virtualServer[i].serverName.size(); j++)
         //     o << virtualServer[i].serverName[j] <<" ";
         // std::cout<<std::endl;
+        std::cout<<"SIze of map  "<<virtualServer[i].errorPage.size()<<std::endl;
         std::map<int, std::string>::iterator itb = virtualServer[i].errorPage.begin();
         std::map<int, std::string>::iterator ite = virtualServer[i].errorPage.end();
         o << "Error pages ";
@@ -445,14 +446,14 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
             o<< std::endl;
             // if (virtualServer[i].location[k].index.size() == 2 )
             //     o <<"index "<<virtualServer[i].location[k].index.at(0)<<" | "<<virtualServer[i].location[k].index.at(1) <<std::endl;
-            std::map<int, std::string>::iterator itb = virtualServer[i].location[k].errorPage.begin();
-            std::map<int, std::string>::iterator ite = virtualServer[i].location[k].errorPage.end();
-            o << "Error pages ";
-            while (itb != ite)
-            {
-                o<<itb->first<<" "<<itb->second <<" | ";
-                itb++;
-            }
+            // std::map<int, std::string>::iterator itb = virtualServer[i].location[k].errorPage.begin();
+            // std::map<int, std::string>::iterator ite = virtualServer[i].location[k].errorPage.end();
+            // o << "Error pages ";
+            // while (itb != ite)
+            // {
+            //     o<<itb->first<<" "<<itb->second <<" | ";
+            //     itb++;
+            // }
             }
 
         }

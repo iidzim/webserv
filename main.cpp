@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
+/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/13 20:30:12 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/05/14 16:45:02 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ void signalhandler(int signum){
 }
 
 int main(int argc, char** argv){
+
 	std::string pwd;
 	broken_pipe = false;
 	signal(SIGPIPE, signalhandler);
@@ -83,7 +84,3 @@ int main(int argc, char** argv){
 
 
 //+ curl --resolve ok.ma:8081:127.0.0.1 http://ok.ma:8081
-
-//= add a default config file
-//= leaks
-//= 
