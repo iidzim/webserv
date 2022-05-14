@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/14 16:42:40 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/14 23:14:32 by oel-yous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -217,7 +217,6 @@ void Server::socketio(std::vector<Socket>& s, std::vector<serverInfo>& server_co
 							if (port == server_conf[i].port)
 								s = server_conf[i];
 						}
-						std::cout << "HERE >" << s.errorPage.size() << std::endl; 
 						c.connections[_fds[i].fd].second = Response(c.connections[_fds[i].fd].first, s, _pwd);
 					}
 				}

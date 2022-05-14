@@ -54,10 +54,24 @@ Response::~Response(){}
 std::string Response::setErrorsHeaders(std::string ErrorMsg, std::string cLentgh){
     std::ostringstream headers;
 
-    headers << "HTTP/1.1 "<<  ErrorMsg << "\r\nContent-type: text/html\r\nContent-length: ";
+    headers << "HTTP/1.1 "<<  ErrorMsg << "\r\n";
+    if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+        headers << "Set-Cookie: "+  gen_random(4) +"=" + gen_random(8) +"\r\n";
+    headers << "Content-type: text/html\r\nContent-length: ";
     headers << cLentgh;
     headers << Connection(0);
     return headers.str();
+}
+
+std::string Response::gen_random(const int len) {
+    srand((unsigned)time(NULL));
+    const std::string x = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    std::string token;
+	token.reserve(len);
+
+    for (int i = 0; i < len; ++i)
+        token += x[rand() % (sizeof(x) - 1)];
+    return token;
 }
 
 bool Response::isFileExist(std::string pathName){
@@ -160,7 +174,7 @@ void Response::DeleteMethod(){
         return ;
     }
     else {
-        headers << "HTTP/1.1 204 No Content";
+        headers << "HTTP/1.1 204 No Content\r\n";
         headers << Connection(0);
         _body = "";
     }
@@ -168,7 +182,10 @@ void Response::DeleteMethod(){
 }
 
 void Response::setOkHeaders(std::string mType, std::string body){
-    _headers = "HTTP/1.1 200 OK\r\nContent-type: " + mType + "\r\nContent-length: " + toString(fileSize(body));
+    _headers = "HTTP/1.1 200 OK\r\n";
+    if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+        _headers += "Set-Cookie: "+  gen_random(4) +"=" + gen_random(8) +"\r\n";
+    _headers += "Content-type: " + mType + "\r\nContent-length: " + toString(fileSize(body));
     _headers += Connection(0);
 }
 
@@ -230,7 +247,10 @@ void Response::setResponse(){
         if (_path == (_root + redirect.first) || (redirect.first == "/" && _path == _root)){
             // std::cout << "ok" << std::endl;
             _body = redirect.second;
-            _headers = "HTTP/1.1 301 Moved Permanently\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+            _headers = "HTTP/1.1 301 Moved Permanently\r\n";
+            if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+                _headers += "Set-Cookie: "+  gen_random(4) +"=" + gen_random(8) +"\r\n";
+            _headers += "Content-type: text/html\r\nContent-length: " + toString(fileSize(_body));
             _headers += "\r\nLocation: " + redirect.second + "/";
             _headers += Connection(0);
             return ;
@@ -262,6 +282,8 @@ void Response::setResponse(){
                         _headers = "HTTP/1.1 301 301 Moved Permanently";
                     else
                         _headers = "HTTP/1.1 200 OK";
+                    if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+                        _headers += "\r\nSet-Cookie: "+  gen_random(4) +"=" + gen_random(8);
                     _headers += Connection(1) + "\r\n" + cgiOut.first;
                     _body = cgiOut.second;
                 // }
@@ -271,7 +293,10 @@ void Response::setResponse(){
             }
             else{ // cgiExt.length  == 0
                 _body = _path;
-                _headers = "HTTP/1.1 200 OK\r\nContent-type: " + _mime.getType(_reqInfo.URI) + "\r\nContent-length: " + toString(fileSize(_body));
+                _headers = "HTTP/1.1 200 OK\r\n";
+                if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+                    _headers += "Set-Cookie: "+  gen_random(4) +"=" + gen_random(8) +"\r\n";
+                _headers += "Content-type: " + _mime.getType(_reqInfo.URI) + "\r\nContent-length: " + toString(fileSize(_body));
                 if (_autoIndex == true)
                     _headers += "\r\nContent-Disposition: attachment";
                 _headers += Connection(0);
@@ -292,7 +317,10 @@ void Response::setResponse(){
                 if ( _path[_path.length() - 1] != '/'){
                     _path += "/";
                     _body = _path + _index[0];
-                    _headers = "HTTP/1.1 302 Found\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+                    _headers = "HTTP/1.1 302 Found\r\n";
+                    if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+                        _headers += "Set-Cookie: "+  gen_random(4) +"=" + gen_random(8) +"\r\n";
+                    _headers += "Content-type: text/html\r\nContent-length: " + toString(fileSize(_body));
                     if (_reqInfo.URI == "/")
                         _headers += "\r\nLocation: " + _reqInfo.URI;
                     else
@@ -347,7 +375,10 @@ void Response::setResponse(){
                         return;
                     }
                     cgiOut = CGI.parseCgiOutput(_CurrDirecory);
-                    _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
+                    _headers = "HTTP/1.1 200 OK\r\n";
+                    if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+                        _headers += "Set-Cookie: "+  gen_random(4) +"=" + gen_random(8);
+                    _headers += Connection(1) + "\r\n" + cgiOut.first;
                     _body = cgiOut.second;
                     closedir(folder);
                     return ;
@@ -389,7 +420,10 @@ void Response::setResponse(){
 
 void Response::uploadResponse(){
     _body = _CurrDirecory + "/var/www/upload.html";
-    _headers = "HTTP/1.1 201 created\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+    _headers = "HTTP/1.1 201 created";
+    if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+        _headers += "\r\nSet-Cookie: "+  gen_random(4) +"=" + gen_random(8) + "\r\n";
+    _headers += "Content-type: text/html\r\nContent-length: " + toString(fileSize(_body));
     _headers += Connection(0);
 }
 std::pair<std::string, std::string> Response::get_response(){

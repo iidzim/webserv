@@ -35,6 +35,8 @@ void cgi::setEnvironment()
             setenv("CONTENT_LENGTH", (it2->second).c_str(), 1);
         }
     }
+    if (_req.headers.find("cookie") != _req.headers.end())
+        setenv("HTTP_COOKIE",_req.headers.find("cookie")->second.c_str(), 1);
     setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
     setenv("QUERY_STRING", _req.query.c_str() , 1);
     setenv("REQUEST_METHOD",_req.method.c_str(), 1);
