@@ -328,7 +328,6 @@ void    request::getHeaders(std::istringstream & istr)
 			BlockMatching(servers);
 			if (!_isChunked && _size !=0 && _originContentLength > _size)
 			{
-		 //   std::cout<<"REQUEST NOT VALID !"<<std::endl;
 				_rqst.statusCode = 413; //request entity too large
 				throw request::RequestNotValid();
 			}
@@ -351,13 +350,13 @@ void    request::getHeaders(std::istringstream & istr)
 		 //   std::cout<<"----------" <<_uploadpath<<std::endl;
 			_rqst.statusCode = 201;
 			_rqst.bodyFile = _uploadpath+_rqst.bodyFile+getMimeType();
+		//	std::coout<<
 		   // std::cout<<"ROOT + UPLOAD "<<_uploadpath<<std::endl;
 		}
 		// std::cout<<"_rqst.bodyFile  | "<<_rqst.bodyFile <<std::endl;
 		_rqst.fd = open(_rqst.bodyFile.c_str(), O_CREAT | O_RDWR, 0777);
 		if (_rqst.fd < 0)
 		{
-			std::cout << "HERE1\n";
 			_rqst.statusCode = 500;
 			close(_rqst.fd);
 			throw request::RequestNotValid();
@@ -571,7 +570,7 @@ void request::isBodyValid()
 					throw request::RequestNotValid();
 				}
 				if (p > 0 && _fds[0].revents & POLLOUT)
-				write(_rqst.fd, tmpLine.c_str(), tmpLine.length());
+					write(_rqst.fd, tmpLine.c_str(), tmpLine.length());
 			}
 			else
 			{

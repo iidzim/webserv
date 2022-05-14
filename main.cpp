@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/13 20:28:38 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/14 15:47:38 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,8 +27,8 @@ void signalhandler(int signum){
 }
 
 int main(int argc, char** argv){
+
 	std::string pwd;
-	pwd = getCurrentDirectory();
 	broken_pipe = false;
 	signal(SIGPIPE, signalhandler);
 	if (argc > 2){
@@ -84,7 +84,3 @@ int main(int argc, char** argv){
 
 
 //+ curl --resolve ok.ma:8081:127.0.0.1 http://ok.ma:8081
-
-//= add a default config file
-//= leaks
-//= 

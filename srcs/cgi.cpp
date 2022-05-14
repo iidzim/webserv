@@ -65,7 +65,6 @@ void cgi::executeFile(std::string CurrPath)
             args[1] = (char*)_fileName.c_str();
             args[2] = NULL;
             execve(args[0], args, environ);
-            write(2, "---123\n", 7);
         }
         else if (_cgiExtention == ".php"){
             char *args[3];
@@ -77,7 +76,7 @@ void cgi::executeFile(std::string CurrPath)
 
         }
     }
-    while ( std::time(NULL) - t < 3) 
+    while (std::time(NULL) - t < 3) 
         waitpid(pid, &stat, WNOHANG);
     close(fd1);
     close (fd);

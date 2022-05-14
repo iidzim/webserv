@@ -12,7 +12,6 @@ void autoIndex::setAutoIndexBody(DIR *folder, std::string path, std::string root
     // char cwd[256];
     // std::string currPath(getcwd(cwd, sizeof(cwd)));
     std::string autoIndexPath = CurrPath + "/var/www/html/autoindex.html";
-
     std::ofstream out(autoIndexPath);
     struct dirent *entry;
     result << "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>YDA</title></head><body><div class='page'><h1> Index of";
@@ -23,7 +22,7 @@ void autoIndex::setAutoIndexBody(DIR *folder, std::string path, std::string root
         href = location + path.substr(root.length());
         result << "<tr>";
         result << "<th> <a href='" << href;
-        if (path[path.length()-1] != '/')
+        if (href[href.length()-1] != '/')
             result << "/";
         result <<  entry->d_name << "'>" << entry->d_name <<"</th>";
         result << "<th>" << lastTimeModified(path + "/" + entry->d_name) << "</th>";
