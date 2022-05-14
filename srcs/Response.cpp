@@ -225,8 +225,9 @@ void Response::setResponse(){
     }
 
     if (redirect.second.length() != 0){
-        if (_path == (_root + redirect.first)){
-            _body = _path;
+        if (_path == (_root + redirect.first) || (redirect.first == "/" && _path == _root)){
+            // std::cout << "ok" << std::endl;
+            _body = redirect.second;
             _headers = "HTTP/1.1 301 Moved Permanently\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
             _headers += "\r\nLocation: " + redirect.second + "/";
             _headers += Connection(0);
@@ -250,6 +251,10 @@ void Response::setResponse(){
                     std::string conn = Connection(1);
                     cgi CGI(_reqInfo, _path, cgiExt , conn);
                     CGI.executeFile(_CurrDirecory);
+                    if (CGI._statusCode == 500){
+                        errorsResponse(500);
+                        return;
+                    }
                     cgiOut = CGI.parseCgiOutput(_CurrDirecory);
                     if (cgiOut.first.find("Status: 301 Moved Permanently") == 0)
                         _headers = "HTTP/1.1 301 301 Moved Permanently";
@@ -335,7 +340,10 @@ void Response::setResponse(){
                     std::string conn = Connection(1);
                     cgi CGI(_reqInfo, _path + "/" +_index[i], cgiExt , conn);
                     CGI.executeFile(_CurrDirecory);
-
+                    if (CGI._statusCode == 500){
+                        errorsResponse(500);
+                        return;
+                    }
                     cgiOut = CGI.parseCgiOutput(_CurrDirecory);
                     _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
                     _body = cgiOut.second;

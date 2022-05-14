@@ -6,6 +6,7 @@ cgi::cgi(){
 
 cgi::cgi(s_requestInfo req, std::string fileName, std::string cgiExt, std::string connection): _req(req), _fileName(fileName), _cgiExtention(cgiExt), _connection(connection){
     _body = "";
+    _statusCode = 200;
 }
 
 cgi::~cgi(){}
@@ -46,7 +47,7 @@ void cgi::setEnvironment()
 void cgi::executeFile(std::string CurrPath)
 {
     setEnvironment();
-    pid_t pid;
+    pid_t pid, id = -1;
     _body = CurrPath + "/var/www/html/cgiOutput.html";
     int fd1 = open(_req.bodyFile.c_str(), O_RDONLY);
     int fd = open(_body.c_str(), O_CREAT| O_RDONLY | O_WRONLY , 0644);
@@ -77,7 +78,13 @@ void cgi::executeFile(std::string CurrPath)
         }
     }
     while (std::time(NULL) - t < 3) 
-        waitpid(pid, &stat, WNOHANG);
+        id = waitpid(pid, &stat, WNOHANG);
+    if (id == 0){
+        close(fd1);
+        close (fd);
+        _statusCode = 500;
+        return ;
+    }
     close(fd1);
     close (fd);
 
