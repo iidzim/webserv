@@ -245,7 +245,7 @@ void Response::setResponse(){
     }
 
     if (redirect.second.length() != 0){
-        std::cout << _path << std::endl;
+        // std::cout << _path << std::endl;
         if (_path == (_root + redirect.first) || (redirect.first == "/" && _path == _root)){
             _body = redirect.second;
             _headers = "HTTP/1.1 301 Moved Permanently\r\n";
@@ -399,7 +399,7 @@ void Response::setResponse(){
                 
                 if (_autoIndex == true) {
                     autoIndex indx;
-                    std::cout << "_path = " <<_path << " |_root == " <<  _root << std::endl;
+                    // std::cout << "_path = " <<_path << " |_root == " <<  _root << std::endl;
                     indx.setAutoIndexBody(folder, _path, _root, _location, _CurrDirecory);
                     if (indx.isError() == true)
                         errorsResponse(indx.getErrorCode());

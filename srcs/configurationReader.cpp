@@ -407,7 +407,7 @@ std::ostream& operator<<(std::ostream& o, configurationReader const & rhs)
         // for (size_t j = 0; j < virtualServer[i].serverName.size(); j++)
         //     o << virtualServer[i].serverName[j] <<" ";
         // std::cout<<std::endl;
-        std::cout<<"SIze of map  "<<virtualServer[i].errorPage.size()<<std::endl;
+        // std::cout<<"SIze of map  "<<virtualServer[i].errorPage.size()<<std::endl;
         std::map<int, std::string>::iterator itb = virtualServer[i].errorPage.begin();
         std::map<int, std::string>::iterator ite = virtualServer[i].errorPage.end();
         o << "Error pages ";

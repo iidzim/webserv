@@ -223,8 +223,12 @@ void    request::getHeaders(std::istringstream & istr)
 		
 		//! split by :
 		size_t pos = line.find(":");
-
-		if (pos != std::string::npos)
+		if (pos == std::string::npos)
+		{
+			_rqst.statusCode = 400;
+			throw request::RequestNotValid();
+		}
+		else if (pos != std::string::npos)
 		{
 			std::string fieldName = line.substr(0, pos);
 			//convert to lower case
@@ -658,7 +662,6 @@ bool request::isComplete()
 	{
 		if (_bodyComplete)
 		{
-			std::cout << "-4-" << _rqst.fd << std::endl; //**************
 			close(_rqst.fd);
 			tmpFile.close();
 			std::remove("tmp.txt");

@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/15 15:55:52 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/15 16:21:09 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,22 +69,19 @@ void Server::recv_request(int i, Clients *c, std::vector<serverInfo>& server_con
 		_fds.erase(_fds.begin() + i);
 		return;
 	}
-	_buffer[r] = '\0';
 	c->connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(server_conf), Response())));
 	try{
-		// std::cout << _buffer << std::endl;
+		// _buffer[r] = '\0';
 		c->connections[_fds[i].fd].first.parse(_buffer, r);
 	}
 	catch(request::RequestNotValid &e){
 		c->connections[_fds[i].fd].first.forceStopParsing();
 	}
-	memset(_buffer, 0, sizeof(_buffer));
-	// when the request is complete switch the type of event to POLLOUT
 	if (c->connections[_fds[i].fd].first.isComplete()){
-
 		// std::cout << _fds[i].fd << " - Request is complete " << std::endl;
 		_fds[i].events = POLLOUT;
 	}
+	memset(_buffer, 0, sizeof(_buffer));
 }
 
 void Server::close_fd(void){
