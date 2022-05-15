@@ -196,7 +196,6 @@ void Response::setResponse(){
     std::string cgiExt ="";
     std::pair<std::string, std::string> redirect;
     for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
-
         if (_servInfo.location[i].uri == "/"  || _reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
             || (_reqInfo.URI.find(_servInfo.location[i].uri + "/") == 0 && _servInfo.location[i].uri.size() > 1)) {
             _root = _servInfo.location[i].root;
@@ -270,7 +269,12 @@ void Response::setResponse(){
                 return ;
             }
             if (cgiExt.length()){
-                // if ( _path.substr(_path.length() - cgiExt.length()) == cgiExt ){
+                if ((cgiExt == ".py" && _path.find(".php") == _path.length() - 4) 
+                || (cgiExt == ".php" && _path.find(".py") == _path.length() - 3) ){
+                    errorsResponse(502);
+                    return ;
+                }
+                else {
                     std::pair<std::string, std::string> cgiOut;
                     std::string conn = Connection(1);
                     cgi CGI(_reqInfo, _path, cgiExt , conn);
@@ -288,7 +292,7 @@ void Response::setResponse(){
                         _headers += "\r\nSet-Cookie: "+  gen_random(4) +"=" + gen_random(8);
                     _headers += Connection(1) + "\r\n" + cgiOut.first;
                     _body = cgiOut.second;
-                // }
+                }
             }
             else{ // cgiExt.length  == 0
                 _body = _path;
@@ -427,9 +431,8 @@ void Response::uploadResponse(){
 }
 std::pair<std::string, std::string> Response::get_response(){
 
-	if (_reqInfo.method != "GET" && _reqInfo.method != "POST" && _reqInfo.method != "DELETE"){
+	if (_reqInfo.method != "GET" && _reqInfo.method != "POST" && _reqInfo.method != "DELETE")
 		errorsResponse(501);
-    }
 	else{
 		if (_reqInfo.statusCode == 200)
 			setResponse();
@@ -487,7 +490,6 @@ int fileSize(std::string fileName){
 bool Response::is_complete(int len, std::string filename){
 
 	_cursor += len;
-	// std::cout << "sending .... " << _cursor << std::endl;
 	if ((size_t)_cursor >= fileSize(filename) + _headers.size())
 		return true;
 	return false;
