@@ -195,12 +195,14 @@ void Response::setResponse(){
     DIR *folder;
     std::string cgiExt ="";
     std::pair<std::string, std::string> redirect;
+    // std::cout << "_reqInfo.URI == " <<_reqInfo.URI << std::endl;
     for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
-        if (_servInfo.location[i].uri == "/"  || _reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
-            || (_reqInfo.URI.find(_servInfo.location[i].uri + "/") == 0 && _servInfo.location[i].uri.size() > 1)) {
+        if ((_servInfo.location[i].uri == "/" ) || _reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
+            || (_reqInfo.URI.find(_servInfo.location[i].uri + "/") == 0 && _reqInfo.URI.length() > 1)) {
             _root = _servInfo.location[i].root;
             _location = _servInfo.location[i].uri;
             isLoc = true;
+            // std::cout << "location is in" << _servInfo.location[i].uri << std::endl;
             _index = _servInfo.location[i].index;
             cgiExt = _servInfo.location[i].cgi;
             redirect = _servInfo.location[i].redirect;
@@ -244,19 +246,19 @@ void Response::setResponse(){
     }
 
     if (redirect.second.length() != 0){
-        // std::cout << _path << std::endl;
-        if (_path == (_root + redirect.first) || (redirect.first == "/" && _path == _root)){
+        if (_root[_root.length() - 1] != '/' && redirect.first[0] != '/')
+            _root += "/";
+        if (_path == (_root + redirect.first)  || (redirect.first == "/" && _path == _root)){
             _body = redirect.second;
             _headers = "HTTP/1.1 301 Moved Permanently\r\n";
             if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
                 _headers += "Set-Cookie: "+  gen_random(4) +"=" + gen_random(8) +"\r\n";
             _headers += "Content-type: text/html\r\nContent-length: " + toString(fileSize(_body));
-            _headers += "\r\nLocation: "  +redirect.second + "/";
+            _headers += "\r\nLocation: "  +redirect.second;
             _headers += Connection(0);
             return ;
         }
     }
-   
     folder = opendir(_path.c_str());
     if (!folder){
         if (errno == EACCES)
@@ -429,8 +431,7 @@ void Response::uploadResponse(){
     _headers += "Content-type: text/html\r\nContent-length: " + toString(fileSize(_body));
     _headers += Connection(0);
 }
-std::pair<std::string, std::string> Response::get_response(){
-
+std::pair<std::string, std::string> Response::get_response(){ 
 	if (_reqInfo.method != "GET" && _reqInfo.method != "POST" && _reqInfo.method != "DELETE")
 		errorsResponse(501);
 	else{

@@ -178,7 +178,6 @@ void    request::requestLine(std::istringstream &istr)
 	}
 	else
 		_rqst.URI = words[1];
-
 	//* http version
 	//! erase \r at the end of the line
 	words[2].erase(words[2].end() - 1);

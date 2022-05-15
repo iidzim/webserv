@@ -243,8 +243,6 @@ void configurationReader::defaultForMissingValues(serverInfo &server)
         server.port = 8000;
         server.host = convertStrIPv4toUnsinedInt("127.0.0.1");
     }
-    // if (server.size == 0)
-    //     server.size = 1000000;
     if (server.root.empty())
     {
         char buf[256];
@@ -261,7 +259,11 @@ void configurationReader::defaultForMissingValues(serverInfo &server)
 void configurationReader::defaultForMissingValues(locationInfos &location)
 {
     if (location.allow_methods.empty())
+    {
         location.allow_methods.push_back("GET");
+        location.allow_methods.push_back("POST");
+
+    }
 }
 
 std::vector<std::string> configurationReader::splitbySpace(std::string& line)
