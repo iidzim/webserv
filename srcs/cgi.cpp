@@ -49,16 +49,19 @@ void cgi::setEnvironment()
 void cgi::executeFile(std::string CurrPath)
 {
     setEnvironment();
-    pid_t pid, id = -1;
+    pid_t pid;
+    int ret = 0;
     _body = CurrPath + "/var/www/html/cgiOutput.html";
+    std::remove(_body.c_str());
     int fd1 = open(_req.bodyFile.c_str(), O_RDONLY);
-    int fd = open(_body.c_str(), O_CREAT| O_RDONLY | O_WRONLY , 0644);
-    std::time_t t = std::time(NULL);
+    int fd = open(_body.c_str(), O_CREAT| O_RDWR | O_TRUNC , 0777);
     pid = fork();
     int stat = 0;
     if (pid == 0){
         if (_req.method == "POST")
             dup2(fd1, 0);
+        else
+            dup2(fd, 0);
         dup2(fd, 1);
         if (_cgiExtention == ".py")
         {
@@ -79,12 +82,22 @@ void cgi::executeFile(std::string CurrPath)
 
         }
     }
-    while (std::time(NULL) - t < 3) 
-        id = waitpid(pid, &stat, WNOHANG);
-    if (id == 0){
+    else {
+
+        time_t t = time(NULL);
+        while ((time(NULL) - t) < 3) {
+            if (waitpid(pid, &stat, WNOHANG)> 0) {
+                if (WIFEXITED(stat)) {
+                    ret = 1;
+                    break ;
+                }
+            }
+        }
+    }
+    if (ret ==  0){
+        _statusCode = 500;
         close(fd1);
         close (fd);
-        _statusCode = 500;
         return ;
     }
     close(fd1);

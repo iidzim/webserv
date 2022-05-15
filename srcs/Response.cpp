@@ -88,11 +88,9 @@ void Response::errorsResponse(int statCode){
 	int ret;
 
 	_reqInfo.statusCode = statCode;
-	// std::cout <<"errorpage == "std::cout <<"errorpage == ";
 	if (_servInfo.errorPage.size() == 0)
 		_body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
 	else{
-		// std::cout <<"errorpage == " << "_servInfo.errorPage.find(statCode)->second" << std::endl;
 		if (_servInfo.errorPage.find(statCode) != _servInfo.errorPage.end()){
 			int fd = open(_servInfo.errorPage.find(statCode)->second.c_str(), O_RDONLY);
 			if (fd < 0)
@@ -291,9 +289,6 @@ void Response::setResponse(){
                     _headers += Connection(1) + "\r\n" + cgiOut.first;
                     _body = cgiOut.second;
                 // }
-                // else // cgiExt != _path.substr(_path.length() - cgiExt.length())
-                //     errorsResponse(502);
-                // return ;
             }
             else{ // cgiExt.length  == 0
                 _body = _path;
