@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/14 16:45:02 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/15 14:16:55 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,30 +37,26 @@ int main(int argc, char** argv){
 	}
 	pwd = getCurrentDirectory();
 	try{
-		// signal(SIGPIPE, signalhandler);
+		std::string path;
 		if (argc == 1)
-			//* add default configuration file
-			Socket a;
+			path = "/Users/iidzim/Desktop/webserv/configFile/valid_confg/default"; ///! a replace
 		else
-		{
-			std::vector<int> ports;
-			std::vector<Socket> sockets;
-			std::string path = argv[1];
-			configurationReader cfg_reader(path);
-			cfg_reader.parser();
-			// std::cout<<cfg_reader<<std::endl;
-    		std::vector<serverInfo> virtualServer = cfg_reader.getVirtualServer();
-			// std::cout<<cfg_reader<<std::endl;
-    		for (size_t i = 0; i < virtualServer.size(); i++){
-				if (std::find(ports.begin(), ports.end(), virtualServer[i].port) == ports.end()){
-					ports.push_back(virtualServer[i].port);
-					sockets.push_back(Socket(virtualServer[i].port));
-				}
+			path = argv[1];	
+		std::vector<int> ports;
+		std::vector<Socket> sockets;
+		configurationReader cfg_reader(path);
+		cfg_reader.parser();
+    	std::vector<serverInfo> virtualServer = cfg_reader.getVirtualServer();
+		// std::cout<<cfg_reader<<std::endl;
+    	for (size_t i = 0; i < virtualServer.size(); i++){
+			if (std::find(ports.begin(), ports.end(), virtualServer[i].port) == ports.end()){
+				ports.push_back(virtualServer[i].port);
+				sockets.push_back(Socket(virtualServer[i].port));
 			}
-			Server s(sockets, virtualServer, pwd);
-			ports.clear();
-			sockets.clear();
 		}
+		Server s(sockets, virtualServer, pwd);
+		ports.clear();
+		sockets.clear();
 	}
 	catch (std::exception &e){
 		std::cerr << e.what() << std::endl;

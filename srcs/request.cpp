@@ -24,41 +24,14 @@
 
 //! if a message is received without transfer-Encoding and content length , the transfer-encoding overrides the content length.
 
-//! if a message is received without transefer-Encoding and with multiple content-length => BAD-REQUEST
 //! if a valid content-length header field is present without transfer-encoding , the value defines 
 	//! the expected message body length
 
-//! if this is a request message and none f the above are true => then message body length is zero
 
 //! if there is a message body  without content-length => response 411 (length required)
 
-//! A message body that uses the chunked transfer coding is incomplete if the zero-sized chunk that terminates the encoding has not been received.
-//! A message that uses a valid Content-Length is incomplete if the size of the message body received (in octets) is less than the value given by Content-Length.
-
-// request::request(){}
-
-
-//! The default, NGINX timeout is 60 seconds => error 504: Gateway Timeout
-
-// request::request()//  _headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
-// {
-//     // _rqst.method = "";
-//     // _rqst.URI = "";
-//     // _rqst.versionHTTP = "";
-//     // _rqst.query = "";
-//     // _rqst.statusCode = 200;
-//     // _contentLength = 0;
-	
-//     std::cout<<"request called default !"<<std::endl;
-// }
-
 request::request():  _begin(true),_headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
 {
-//    _start = std::time(NULL);
-//    std::cout<<"_start "<<_start<<std::endl;
-//    std::this_thread::sleep_for(std::chrono::seconds(30));
-//    std::cout<<"_end "<<std::time(NULL);
-//    std::cout<<"durae"<<std::time(NULL) - _start <<std::endl;
 	_port = -1;
 	_host.clear();
 	_data.clear();
@@ -72,18 +45,12 @@ request::request():  _begin(true),_headersComplete(false), _bodyComplete(false),
 	_contentLength = 0;
 	_originContentLength = 0;
 	_contentType.clear();
-	
-	// std::cout<<"default constructor called !!"<<std::endl;
+
 }
 
 request::request(std::vector<serverInfo> &servers):  _begin(true),_headersComplete(false), _bodyComplete(false), _isChunked(false), _isBodyExcpected(false)
 {
-//    _start = std::time(NULL);
-//    std::cout<<"_start "<<_start<<std::endl;
-//    std::this_thread::sleep_for(std::chrono::seconds(30));
-//    std::cout<<"_end "<<std::time(NULL);
-//    std::cout<<"durae"<<std::time(NULL) - _start <<std::endl;
-   
+	_start = std::time(NULL);  
 	_uploadpath.clear();
 	_root.clear();
 	_port = -1;
@@ -112,6 +79,7 @@ request::request(const request& obj)
 
 request& request::operator=(const request& obj)
 {
+	_start = obj._start;
 	_begin = obj._begin;
 	_port = obj._port;
 	_host = obj._host;
@@ -125,12 +93,23 @@ request& request::operator=(const request& obj)
 	_originContentLength = obj._originContentLength;
 	_contentType = obj._contentType;
 	this->servers = obj.servers;
+	_rqst.fd = obj._rqst.fd; //!
 	_size = obj._size;
 	
 	return *this;
 }
 
 request::~request(){}
+
+void request::resetTime()
+{
+	_start = std::time(NULL);
+}
+
+std::time_t request::getTime()
+{
+	return _start;
+}
 
 void request::deleteOptionalWithespaces(std::string & fieldValue)
 {
@@ -197,7 +176,7 @@ void    request::requestLine(std::istringstream &istr)
 		_isBodyExcpected = true;
 
 		//create a tmp file
-		tmpFile.open("tmp.txt", std::ios::out | std::ios::app); //replace it by vector
+		tmpFile.open("tmp.txt", std::ios::out | std::ios::app); //replace it by vector //????????????????????????????????????????????
 
 	}
 	pos = words[1].find("?");
@@ -268,7 +247,10 @@ void    request::getHeaders(std::istringstream & istr)
 				//    std::cout<<"["<<fieldName<<"-> "<< fieldValue<<"]"<<std::endl;
 				deleteOptionalWithespaces(fieldValue);
 				if (fieldName == "transfer-encoding" && fieldValue == "chunked")
+				{
 					_isChunked = true;
+				//	tmpFile.open("tmp.txt", std::ios::out | std::ios::app);
+				}
 				else if (fieldName == "host")
 				{
 
@@ -354,6 +336,7 @@ void    request::getHeaders(std::istringstream & istr)
 		if (_rqst.fd < 0)
 		{
 			_rqst.statusCode = 500;
+			std::cout << "-2-" << _rqst.fd << std::endl; //**************
 			close(_rqst.fd);
 			throw request::RequestNotValid();
 		}
@@ -507,7 +490,6 @@ void request::isBodyValid()
 		if (size == 0)
 		{
 			isDone = true;
-			//test totalBytes with the size of the file
 			_bodyComplete = true;
 			tmpFile.close();
 			if (_size != 0 && totalBytes > _size)
@@ -585,15 +567,13 @@ void request::isBodyValid()
 					write(_rqst.fd, line.c_str(), line.length());
 		  }
 	 }
-   
-	// std::cout<<"Total Byres " << totalBytes<<std::endl;
-	// std::cout<<"Size " << _size<<std::endl;
 }
 
 void request::parse(char *buffer, size_t r)
 {
 	size_t i;
 	int p;
+	resetTime();
 	if (!_headersComplete)
 	{
 		i = 0;
@@ -622,7 +602,7 @@ void request::parse(char *buffer, size_t r)
 			if (p > 0 && _fds[0].revents & POLLOUT)
 				write(_rqst.fd, buffer, i);
 		}
-		else
+		else if (_isChunked)
 		{
 			size_t i = 0;
 			while(i < r)
@@ -654,7 +634,6 @@ void request::parse(char *buffer, size_t r)
 					while (i < leftdata.size() && _contentLength < _originContentLength) //&& _contentLength < stoul(_rqst.headers["content-length"]))
 					{
 						_contentLength++;
-						// my_file<<leftdata[i];
 						i++;
 					}
 					p = poll(_fds, 1, -1);
@@ -698,16 +677,34 @@ void request::print_request()
 	}
 }
 
+void request::closefds()
+{
+	if (_isBodyExcpected)
+	{
+		std::cout << "-3-" << _rqst.fd << std::endl; //**************
+		close(_rqst.fd);
+		tmpFile.close();
+		std::remove("tmp.txt");
+	}
+}
+
+bool request::getComplete()
+{
+	if (_headersComplete && (_bodyComplete || !_isBodyExcpected))
+		return true;
+	return false;
+}
+
 bool request::isComplete()
 {
 	if (_headersComplete && (_bodyComplete || !_isBodyExcpected))
 	{
 		if (_bodyComplete)
 		{
+			std::cout << "-4-" << _rqst.fd << std::endl; //**************
 			close(_rqst.fd);
-		// my_file.close();
-		tmpFile.close();
-		//std::remove("tmp.txt");
+			tmpFile.close();
+			std::remove("tmp.txt");
 		}
 		return true;
 	}

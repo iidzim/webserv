@@ -3,6 +3,7 @@
 
 Response::Response(request req, std::string pwd): _headers(""), _body(""), _reqInfo(req.getRequest()), _cursor(0){
 	_CurrDirecory = pwd;
+    std::cout << "---------" <<_CurrDirecory << std::endl;
 	_iskeepAlive = true;
 	_autoIndex = false;
 	_location = "";
@@ -20,6 +21,7 @@ Response::Response(): _headers(""), _body(""), _cursor(0) {
 
 Response::Response(request req, serverInfo s, std::string pwd):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
 	_CurrDirecory = pwd;
+    std::cout << "---------" <<_CurrDirecory << std::endl;
 	_iskeepAlive = true;
 	_autoIndex = false;
 	_location = "";
@@ -64,6 +66,7 @@ bool Response::isFileExist(std::string pathName){
 	int fd = open(pathName.c_str(), O_RDONLY);
 	if (fd < 0)
 		return false;
+	std::cout << "-5-" << fd << std::endl; //**************
 	close(fd);
 	return true;
 }
@@ -85,6 +88,7 @@ void Response::errorsResponse(int statCode){
 				_body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
 			else
 				_body = _servInfo.errorPage.find(statCode)->second;
+			std::cout << "-6-" << fd << std::endl; //**************
 			close(fd);
 		}
 		else
@@ -233,9 +237,11 @@ void Response::setResponse(){
             _headers = "HTTP/1.1 301 Moved Permanently\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
             _headers += "\r\nLocation: " + redirect.second + "/";
             _headers += Connection(0);
+            std::cout << "redirect ====== " << redirect.second << std::endl;
             return ;
         }
     }
+    std::cout << "_path ====== " << _path << std::endl;
     folder = opendir(_path.c_str());
     if (!folder){
         if (errno == EACCES)
@@ -310,10 +316,12 @@ void Response::setResponse(){
                     
                     _body = _path + "/" + _index[i];
                     setOkHeaders("text/html", _body);
+			        std::cout << "-7-" << fd << std::endl; //**************
                     close(fd);
                     closedir(folder);
                     return ;
                 }
+			    std::cout << "-8-" << fd << std::endl; //**************
                 close(fd);
             }
             if (fd < 0){
@@ -359,11 +367,13 @@ void Response::setResponse(){
                 opn = open((_path + '/' + _index[i]).c_str(), O_RDONLY);
                 if (opn != -1){
                     _body = _path + "/" + _index[i];
-                     setOkHeaders("text/html", _body);
+                    setOkHeaders("text/html", _body);
+			        std::cout << "-9-" << opn << std::endl; //*************
                     close(opn);
                     break;
                 }
                 close(opn);
+			    std::cout << "-10-" << opn << std::endl; //**************
             }
             if (opn == -1) {
                 
@@ -405,10 +415,10 @@ std::pair<std::string, std::string> Response::get_response(){
 			errorsResponse(_reqInfo.statusCode);
 	}
 	std::pair<std::string, std::string> p;
-	// std::cout << "-----------------------------------------------" << std::endl;
-	// std::cout << _headers << std::endl;
-	// std::cout << _body << std::endl;
-	// std::cout << "-----------------------------------------------" << std::endl;
+	std::cout << "-----------------------------------------------" << std::endl;
+	std::cout << _headers << std::endl;
+	std::cout << _body << std::endl;
+	std::cout << "-----------------------------------------------" << std::endl;
 	p.first = _headers;
 	p.second = _body;
 	return (p);
@@ -449,6 +459,7 @@ int fileSize(std::string fileName){
 	if (fd >= 0){
 		ret = lseek(fd, 0, SEEK_END);
 		lseek(fd, 0, SEEK_SET);
+		std::cout << "-11-" << fd << std::endl; //**************
 		close (fd);
 	}
 	return (ret);

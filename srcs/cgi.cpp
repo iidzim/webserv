@@ -79,6 +79,7 @@ void cgi::executeFile(std::string CurrPath)
     }
     while (std::time(NULL) - t < 3) 
         id = waitpid(pid, &stat, WNOHANG);
+    std::cout << fd1 << " -1- " << fd << std::endl; ///******************
     if (id == 0){
         close(fd1);
         close (fd);
