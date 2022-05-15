@@ -167,17 +167,20 @@ void Response::DeleteMethod(){
             return ;
         }
     }
-    fd = unlink(_path.c_str());
+    fd = open(_path.c_str(), O_RDONLY);
     if (fd < 0){
         if (errno == EACCES)
             errorsResponse(403);
+        close(fd);
         return ;
     }
     else {
-        headers << "HTTP/1.1 204 No Content\r\n";
+        close(fd);
+        headers << "HTTP/1.1 204 No Content";
         headers << Connection(0);
         _body = "";
     }
+    std::remove(_path.c_str());
     _headers = headers.str();
 }
 
@@ -196,7 +199,7 @@ void Response::setResponse(){
     std::pair<std::string, std::string> redirect;
     for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
 
-        if (_servInfo.location[i].uri == "/" || _reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
+        if (_servInfo.location[i].uri == "/"  || _reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
             || (_reqInfo.URI.find(_servInfo.location[i].uri + "/") == 0 && _servInfo.location[i].uri.size() > 1)) {
             _root = _servInfo.location[i].root;
             _location = _servInfo.location[i].uri;
@@ -244,18 +247,19 @@ void Response::setResponse(){
     }
 
     if (redirect.second.length() != 0){
+        std::cout << _path << std::endl;
         if (_path == (_root + redirect.first) || (redirect.first == "/" && _path == _root)){
-            // std::cout << "ok" << std::endl;
             _body = redirect.second;
             _headers = "HTTP/1.1 301 Moved Permanently\r\n";
             if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
                 _headers += "Set-Cookie: "+  gen_random(4) +"=" + gen_random(8) +"\r\n";
             _headers += "Content-type: text/html\r\nContent-length: " + toString(fileSize(_body));
-            _headers += "\r\nLocation: " + redirect.second + "/";
+            _headers += "\r\nLocation: "  +redirect.second + "/";
             _headers += Connection(0);
             return ;
         }
     }
+   
     folder = opendir(_path.c_str());
     if (!folder){
         if (errno == EACCES)
@@ -428,8 +432,9 @@ void Response::uploadResponse(){
 }
 std::pair<std::string, std::string> Response::get_response(){
 
-	if (_reqInfo.method != "GET" && _reqInfo.method != "POST" && _reqInfo.method != "DELETE")
+	if (_reqInfo.method != "GET" && _reqInfo.method != "POST" && _reqInfo.method != "DELETE"){
 		errorsResponse(501);
+    }
 	else{
 		if (_reqInfo.statusCode == 200)
 			setResponse();
@@ -439,10 +444,6 @@ std::pair<std::string, std::string> Response::get_response(){
 			errorsResponse(_reqInfo.statusCode);
 	}
 	std::pair<std::string, std::string> p;
-	// std::cout << "-----------------------------------------------" << std::endl;
-	// std::cout << _headers << std::endl;
-	// std::cout << _body << std::endl;
-	// std::cout << "-----------------------------------------------" << std::endl;
 	p.first = _headers;
 	p.second = _body;
 	return (p);
