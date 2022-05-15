@@ -13,6 +13,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <algorithm>
+#include <ctime>
 #include <stdlib.h>
 
 

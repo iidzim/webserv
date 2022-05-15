@@ -3,7 +3,6 @@
 
 Response::Response(request req, std::string pwd): _headers(""), _body(""), _reqInfo(req.getRequest()), _cursor(0){
 	_CurrDirecory = pwd;
-    std::cout << "---------" <<_CurrDirecory << std::endl;
 	_iskeepAlive = true;
 	_autoIndex = false;
 	_location = "";
@@ -21,7 +20,6 @@ Response::Response(): _headers(""), _body(""), _cursor(0) {
 
 Response::Response(request req, serverInfo s, std::string pwd):  _headers(""), _body(""), _reqInfo(req.getRequest()), _servInfo(s), _cursor(0) {
 	_CurrDirecory = pwd;
-    std::cout << "---------" <<_CurrDirecory << std::endl;
 	_iskeepAlive = true;
 	_autoIndex = false;
 	_location = "";
@@ -56,17 +54,30 @@ Response::~Response(){}
 std::string Response::setErrorsHeaders(std::string ErrorMsg, std::string cLentgh){
 	std::ostringstream headers;
 
-	headers << "HTTP/1.1 "<<  ErrorMsg << "\r\nContent-type: text/html\r\nContent-length: ";
-	headers << cLentgh;
-	headers << Connection(0);
-	return headers.str();
+    headers << "HTTP/1.1 "<<  ErrorMsg << "\r\n";
+    if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+        headers << "Set-Cookie: "+  gen_random(4) +"=" + gen_random(8) +"\r\n";
+    headers << "Content-type: text/html\r\nContent-length: ";
+    headers << cLentgh;
+    headers << Connection(0);
+    return headers.str();
+}
+
+std::string Response::gen_random(const int len) {
+    srand((unsigned)time(NULL));
+    const std::string x = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    std::string token;
+	token.reserve(len);
+
+    for (int i = 0; i < len; ++i)
+        token += x[rand() % (sizeof(x) - 1)];
+    return token;
 }
 
 bool Response::isFileExist(std::string pathName){
 	int fd = open(pathName.c_str(), O_RDONLY);
 	if (fd < 0)
 		return false;
-	std::cout << "-5-" << fd << std::endl; //**************
 	close(fd);
 	return true;
 }
@@ -77,18 +88,15 @@ void Response::errorsResponse(int statCode){
 	int ret;
 
 	_reqInfo.statusCode = statCode;
-	// std::cout <<"errorpage == "std::cout <<"errorpage == ";
 	if (_servInfo.errorPage.size() == 0)
 		_body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
 	else{
-		// std::cout <<"errorpage == " << "_servInfo.errorPage.find(statCode)->second" << std::endl;
 		if (_servInfo.errorPage.find(statCode) != _servInfo.errorPage.end()){
 			int fd = open(_servInfo.errorPage.find(statCode)->second.c_str(), O_RDONLY);
 			if (fd < 0)
 				_body = _CurrDirecory + "/error_pages/" + toString(statCode) + ".html";
 			else
 				_body = _servInfo.errorPage.find(statCode)->second;
-			std::cout << "-6-" << fd << std::endl; //**************
 			close(fd);
 		}
 		else
@@ -141,39 +149,45 @@ std::string Response::Connection(int flag){
 }
 
 void Response::DeleteMethod(){
-	int fd;
-	std::ostringstream headers;
-	std::vector<std::string> forbiddenFiles;
-	forbiddenFiles.push_back(_CurrDirecory +"/srcs/");
-	forbiddenFiles.push_back(_CurrDirecory +"/includes/");
-	forbiddenFiles.push_back(_CurrDirecory +"/error_pages/");
-	forbiddenFiles.push_back(_CurrDirecory +"/configFile/");
-	forbiddenFiles.push_back(_CurrDirecory +"/main.cpp");
-	forbiddenFiles.push_back(_CurrDirecory +"/Makefile");
-	forbiddenFiles.push_back(_CurrDirecory +"/var/www/html/");
-	for (std::vector<std::string>::iterator it = forbiddenFiles.begin(); it != forbiddenFiles.end(); it++){
-		if (_path.find(*it) == 0){
-			errorsResponse(403);
-			return ;
-		}
-	}
-	fd = unlink(_path.c_str());
-	if (fd < 0){
-		if (errno == EACCES)
-			errorsResponse(403);
-		return ;
-	}
-	else {
-		headers << "HTTP/1.1 204 No Content";
-		headers << Connection(0);
-		_body = "";
-	}
-	_headers = headers.str();
+    int fd;
+    std::ostringstream headers;
+    std::vector<std::string> forbiddenFiles;
+    forbiddenFiles.push_back(_CurrDirecory +"/srcs/");
+    forbiddenFiles.push_back(_CurrDirecory +"/includes/");
+    forbiddenFiles.push_back(_CurrDirecory +"/error_pages/");
+    forbiddenFiles.push_back(_CurrDirecory +"/configFile/");
+    forbiddenFiles.push_back(_CurrDirecory +"/main.cpp");
+    forbiddenFiles.push_back(_CurrDirecory +"/Makefile");
+    forbiddenFiles.push_back(_CurrDirecory +"/var/www/html/");
+    for (std::vector<std::string>::iterator it = forbiddenFiles.begin(); it != forbiddenFiles.end(); it++){
+        if (_path.find(*it) == 0){
+            errorsResponse(403);
+            return ;
+        }
+    }
+    fd = open(_path.c_str(), O_RDONLY);
+    if (fd < 0){
+        if (errno == EACCES)
+            errorsResponse(403);
+        close(fd);
+        return ;
+    }
+    else {
+        close(fd);
+        headers << "HTTP/1.1 204 No Content";
+        headers << Connection(0);
+        _body = "";
+    }
+    std::remove(_path.c_str());
+    _headers = headers.str();
 }
 
 void Response::setOkHeaders(std::string mType, std::string body){
-	_headers = "HTTP/1.1 200 OK\r\nContent-type: " + mType + "\r\nContent-length: " + toString(fileSize(body));
-	_headers += Connection(0);
+    _headers = "HTTP/1.1 200 OK\r\n";
+    if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+        _headers += "Set-Cookie: "+  gen_random(4) +"=" + gen_random(8) +"\r\n";
+    _headers += "Content-type: " + mType + "\r\nContent-length: " + toString(fileSize(body));
+    _headers += Connection(0);
 }
 
 void Response::setResponse(){
@@ -183,7 +197,7 @@ void Response::setResponse(){
     std::pair<std::string, std::string> redirect;
     for (unsigned long  i = 0; i < _servInfo.location.size(); i++){
 
-        if (_servInfo.location[i].uri == "/" || _reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
+        if (_servInfo.location[i].uri == "/"  || _reqInfo.URI == (_servInfo.location[i].uri + "/") || _reqInfo.URI == _servInfo.location[i].uri
             || (_reqInfo.URI.find(_servInfo.location[i].uri + "/") == 0 && _servInfo.location[i].uri.size() > 1)) {
             _root = _servInfo.location[i].root;
             _location = _servInfo.location[i].uri;
@@ -231,17 +245,19 @@ void Response::setResponse(){
     }
 
     if (redirect.second.length() != 0){
+        std::cout << _path << std::endl;
         if (_path == (_root + redirect.first) || (redirect.first == "/" && _path == _root)){
-            // std::cout << "ok" << std::endl;
             _body = redirect.second;
-            _headers = "HTTP/1.1 301 Moved Permanently\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
-            _headers += "\r\nLocation: " + redirect.second + "/";
+            _headers = "HTTP/1.1 301 Moved Permanently\r\n";
+            if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+                _headers += "Set-Cookie: "+  gen_random(4) +"=" + gen_random(8) +"\r\n";
+            _headers += "Content-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+            _headers += "\r\nLocation: "  +redirect.second + "/";
             _headers += Connection(0);
-            std::cout << "redirect ====== " << redirect.second << std::endl;
             return ;
         }
     }
-    std::cout << "_path ====== " << _path << std::endl;
+   
     folder = opendir(_path.c_str());
     if (!folder){
         if (errno == EACCES)
@@ -268,16 +284,18 @@ void Response::setResponse(){
                         _headers = "HTTP/1.1 301 301 Moved Permanently";
                     else
                         _headers = "HTTP/1.1 200 OK";
+                    if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+                        _headers += "\r\nSet-Cookie: "+  gen_random(4) +"=" + gen_random(8);
                     _headers += Connection(1) + "\r\n" + cgiOut.first;
                     _body = cgiOut.second;
                 // }
-                // else // cgiExt != _path.substr(_path.length() - cgiExt.length())
-                //     errorsResponse(502);
-                // return ;
             }
             else{ // cgiExt.length  == 0
                 _body = _path;
-                _headers = "HTTP/1.1 200 OK\r\nContent-type: " + _mime.getType(_reqInfo.URI) + "\r\nContent-length: " + toString(fileSize(_body));
+                _headers = "HTTP/1.1 200 OK\r\n";
+                if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+                    _headers += "Set-Cookie: "+  gen_random(4) +"=" + gen_random(8) +"\r\n";
+                _headers += "Content-type: " + _mime.getType(_reqInfo.URI) + "\r\nContent-length: " + toString(fileSize(_body));
                 if (_autoIndex == true)
                     _headers += "\r\nContent-Disposition: attachment";
                 _headers += Connection(0);
@@ -298,7 +316,10 @@ void Response::setResponse(){
                 if ( _path[_path.length() - 1] != '/'){
                     _path += "/";
                     _body = _path + _index[0];
-                    _headers = "HTTP/1.1 302 Found\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+                    _headers = "HTTP/1.1 302 Found\r\n";
+                    if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+                        _headers += "Set-Cookie: "+  gen_random(4) +"=" + gen_random(8) +"\r\n";
+                    _headers += "Content-type: text/html\r\nContent-length: " + toString(fileSize(_body));
                     if (_reqInfo.URI == "/")
                         _headers += "\r\nLocation: " + _reqInfo.URI;
                     else
@@ -316,12 +337,10 @@ void Response::setResponse(){
                     
                     _body = _path + "/" + _index[i];
                     setOkHeaders("text/html", _body);
-			        std::cout << "-7-" << fd << std::endl; //**************
                     close(fd);
                     closedir(folder);
                     return ;
                 }
-			    std::cout << "-8-" << fd << std::endl; //**************
                 close(fd);
             }
             if (fd < 0){
@@ -355,7 +374,10 @@ void Response::setResponse(){
                         return;
                     }
                     cgiOut = CGI.parseCgiOutput(_CurrDirecory);
-                    _headers = "HTTP/1.1 200 OK" + Connection(1) + "\r\n" + cgiOut.first;
+                    _headers = "HTTP/1.1 200 OK\r\n";
+                    if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+                        _headers += "Set-Cookie: "+  gen_random(4) +"=" + gen_random(8);
+                    _headers += Connection(1) + "\r\n" + cgiOut.first;
                     _body = cgiOut.second;
                     closedir(folder);
                     return ;
@@ -368,12 +390,10 @@ void Response::setResponse(){
                 if (opn != -1){
                     _body = _path + "/" + _index[i];
                     setOkHeaders("text/html", _body);
-			        std::cout << "-9-" << opn << std::endl; //*************
                     close(opn);
                     break;
                 }
                 close(opn);
-			    std::cout << "-10-" << opn << std::endl; //**************
             }
             if (opn == -1) {
                 
@@ -398,14 +418,18 @@ void Response::setResponse(){
 }
 
 void Response::uploadResponse(){
-	_body = _CurrDirecory + "/var/www/upload.html";
-	_headers = "HTTP/1.1 201 created\r\nContent-type: text/html\r\nContent-length: " + toString(fileSize(_body));
-	_headers += Connection(0);
+    _body = _CurrDirecory + "/var/www/upload.html";
+    _headers = "HTTP/1.1 201 created";
+    if (_reqInfo.headers.find("cookie") == _reqInfo.headers.end())
+        _headers += "\r\nSet-Cookie: "+  gen_random(4) +"=" + gen_random(8) + "\r\n";
+    _headers += "Content-type: text/html\r\nContent-length: " + toString(fileSize(_body));
+    _headers += Connection(0);
 }
 std::pair<std::string, std::string> Response::get_response(){
 
-	if (_reqInfo.method != "GET" && _reqInfo.method != "POST" && _reqInfo.method != "DELETE")
+	if (_reqInfo.method != "GET" && _reqInfo.method != "POST" && _reqInfo.method != "DELETE"){
 		errorsResponse(501);
+    }
 	else{
 		if (_reqInfo.statusCode == 200)
 			setResponse();
@@ -415,10 +439,6 @@ std::pair<std::string, std::string> Response::get_response(){
 			errorsResponse(_reqInfo.statusCode);
 	}
 	std::pair<std::string, std::string> p;
-	std::cout << "-----------------------------------------------" << std::endl;
-	std::cout << _headers << std::endl;
-	std::cout << _body << std::endl;
-	std::cout << "-----------------------------------------------" << std::endl;
 	p.first = _headers;
 	p.second = _body;
 	return (p);
@@ -459,7 +479,6 @@ int fileSize(std::string fileName){
 	if (fd >= 0){
 		ret = lseek(fd, 0, SEEK_END);
 		lseek(fd, 0, SEEK_SET);
-		std::cout << "-11-" << fd << std::endl; //**************
 		close (fd);
 	}
 	return (ret);
@@ -468,7 +487,6 @@ int fileSize(std::string fileName){
 bool Response::is_complete(int len, std::string filename){
 
 	_cursor += len;
-	// std::cout << "sending .... " << _cursor << std::endl;
 	if ((size_t)_cursor >= fileSize(filename) + _headers.size())
 		return true;
 	return false;

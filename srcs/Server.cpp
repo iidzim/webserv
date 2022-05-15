@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/15 15:49:11 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/15 15:55:52 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,15 +61,10 @@ void Server::accept_connection(int i, std::vector<Socket>& s){
 void Server::recv_request(int i, Clients *c, std::vector<serverInfo>& server_conf){
 
 	char _buffer[2048*1000];
-	std::cout << _fds[i].fd << " Receiving request" << std::endl;
+	// std::cout << _fds[i].fd << " Receiving request" << std::endl;
 	int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
-	std::cout << "r = " << r << std::endl;
 	if (r <= 0){
-		// std::cout << "HERE\n";
-		// if (!c->connections[_fds[i].fd].first.isComplete())
-			// std::cout << "not complete !\n";
 		c->remove_clients(_fds[i].fd);
-		// std::cout << "-12-" << _fds[i].fd << std::endl; //**************
 		close(_fds[i].fd);
 		_fds.erase(_fds.begin() + i);
 		return;
@@ -87,7 +82,7 @@ void Server::recv_request(int i, Clients *c, std::vector<serverInfo>& server_con
 	// when the request is complete switch the type of event to POLLOUT
 	if (c->connections[_fds[i].fd].first.isComplete()){
 
-		std::cout << _fds[i].fd << " - Request is complete " << std::endl;
+		// std::cout << _fds[i].fd << " - Request is complete " << std::endl;
 		_fds[i].events = POLLOUT;
 	}
 }
@@ -101,7 +96,6 @@ void Server::close_fd(void){
 
 void Server::brokenPipe(Clients *c, int i){
 
-	// std::cout << "-13-" << _fds[i].fd << std::endl; //**************
 	close(_fds[i].fd);
 	c->remove_clients(_fds[i].fd);
 	_fds.erase(_fds.begin() + i);
@@ -109,7 +103,7 @@ void Server::brokenPipe(Clients *c, int i){
 
 void Server::send_response(int i, Clients *c){
 
-	std::cout << "Sending response" << std::endl;
+	// std::cout << "Sending response" << std::endl;
 	std::pair<std::string, std::string> rep = c->connections[_fds[i].fd].second.get_response();
 	std::string headers = rep.first;
 	std::string filename = rep.second;
@@ -120,7 +114,7 @@ void Server::send_response(int i, Clients *c){
 
 	if (len < headers_size){
 
-		std::cout << "sending headers" << std::endl;
+		// std::cout << "sending headers" << std::endl;
 		std::string str = headers.substr(len);
 		s = send(_fds[i].fd, str.c_str(), str.length(), 0);
 		if (broken_pipe == true){
@@ -153,7 +147,7 @@ void Server::send_response(int i, Clients *c){
 		return;
 	}
 	if (c->connections[_fds[i].fd].second.is_complete(s, filename)){
-		std::cout << _fds[i].fd << " - response is complete\n";
+		// std::cout << _fds[i].fd << " - response is complete\n";
 		int file_descriptor = _fds[i].fd;
 		if (c->connections[_fds[i].fd].second.IsKeepAlive() == false){
 			close(_fds[i].fd);
@@ -172,7 +166,7 @@ void Server::socketio(std::vector<Socket>& s, std::vector<serverInfo>& server_co
 	std::cout << "Server is running ...\n";
 	for(;;){
 
-		std::cout << "Polling ................................." << _fds.size() << " - " << c.connections.size() << std::endl;
+		// std::cout << "Polling ................................." << _fds.size() << " - " << c.connections.size() << std::endl;
 		int p = poll(&_fds.front(), _fds.size(), 10000);
 		if (p < 0)
 			throw::Socket::SocketException("Poll failed: Unexpected event occured");
@@ -181,10 +175,9 @@ void Server::socketio(std::vector<Socket>& s, std::vector<serverInfo>& server_co
 
 			if (c.connections.find(_fds[j].fd) != c.connections.end()){
 				if (!c.connections[_fds[j].fd].first.getComplete() && std::time(NULL) - c.connections[_fds[j].fd].first.getTime() > 9){
-					std::cout << "TIMEOUT\n";
+					// std::cout << "TIMEOUT\n";
 					c.connections[_fds[j].fd].first.closefds();
 					c.remove_clients(_fds[j].fd);
-					std::cout << "-18-" << _fds[j].fd << std::endl; //**************
 					close(_fds[j].fd);
 					_fds.erase(_fds.begin() + j);
 				}
@@ -234,7 +227,6 @@ void Server::socketio(std::vector<Socket>& s, std::vector<serverInfo>& server_co
 			}
 			else if ((_fds[i].revents & POLLHUP) || (_fds[i].revents & POLLERR) || (_fds[i].revents & POLLNVAL)){
 
-				std::cout << "-19-" << _fds[i].fd << std::endl; //**************
 				close(_fds[i].fd);
 				_fds.erase(_fds.begin() + i);
 				c.remove_clients(_fds[i].fd);

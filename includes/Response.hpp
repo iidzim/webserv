@@ -30,6 +30,7 @@ class Response{
         Response(const Response & src);
         Response & operator=(const Response & obj);
         ~Response();
+        std::string gen_random(const int len);
         std::pair<std::string, std::string> get_response();
         std::string setErrorsHeaders(std::string , std::string);
        
