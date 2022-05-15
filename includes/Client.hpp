@@ -6,7 +6,7 @@
 /*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/04/08 16:45:25 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/09 18:35:08 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/15 11:39:43 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 #include "Response.hpp"
 #include "Request.hpp"
+#include <ctime>
 // #include "webserv.hpp"
 #include <utility>
 #include <map>

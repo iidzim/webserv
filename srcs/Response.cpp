@@ -393,7 +393,7 @@ void Response::setResponse(){
                 opn = open((_path + '/' + _index[i]).c_str(), O_RDONLY);
                 if (opn != -1){
                     _body = _path + "/" + _index[i];
-                     setOkHeaders("text/html", _body);
+                    setOkHeaders("text/html", _body);
                     close(opn);
                     break;
                 }

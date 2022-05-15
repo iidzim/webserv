@@ -39,7 +39,7 @@ typedef struct t_requestInfo
 class request
 {
     private:
-        std::time_t     _start;
+        std::time_t    _start;
         bool            _begin;
         int             _port;
         std::string     _host;
@@ -60,8 +60,7 @@ class request
         size_t          _originContentLength;
         std::vector<serverInfo> servers;
         size_t          _size;
-        struct pollfd   _fds[1];
-
+    
         void requestLine(std::istringstream & istr); // Method URI VERSION
         void getHeaders(std::istringstream & str); //all the available headers in MJS
         void clearRequest(); //! not sure if necessary
@@ -76,6 +75,7 @@ class request
         bool isHexadecimalFormat(std::string &number); // use xdigit
         std::string     getMimeType();
         std::string     getContentType();
+
         
     public:
         request();
@@ -97,6 +97,10 @@ class request
         void            forceStopParsing();
         int             getPort();
         std::string     getHost();
+        void resetTime();
+        std::time_t getTime();
+        void closefds();
+        bool getComplete();
 
        //! for debugging
        void print_request();

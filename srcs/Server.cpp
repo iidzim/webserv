@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-yous <oel-yous@student.42.fr>          +#+  +:+       +#+        */
+/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/24 21:03:58 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/14 23:26:33 by oel-yous         ###   ########.fr       */
+/*   Updated: 2022/05/15 15:55:52 by iidzim           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,7 @@ void Server::accept_connection(int i, std::vector<Socket>& s){
 void Server::recv_request(int i, Clients *c, std::vector<serverInfo>& server_conf){
 
 	char _buffer[2048*1000];
-	// std::cout << "Receiving request" << std::endl;
+	// std::cout << _fds[i].fd << " Receiving request" << std::endl;
 	int r = recv(_fds[i].fd, _buffer, sizeof(_buffer), 0);
 	if (r <= 0){
 		c->remove_clients(_fds[i].fd);
@@ -72,6 +72,7 @@ void Server::recv_request(int i, Clients *c, std::vector<serverInfo>& server_con
 	_buffer[r] = '\0';
 	c->connections.insert(std::make_pair(_fds[i].fd, std::make_pair(request(server_conf), Response())));
 	try{
+		// std::cout << _buffer << std::endl;
 		c->connections[_fds[i].fd].first.parse(_buffer, r);
 	}
 	catch(request::RequestNotValid &e){
@@ -125,25 +126,18 @@ void Server::send_response(int i, Clients *c){
 
 		// std::cout << "sending body ...\n";
 		o = open(filename.c_str(), O_RDONLY);
-		// int total_size = fileSize(filename) + headers_size - len;
 		lseek(o, len - headers_size, SEEK_SET);
-		struct pollfd file[1];
-		file[0].fd = o;
-		file[0].events = POLLIN;
-		int poll_file = poll(file, 1, -1);
-		if (poll_file > 0 && (file[0].revents & POLLIN)){
-			int r = read(o, buff, sizeof(buff));
+		int r = read(o, buff, sizeof(buff));
+		if (r > 0){
 			buff[r] = '\0';
-			if (r > 0){
-				s = send(_fds[i].fd, buff, r, 0);
-				if (broken_pipe == true){
-					close(o);
-					brokenPipe(c, i);
-					return;
-				}
+			s = send(_fds[i].fd, buff, r, 0);
+			if (broken_pipe == true){
+				close(o);
+				brokenPipe(c, i);
+				return;
 			}
-			memset(buff, 0, BUFF_SIZE);
 		}
+		memset(buff, 0, BUFF_SIZE);
 		close(o);
 	}
 	if (s <= 0){
@@ -172,14 +166,24 @@ void Server::socketio(std::vector<Socket>& s, std::vector<serverInfo>& server_co
 	std::cout << "Server is running ...\n";
 	for(;;){
 
-		// std::cout << "Polling ................................. \n";// << _fds.size() << " - " << _fds.capacity() << std::endl;
-		int p = poll(&_fds.front(), _fds.size(), -1);
+		// std::cout << "Polling ................................." << _fds.size() << " - " << c.connections.size() << std::endl;
+		int p = poll(&_fds.front(), _fds.size(), 10000);
 		if (p < 0)
 			throw::Socket::SocketException("Poll failed: Unexpected event occured");
-		if (p == 0){
-			std::cout << "Poll failed: No new connection" << std::endl;
-			continue;
+		//? timeout
+		for (size_t j = 0; j < _fds.size(); j++){
+
+			if (c.connections.find(_fds[j].fd) != c.connections.end()){
+				if (!c.connections[_fds[j].fd].first.getComplete() && std::time(NULL) - c.connections[_fds[j].fd].first.getTime() > 9){
+					// std::cout << "TIMEOUT\n";
+					c.connections[_fds[j].fd].first.closefds();
+					c.remove_clients(_fds[j].fd);
+					close(_fds[j].fd);
+					_fds.erase(_fds.begin() + j);
+				}
+			}
 		}
+
 		// for (size_t i = 0; i < _fds.size(); i++){
 		// 	std::cout << _fds[i].fd << " - " << _fds[i].events << std::endl;
 		// }
