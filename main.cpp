@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: iidzim <iidzim@student.42.fr>              +#+  +:+       +#+        */
+/*   By: framdani <framdani@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/28 11:12:07 by iidzim            #+#    #+#             */
-/*   Updated: 2022/05/15 14:16:55 by iidzim           ###   ########.fr       */
+/*   Updated: 2022/05/26 17:18:32 by framdani         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ int main(int argc, char** argv){
 	try{
 		std::string path;
 		if (argc == 1)
-			path = "/Users/iidzim/Desktop/webserv/configFile/valid_confg/default"; ///! a replace
+			path = pwd+"configFile/valid_confg/default";
 		else
 			path = argv[1];	
 		std::vector<int> ports;
@@ -63,19 +63,6 @@ int main(int argc, char** argv){
 	}
 	return (0);
 }
-
-//td:
-	// 
-	//? parse config file
-	//? create sockets based on server configuration
-	//? sockets listening
-	//? establish connection
-	//? receive request
-	//? parse request
-	//? generate response
-	//? send response
-	//? close connection
-	//? repeat - handle multiple server & sockets at the same time
 
 
 
